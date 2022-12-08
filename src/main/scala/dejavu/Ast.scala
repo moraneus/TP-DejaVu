@@ -2,8 +2,9 @@
 package dejavu
 
 import java.io._
-
+import java.nio.file.Paths
 import scala.io.Source
+import scala.util.Random
 
 object AstUtil {
   val DEBUG_BRACKETS = false
@@ -82,7 +83,7 @@ object AstUtil {
     */
 
   def refreshMonitorTextIfDevelopment(): Unit = {
-    val dejavuDir = "/Users/khavelun/Desktop/development/ideaworkspace/dejavu/src/main/scala/dejavu/"
+    val dejavuDir = s"${Paths.get(".").toAbsolutePath}src/main/scala/dejavu/"
     val monitorFreshFileIn = dejavuDir + "Monitor.scala"
     if (new java.io.File(monitorFreshFileIn).exists) { // true in development environment
       val monitorFreshText = Source.fromFile(monitorFreshFileIn).getLines.drop(1).mkString("\n") // drop package name
@@ -125,9 +126,22 @@ object AstUtil {
 import AstUtil._
 
 case class Spec(properties: List[Property]) {
+
+  val generatedMonitorsPath: String = s"${Paths.get(".").toAbsolutePath}/src/test/scala/sandbox/generated_monitors/${getRandomFolderName}"
+
+  private def getRandomFolderName: String = {
+    val x = Random.alphanumeric
+    s"test_${(x take 10).mkString}"
+  }
+
   def translate(): Unit = {
     refreshMonitorTextIfDevelopment()
-    openFile("TraceMonitor.scala")
+
+    val dir = new File(generatedMonitorsPath)
+    if (!dir.exists) dir.mkdirs
+    openFile(s"$generatedMonitorsPath/TraceMonitor.scala")
+    println(s"Generated TraceMonitor.scala file in: $generatedMonitorsPath")
+
     writeln(ResourceReader.read("Monitor.txt"))
     writeln()
     for (property <- properties) {
@@ -293,7 +307,7 @@ case class Spec(properties: List[Property]) {
       """.stripMargin)
 
     writeln(
-      """object TraceMonitor {
+      s"""object TraceMonitor {
         |  def main(args: Array[String]): Unit = {
         |    if (1 <= args.length && args.length <= 3) {
         |      if (args.length > 1) Options.BITS = args(1).toInt
@@ -302,8 +316,9 @@ case class Spec(properties: List[Property]) {
         |      if (args.length == 3 && args(2) == "debug") Options.DEBUG = true
         |      if (args.length == 3 && args(2) == "profile") Options.PROFILE = true
         |      try {
-        |        openResultFile("dejavu-results")
-        |        if (Options.PROFILE) {
+        |        openResultFile("$generatedMonitorsPath/dejavu-results")""".stripMargin)
+    writeln(
+     """        if (Options.PROFILE) {
         |          openProfileFile("dejavu-profile.csv")
         |          m.printProfileHeader()
         |        }
@@ -339,7 +354,7 @@ case class Spec(properties: List[Property]) {
     properties.mkString("\n")
 
   def printDot() {
-    val pw = new PrintWriter(new File("ast.dot"))
+    val pw = new PrintWriter(new File(s"${generatedMonitorsPath}/ast.dot"))
     for (p <- properties) {
       pw.write("digraph G {\n")
       pw.write(p.ltl.toDot)
