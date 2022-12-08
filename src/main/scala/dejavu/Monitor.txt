@@ -17,6 +17,10 @@ object Options {
   var PRINT_LINENUMBER_EACH: Int = 1000
   var UNIT_TEST: Boolean = false
   var STATISTICS: Boolean = true
+
+  // ### Prediction Extension ###
+  var PREDICTION: Boolean = false
+  var PREDICTION_K: Int = 0
 }
 
 object Util {
@@ -329,8 +333,11 @@ class BDDGenerator(F: Formula)(variables: List[(String, Boolean, Int)], bitsPerT
 
   val nrOfTimeVariables = 5
 
+  // ### Prediction Extension ###
   if (totalNumberOfBits > 0 || bitsPerTimeVar > 0) {
-    B.setVarNum(totalNumberOfBits + (nrOfTimeVariables * bitsPerTimeVar))
+    var predictionExtraBits = 0
+    if (Options.PREDICTION) predictionExtraBits += 2 * variables.head._3
+    B.setVarNum(totalNumberOfBits + predictionExtraBits + (nrOfTimeVariables * bitsPerTimeVar))
   }
 
   /**

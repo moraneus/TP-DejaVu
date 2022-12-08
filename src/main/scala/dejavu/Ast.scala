@@ -308,42 +308,78 @@ case class Spec(properties: List[Property]) {
 
     writeln(
       s"""object TraceMonitor {
-        |  def main(args: Array[String]): Unit = {
-        |    if (1 <= args.length && args.length <= 3) {
-        |      if (args.length > 1) Options.BITS = args(1).toInt
-        |      val m = new PropertyMonitor
-        |      val file = args(0)
-        |      if (args.length == 3 && args(2) == "debug") Options.DEBUG = true
-        |      if (args.length == 3 && args(2) == "profile") Options.PROFILE = true
-        |      try {
-        |        openResultFile("$generatedMonitorsPath/dejavu-results")""".stripMargin)
+         |  val usage =
+         |    "Usage: (--logfile <filename>) [--bits numOfBits] [--mode (debug | profile)] [--prediction num]"
+         |
+         |  def main(args: Array[String]): Unit = {
+         |
+         |    if (2 <= args.length && args.length <= 8) {
+         |      val argMap = Map.newBuilder[String, Any]
+         |      args.sliding(2, 2).toList.collect {
+         |        case Array("--logfile", logfile: String) => argMap.+=("logfile" -> logfile)
+         |        case Array("--bits", numOfBits: String) => argMap.+=("bits" -> numOfBits)
+         |        case Array("--mode", mode: String) => argMap.+=("mode" -> mode)
+         |        case Array("--prediction", predictionLength: String) => argMap.+=("prediction" -> predictionLength)
+         |      }
+         |      val bits = argMap.result().get("bits")
+         |      val bitsValue =  bits match {
+         |        case Some(value) => value.toString
+         |        case None => "20" // Default is 20 bits length
+         |      }
+         |      Options.BITS = bitsValue.toInt
+         |
+         |      val prediction = argMap.result().get("prediction")
+         |      val predictionValue = prediction match {
+         |        case Some(value) => {
+         |          Options.PREDICTION = true
+         |          value.toString
+         |        }
+         |        case None => "0"
+         |      }
+         |      Options.PREDICTION_K = predictionValue.toInt
+         |
+         |      val m = new PropertyMonitor
+         |
+         |      val file = argMap.result()("logfile").toString
+         |
+         |      val mode = argMap.result().get("mode")
+         |      mode match {
+         |        case Some(value) =>
+         |          val m = value.toString.toLowerCase()
+         |          if (m == "debug") Options.DEBUG = true
+         |          if (m == "profile") Options.PROFILE = true
+         |        case None => println("No mode was selected")
+         |      }
+         |
+         |      try {
+         |        openResultFile("$generatedMonitorsPath/dejavu-results")
+         |        if (Options.PROFILE) {
+         |          openProfileFile("dejavu-profile.csv")
+         |          m.printProfileHeader()
+         |        }
+         |        m.submitCSVFile(file)
+         """.stripMargin)
     writeln(
-     """        if (Options.PROFILE) {
-        |          openProfileFile("dejavu-profile.csv")
-        |          m.printProfileHeader()
-        |        }
-        |        m.submitCSVFile(file)
-        |      } catch {
-        |          case e: Throwable =>
-        |            println(s"\n*** $e\n")
-        |            // e.printStackTrace()
-        |      } finally {
-        |        closeResultFile()
-        |        if (Options.PROFILE) closeProfileFile()
-        |      }
-        |    } else {
-        |      println("*** call with these arguments:")
-        |      println("<logfile> [<bits> [debug|profile]]")
-        |    }
-        |  }
-        |}
+      """       } catch {
+         |        case e: Throwable =>
+         |          println(s"\n*** $e\n")
+         |        // e.printStackTrace()
+         |      } finally {
+         |        closeResultFile()
+         |        if (Options.PROFILE) closeProfileFile()
+         |      }
+         |    } else {
+         |      println("*** call with these arguments:")
+         |      println(usage)
+         |    }
+         |  }
+         |}
       """.stripMargin)
     closeFile()
     if (DEBUG_AST) {
       // debug(LTL.ruleIndex)
       printDot()
     }
-
   }
 
   def duplicateRules: Spec = {
