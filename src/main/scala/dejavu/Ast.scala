@@ -307,7 +307,106 @@ case class Spec(properties: List[Property]) {
       """.stripMargin)
 
     writeln(
-      s"""object TraceMonitor {
+      s"""
+        | // ### Prediction Extension ###
+        |class Prediction(monitor: Monitor) {
+        |  val F: Formula = monitor.formulae.head
+        |  val G: BDDGenerator = F.bddGenerator
+        |  val vars: Map[String, Variable] = G.varMap
+        |  val predictionDepth: Int = Options.PREDICTION_K
+        |
+        |
+        |  def prediction(): Unit = {
+        |    val isoBdd: Array[BDD] = Array.fill(${LTL.next})(G.False)
+        |    for (v <- vars) {
+        |      var isoPairsBdd = G.True
+        |      for (i <- F.pre.indices) {
+        |        val varName = v._1
+        |        val varObject = v._2
+        |        val otherQuantVars = G.otherQuantVars(varName)
+        |        isoBdd(i) = IsomorphicPairsCalculator(varObject, otherQuantVars, F.pre(i))
+        |        isoPairsBdd = isoPairsBdd.and(isoBdd(i))
+        |      }
+        |      isoPairsBdd.printSet()
+        |    }
+        |  }
+        """.stripMargin)
+    writeln(
+      """
+        |  /**
+        |    * Build a BDD which represent 'if and only if' meaning for two bits (e.g., y_i ↔ g_i).
+        |    * bit 'b' is '1' iff bit 'a' is '1', means that if the bits are the same, the bdd
+        |    * accept the assignment.
+        |    *
+        |    * @param indexA         The index which represent the first bit in the generated BDD.
+        |    * @param indexB         The index which represent the second bit in the generated BDD.
+        |    * @return               'iff' BDD over two bits.
+        |    */
+        |  def iff2Bits(indexA: Int, indexB: Int): BDD = {
+        |    // Define the assignment '11'
+        |    val a = G.theOneBDDFor(indexA)
+        |    val b = a.and(G.theOneBDDFor(indexB))
+        |    // Define the assignment '00'
+        |    val c = G.theZeroBDDFor(indexA)
+        |    val d = c.and(G.theZeroBDDFor(indexB))
+        |    b.or(d)
+        |  }
+        |
+        |  /**
+        |    * Find all isomorphic variable assignments in a given BDD.
+        |    * The returned result is a BDD GH over a bit vector 'g1 . . . gn' and 'h1 . . . hn' such
+        |    * that the bit vectors 'g1 . . . gn' and 'h1 . . . hn' represent pairs of values 'g' and 'h', where
+        |    * 'g' and 'h' are isomorphic over relation R (represented by the input BDD 'bdd').
+        |    *
+        |    * @param variable       The variable object, which is the target to calculate isomorphics paris over 'bdd'.
+        |    * @param otherQuantVars The other quant vars.
+        |    * @param bdd            The target BDD, which the isomorphic pairs will be searched in it.
+        |    * @return               BDD GH over a bit vector 'g1 . . . gn' and 'h1 . . . hn'.
+        |    */
+        |
+        |    def IsomorphicPairsCalculator(variable: Variable, otherQuantVars: List[BDD], bdd: BDD): BDD = {
+        |    // Extract the target variable corresponding bits
+        |    val isoQuantVars = variable.quantvar
+        |    val varBits = variable.bits
+        |
+        |    // Initialize the left and right BDDs which are part of formula (2) in the paper.
+        |    // ∀x1 . . . ∀xm(∃y1 . . . ∃yn(B ∧ (y1 ↔ g1) . . . ∧ (yn ↔ gn)) ↔ ∃y1 . . . ∃yn(B ∧ (y1 ↔ h1) . . . ∧ (yn ↔ hn)))
+        |    var left = G.True
+        |    var right = G.True
+        |
+        |    // Build the left BDD (∃y1 . . . ∃yn(B ∧ (y1 ↔ g1) . . . ∧ (yn ↔ gn)))
+        |    // Build the right BDD (∃y1 . . . ∃yn(B ∧ (y1 ↔ h1) . . . ∧ (yn ↔ hn)))
+        |    for ((varBitIndex: Int, i: Int) <- varBits.view.zipWithIndex) {
+        |      val gIndex: Int = (i - (varBits.length - 1)).abs + G.totalNumberOfBits
+        |      val hIndex = gIndex + varBits.length
+        |      if (Options.DEBUG) {
+        |        println(s"Builds a left internal IFF BDD (y_$varBitIndex ↔ g_$gIndex)")
+        |        println(s"Builds a right internal IFF BDD (y_$varBitIndex ↔ h_$hIndex)")
+        |      }
+        |      // (y1 ↔ g1) . . . ∧ (yn ↔ gn)
+        |      left = left.and(iff2Bits(varBitIndex, gIndex))
+        |      // (y1 ↔ h1) . . . ∧ (yn ↔ hn)
+        |      right = right.and(iff2Bits(varBitIndex, hIndex))
+        |    }
+        |    // ∃y1 . . . ∃yn(B ∧ (y1 ↔ g1) . . . ∧ (yn ↔ gn))
+        |    left = bdd.and(left).exist(isoQuantVars)
+        |    // ∃y1 . . . ∃yn(B ∧ (y1 ↔ h1) . . . ∧ (yn ↔ hn))
+        |    right = bdd.and(right).exist(isoQuantVars)
+        |
+        |    // Apply the logical 'bi-implication' of the left and the right BDDs
+        |    var result = left.biimp(right)
+        |
+        |    // Remove all other quantifiers variables.
+        |    for (quantVar <- otherQuantVars) result = result.forAll(quantVar)
+        |    result
+        |  }
+        |}
+        """.stripMargin)
+
+    writeln(
+      s"""
+         | // ### Prediction Extension ###
+         |object TraceMonitor {
          |  val usage =
          |    "Usage: (--logfile <filename>) [--bits numOfBits] [--mode (debug | profile)] [--prediction num]"
          |
@@ -345,9 +444,9 @@ case class Spec(properties: List[Property]) {
          |      val mode = argMap.result().get("mode")
          |      mode match {
          |        case Some(value) =>
-         |          val m = value.toString.toLowerCase()
-         |          if (m == "debug") Options.DEBUG = true
-         |          if (m == "profile") Options.PROFILE = true
+         |          val modeValue = value.toString.toLowerCase()
+         |          if (modeValue == "debug") Options.DEBUG = true
+         |          if (modeValue == "profile") Options.PROFILE = true
          |        case None => println("No mode was selected")
          |      }
          |
@@ -358,6 +457,12 @@ case class Spec(properties: List[Property]) {
          |          m.printProfileHeader()
          |        }
          |        m.submitCSVFile(file)
+         |        if (Options.PREDICTION) {
+         |          val prediction = new Prediction(m)
+         |          prediction.prediction()
+         |        } else {
+         |          println("Prediction was not activated")
+         |        }
          """.stripMargin)
     writeln(
       """       } catch {

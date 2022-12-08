@@ -363,6 +363,18 @@ class BDDGenerator(F: Formula)(variables: List[(String, Boolean, Int)], bitsPerT
     B.ithVar(pos)
   }
 
+  // ### Prediction Extension ###
+  /**
+    * The BDD for a single position that is true only of that bit is 0.
+    *
+    * @param pos the position making part of the resulting BDD.
+    * @return the BDD accepting on 0 for that position.
+    */
+
+  def theZeroBDDFor(pos: Int): BDD = {
+    B.nithVar(pos)
+  }
+
   /**
     * Initializes the <code>varMap</code> variable by mapping each variable in the formula to
     * an instance of the <code>Variable</code> class.
