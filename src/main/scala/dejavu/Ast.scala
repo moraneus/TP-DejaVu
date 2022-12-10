@@ -162,8 +162,6 @@ case class Spec(properties: List[Property]) {
 
       writeln(
         s"""
-           |    // ### Prediction Extension ###
-           |    monitor.collectAllPredicates = true
            |    debugMonitorState()
            |
            |    val error = now(0).isZero
