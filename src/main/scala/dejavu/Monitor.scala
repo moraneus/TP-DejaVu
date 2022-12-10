@@ -439,7 +439,7 @@ class BDDGenerator(F: Formula)(variables: List[(String, Boolean, Int)], bitsPerT
 class TraceStatistics(events: Set[String]) {
   var eventTable: Map[String, Long] = events.map(_ -> 0.asInstanceOf[Long]).toMap
 
-  def upddate(eventName: String): Unit = {
+  def update(eventName: String): Unit = {
     eventTable.get(eventName) match {
       case None => eventTable += (eventName -> 1)
       case Some(count) => eventTable += (eventName -> (count + 1))
@@ -541,7 +541,7 @@ abstract class Monitor {
 
   def submit(name: String, args: List[Any]): Unit = {
     if (Options.STATISTICS) {
-      statistics.upddate(name)
+      statistics.update(name)
     }
     state.update(name, args)
     evaluate()
