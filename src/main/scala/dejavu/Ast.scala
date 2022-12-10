@@ -320,14 +320,30 @@ case class Spec(properties: List[Property]) {
         |    val isoBdd: Array[BDD] = Array.fill(${LTL.next})(G.False)
         |    for (v <- vars) {
         |      var isoPairsBdd = G.True
+        |      val varBitsLength = v._2.bits.length
         |      for (i <- F.pre.indices) {
         |        val varName = v._1
         |        val varObject = v._2
         |        val otherQuantVars = G.otherQuantVars(varName)
-        |        isoBdd(i) = IsomorphicPairsCalculator(varObject, otherQuantVars, F.pre(i))
-        |        isoPairsBdd = isoPairsBdd.and(isoBdd(i))
+        |
+        |        // If the target BDD is true or false, this has no influence on the result.
+        |        if (!F.pre(i).isZero && !F.pre(i).isOne) {
+        |          isoBdd(i) = IsomorphicPairsCalculator(varObject, otherQuantVars, F.pre(i))
+        |          isoPairsBdd = isoPairsBdd.and(isoBdd(i))
+        |        }
+        |        
         |      }
-        |      isoPairsBdd.printSet()
+        |      while (!isoPairsBdd.equals(G.False) && isoPairsBdd != null) {
+        |        isoPairsBdd.printSet()
+        |        val gQuantVars = G.getQuantVars(Array.range(G.totalNumberOfBits,
+        |          G.totalNumberOfBits + varBitsLength))
+        |        val hQuantVars = G.getQuantVars(Array.range(G.totalNumberOfBits + varBitsLength,
+        |          G.totalNumberOfBits + (varBitsLength * 2)))
+        |        val satAssignmentG = isoPairsBdd.satOne(gQuantVars, true).exist(hQuantVars)
+        |        isoPairsBdd =
+        |          isoPairsBdd
+        |          .and(isoPairsBdd.restrict(satAssignmentG).not())
+        |      }
         |    }
         |  }
         """.stripMargin)

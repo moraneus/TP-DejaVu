@@ -233,6 +233,14 @@ class Variable(F: Formula)(name: String, bounded: Boolean, offset: Int, nrOfBits
         assert(false, s"Out of memory for variable $name!")
       }
       val result = free.satOne(allOnes, true)
+
+      // ### Prediction Extension ###
+      if (Options.DEBUG) {
+        println("######################################################")
+        println(s"Value ${v.toString} get the assignment of ${result.satOne()}")
+        println("######################################################")
+      }
+
       free = free.and(result.not())
       bdds += (v -> result)
       F.addTouchedByLastEvent(name, v, result)
