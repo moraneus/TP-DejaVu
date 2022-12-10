@@ -489,6 +489,10 @@ abstract class Monitor {
   var deltaTime: Int = 0
   var errors: Int = 0
 
+  // ### Prediction Extension ###
+  var predicates: Set[String] = Set()
+  var collectAllPredicates: Boolean = false
+
   /**
     * Sets the current time to the time indicated by the timestamp associated
     * with the latest event. It specifically sets `deltaTime` to denote the
@@ -801,6 +805,9 @@ abstract class Formula(val monitor: Monitor) {
 
   def build(name: String)(patterns: Pattern*): BDD =
     bddFromBinding(monitor.state.holds(name, patterns.toList))
+
+    // ### Prediction Extension ###
+    if (!monitor.collectAllPredicates) monitor.predicates += name
 
   /**
     * Builds a BDD from a relational expression of the form: <code>varName1 op varName2</code>, only

@@ -162,6 +162,8 @@ case class Spec(properties: List[Property]) {
 
       writeln(
         s"""
+           |    // ### Prediction Extension ###
+           |    monitor.collectAllPredicates = true
            |    debugMonitorState()
            |
            |    val error = now(0).isZero
@@ -321,14 +323,14 @@ case class Spec(properties: List[Property]) {
         |    for (v <- vars) {
         |      var isoPairsBdd = G.True
         |      val varBitsLength = v._2.bits.length
-        |      for (i <- F.pre.indices) {
+        |      for (i <- F.now.indices) {
         |        val varName = v._1
         |        val varObject = v._2
         |        val otherQuantVars = G.otherQuantVars(varName)
         |
         |        // If the target BDD is true or false, this has no influence on the result.
-        |        if (!F.pre(i).isZero && !F.pre(i).isOne) {
-        |          isoBdd(i) = IsomorphicPairsCalculator(varObject, otherQuantVars, F.pre(i))
+        |        if (!F.now(i).isZero && !F.now(i).isOne) {
+        |          isoBdd(i) = IsomorphicPairsCalculator(varObject, otherQuantVars, F.now(i))
         |          isoPairsBdd = isoPairsBdd.and(isoBdd(i))
         |        }
         |
