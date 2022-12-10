@@ -234,13 +234,6 @@ class Variable(F: Formula)(name: String, bounded: Boolean, offset: Int, nrOfBits
       }
       val result = free.satOne(allOnes, true)
 
-      // ### Prediction Extension ###
-      if (Options.DEBUG) {
-        println("######################################################")
-        println(s"Value ${v.toString} get the assignment of ${result.satOne()}")
-        println("######################################################")
-      }
-
       free = free.and(result.not())
       bdds += (v -> result)
       F.addTouchedByLastEvent(name, v, result)
@@ -882,7 +875,9 @@ abstract class Formula(val monitor: Monitor) {
   def addTouchedByLastEvent(name: String, value: Any, bdd: BDD): Unit = {
     if (varsInRelations.contains(name)) {
       touchedByLastEvent += ((name, value, bdd))
-      debug(s"recording binding $name -> $value for subsequent relation updating")
+
+      // ### Prediction Extension ###
+      debug(s"recording binding $name -> $value (assignment: ${bdd.satOne()}) for subsequent relation updating")
     }
   }
 

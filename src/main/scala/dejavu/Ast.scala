@@ -331,7 +331,7 @@ case class Spec(properties: List[Property]) {
         |          isoBdd(i) = IsomorphicPairsCalculator(varObject, otherQuantVars, F.pre(i))
         |          isoPairsBdd = isoPairsBdd.and(isoBdd(i))
         |        }
-        |        
+        |
         |      }
         |      while (!isoPairsBdd.equals(G.False) && isoPairsBdd != null) {
         |        isoPairsBdd.printSet()
@@ -428,7 +428,7 @@ case class Spec(properties: List[Property]) {
          |
          |  def main(args: Array[String]): Unit = {
          |
-         |    if (2 <= args.length && args.length <= 8) {
+         |    if (2 <= args.length && args.length <= 8 && args.length % 2 == 0) {
          |      val argMap = Map.newBuilder[String, Any]
          |      args.sliding(2, 2).toList.collect {
          |        case Array("--logfile", logfile: String) => argMap.+=("logfile" -> logfile)
