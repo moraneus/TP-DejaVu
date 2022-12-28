@@ -6,6 +6,9 @@ import java.nio.file.Paths
 import scala.io.Source
 import scala.util.Random
 
+// ### Prediction Extension ###
+import scala.collection.mutable.{Set => mSet}
+
 object AstUtil {
   val DEBUG_BRACKETS = false
   val DEBUG_AST = true
@@ -296,56 +299,201 @@ case class Spec(properties: List[Property]) {
 
     val constructors = properties.map(_.name).map(nm => s"new Formula_$nm(this)").mkString(",")
     val eventsInSpec = SymbolTable.referredEvents.map(quote(_)).mkString(",")
+
+    // ### Prediction Extension ###
+    val property = properties.head
+    var eventsInVarsMapping = Map[String, mSet[String]]()
+    for (a <- property.getPredicateTerms) {
+      val currVar = a.values.head.toString
+      if (eventsInVarsMapping.contains(currVar)) {
+        eventsInVarsMapping(currVar) += a.name
+      } else {
+        eventsInVarsMapping += currVar -> mSet(a.name)
+      }
+    }
+    var eventsInVarsString: String = """Map("""
+    for (event <- eventsInVarsMapping) {
+      eventsInVarsString += s""""${event._1}" -> List("""
+      for (e <- event._2) {
+        eventsInVarsString += s""""$e","""
+      }
+      eventsInVarsString = eventsInVarsString.dropRight(1)
+      eventsInVarsString += "),"
+    }
+    eventsInVarsString = eventsInVarsString.dropRight(1) + ")"
+
+
     writeln(
       s"""/* The specialized Monitor for the provided properties. */
          |
          |class PropertyMonitor extends Monitor {
          |  def eventsInSpec: Set[String] = Set(${eventsInSpec})
          |
+         |  // ### Prediction Extension ###
+         |  val eventsInVars: Map[String, List[String]] = $eventsInVarsString
+         |
          |  formulae ++= List($constructors)
          |}
       """.stripMargin)
 
     writeln(
-      s"""
+      """
         | // ### Prediction Extension ###
-        |class Prediction(monitor: Monitor) {
-        |  val F: Formula = monitor.formulae.head
-        |  val G: BDDGenerator = F.bddGenerator
-        |  val vars: Map[String, Variable] = G.varMap
-        |  val predictionDepth: Int = Options.PREDICTION_K
+        |class Prediction(G: BDDGenerator) {
         |
+        | def prediction(monitor: Monitor, k: Int, predictEvents: ListBuffer[(String, List[Any])]): Unit = {
         |
-        |  def prediction(): Unit = {
+        |    // Recursion Base case
+        |    if (k == 0) {
+        |      // Prints the selected path
+        |      for (event <- predictEvents) {
+        |        print(s"${event._1}(${event._2.head}) -> ")
+        |      }
+        |      println("DONE")
+        |
+        |      // Print the summary of trace (including extension)
+        |      println(s"Processed ${monitor.lineNr} events")
+        |      monitor.end()
+        |      return
+        |    }
+        """.stripMargin)
+    writeln(
+      s"""
+        |    var tmpLineNr: Int = 0
+        |    var tmpError: Int = 0
+        |    var tmpPredictEvents: ListBuffer[(String, List[Any])] = predictEvents
+        |    var tmpEventTable: Map[String, Long] = null
+        |    var tmpVarBdds: Map[Any, BDD] = null
+        |    var tmpFree: BDD = null
+        |    var tmpSeen: BDD = null
+        |    var tmpInRelation: BDD = null
+        |    val tmpPre: Array[BDD] = Array.fill(${LTL.next})(G.False)
+        |    val tmpNow: Array[BDD] = Array.fill(${LTL.next})(G.False)
+        |
+        |    val F: Formula = monitor.formulae.head
+        |    val vars: Map[String, Variable] = G.varMap
         |    val isoBdd: Array[BDD] = Array.fill(${LTL.next})(G.False)
+        |
+        |    // Loop through all property variables
         |    for (v <- vars) {
-        |      var isoPairsBdd = G.True
-        |      val varBitsLength = v._2.bits.length
-        |      for (i <- F.now.indices) {
-        |        val varName = v._1
-        |        val varObject = v._2
+        |      var ghBdd = G.True
+        |      val varName = v._1
+        |      val varObject = v._2
+        |      val varBits = varObject.bits
+        |      val varBitsLength = varBits.length
+        |
+        |      // Loop through all tmp relations, represent as BDDs
+        |      // The tmp array holds the latest relations.
+        |      for (i <- F.tmp.indices) {
         |        val otherQuantVars = G.otherQuantVars(varName)
         |
         |        // If the target BDD is true or false, this has no influence on the result.
-        |        if (!F.now(i).isZero && !F.now(i).isOne) {
-        |          isoBdd(i) = IsomorphicPairsCalculator(varObject, otherQuantVars, F.now(i))
-        |          isoPairsBdd = isoPairsBdd.and(isoBdd(i))
+        |        if (!F.tmp(i).isZero && !F.tmp(i).isOne) {
+        |          isoBdd(i) = IsomorphicPairsCalculator(varObject, otherQuantVars, F.tmp(i))
+        |          ghBdd = ghBdd.and(isoBdd(i))
         |        }
-        |
         |      }
-        |      while (!isoPairsBdd.equals(G.False) && isoPairsBdd != null) {
-        |        isoPairsBdd.printSet()
-        |        val gQuantVars = G.getQuantVars(Array.range(G.totalNumberOfBits,
-        |          G.totalNumberOfBits + varBitsLength))
-        |        val hQuantVars = G.getQuantVars(Array.range(G.totalNumberOfBits + varBitsLength,
-        |          G.totalNumberOfBits + (varBitsLength * 2)))
-        |        val satAssignmentG = isoPairsBdd.satOne(gQuantVars, true).exist(hQuantVars)
-        |        isoPairsBdd =
-        |          isoPairsBdd
-        |          .and(isoPairsBdd.restrict(satAssignmentG).not())
+        |
+        |      while (!ghBdd.equals(G.False) && ghBdd != null) {
+        |
+        |        // Compute the 'g' indexes in gh BDD.
+        |        val gArrayBits = Array.range(G.totalNumberOfBits,
+        |          G.totalNumberOfBits + varBitsLength)
+        |        val gQuantVars = G.getQuantVars(gArrayBits)
+        |
+        |        // Compute the 'h' indexes in gh BDD.
+        |        val hArrayBits = Array.range(G.totalNumberOfBits + varBitsLength,
+        |          G.totalNumberOfBits + (varBitsLength * 2))
+        |        val hQuantVars = G.getQuantVars(hArrayBits)
+        |
+        |        // Get one satisfy assignment
+        |        val satAssignmentG = ghBdd.satOne(gQuantVars, true).exist(hQuantVars)
+        |
+        |        // Gets all isomorphic assignments of 'satAssignmentG'
+        |        // 'ia' for isomorphic assignments
+        |        val iaBDD = ghBdd.restrict(satAssignmentG)
+        |
+        |        // Removes all isomorphic assignments of 'satAssignmentG' from 'gh' BDD
+        |        ghBdd = ghBdd.and(iaBDD.not())
+        |
+        |        // Define BDD pairs in order to make 'iaBDD' indexes ('ghBDD' originally)
+        |        // to be like the correspond var indexes.
+        |        val pairs = G.B.makePair
+        |        pairs.set(hArrayBits, varBits.reverse)
+        |        iaBDD.replaceWith(pairs)
+        |
+        |        // Fetch one value of corresponds isomorphic assignment.
+        |        val fetchedValue = fetchingValue(iaBDD, varObject)
+        |
+        |        // Loop through all relevant event types
+        |        for (event <- monitor.eventsInVars(varName)) {
+        |
+        |          storePreviousMonitorState(F.now, F.pre, tmpNow, tmpPre)
+        |          tmpLineNr = monitor.lineNr
+        |          tmpError = monitor.errors
+        |          monitor.lineNr += 1
+        |          tmpEventTable = monitor.statistics.eventTable
+        |          tmpVarBdds = v._2.bdds
+        |          tmpFree = v._2.free
+        |          tmpSeen = v._2.seen
+        |          tmpInRelation = v._2.inRelation
+        |          monitor.submit(event, List(fetchedValue))
+        |          tmpPredictEvents.append((event, List(fetchedValue)))
+        |
+        |          prediction(monitor, k - 1, tmpPredictEvents)
+        |
+        |          tmpPredictEvents = tmpPredictEvents.dropRight(k)
+        |          restorePreviousMonitorState(F.now, F.pre, tmpNow, tmpPre)
+        |          monitor.lineNr = tmpLineNr
+        |          monitor.errors = tmpError
+        |          monitor.statistics.eventTable = tmpEventTable
+        |          v._2.free = tmpFree
+        |          v._2.seen = tmpSeen
+        |          v._2.inRelation = tmpInRelation
+        |          v._2.bdds = tmpVarBdds
+        |        }
         |      }
         |    }
         |  }
+        |
+        |   def storePreviousMonitorState(
+        |           nowOrigin: Array[BDD],
+        |           preOrigin: Array[BDD],
+        |           nowTmp: Array[BDD],
+        |           preTmp: Array[BDD]): Unit = {
+        |     for ((bdd: BDD, i: Int) <- nowOrigin.toList.zipWithIndex) {
+        |       nowTmp(i) = bdd
+        |     }
+        |     for ((bdd: BDD, i: Int) <- preOrigin.toList.zipWithIndex) {
+        |       preTmp(i) = bdd
+        |     }
+        |   }
+        |
+        |   def restorePreviousMonitorState(
+        |           nowOrigin: Array[BDD],
+        |           preOrigin: Array[BDD],
+        |           nowTmp: Array[BDD],
+        |           preTmp: Array[BDD]): Unit = {
+        |     for ((bdd: BDD, i: Int) <- nowTmp.toList.zipWithIndex) {
+        |       nowOrigin(i) = bdd
+        |     }
+        |     for ((bdd: BDD, i: Int) <- preTmp.toList.zipWithIndex) {
+        |       preOrigin(i) = bdd
+        |     }
+        |   }
+        |
+        |   def fetchingValue(ia: BDD, v: Variable): String = {
+        |     val varAssignments = v.bdds
+        |     val varAssignmentsInList = new ListBuffer[Int]()
+        |     for (assignment <- varAssignments) {
+        |       val assignmentValue = assignment._1.toString
+        |       varAssignmentsInList += assignmentValue.toInt
+        |       if (!assignment._2.and(ia).equals(G.False)) return assignmentValue
+        |     }
+        |
+        |     // When no matching is found we return the max value + 1
+        |     (varAssignmentsInList.max + 1).toString
+        |   }
         """.stripMargin)
     writeln(
       """
@@ -392,7 +540,7 @@ case class Spec(properties: List[Property]) {
         |
         |    // Build the left BDD (∃y1 . . . ∃yn(B ∧ (y1 ↔ g1) . . . ∧ (yn ↔ gn)))
         |    // Build the right BDD (∃y1 . . . ∃yn(B ∧ (y1 ↔ h1) . . . ∧ (yn ↔ hn)))
-        |    for ((varBitIndex: Int, i: Int) <- varBits.view.zipWithIndex) {
+        |    for ((varBitIndex: Int, i: Int) <- varBits.toList.zipWithIndex) {
         |      val gIndex: Int = (i - (varBits.length - 1)).abs + G.totalNumberOfBits
         |      val hIndex = gIndex + varBits.length
         |      if (Options.DEBUG) {
@@ -474,8 +622,10 @@ case class Spec(properties: List[Property]) {
          |        }
          |        m.submitCSVFile(file)
          |        if (Options.PREDICTION) {
-         |          val prediction = new Prediction(m)
-         |          prediction.prediction()
+         |          val G = m.formulae.head.bddGenerator
+         |          val prediction = new Prediction(G)
+         |          val events = new ListBuffer[(String, List[Any])]()
+         |          prediction.prediction(m, Options.PREDICTION_K, events)
          |        } else {
          |          println("Prediction was not activated")
          |        }
