@@ -643,35 +643,63 @@ case class Spec(properties: List[Property]) {
          |        case Array("--mode", mode: String) => argMap.+=("mode" -> mode)
          |        case Array("--prediction", predictionLength: String) => argMap.+=("prediction" -> predictionLength)
          |      }
-         |      val bits = argMap.result().get("bits")
-         |      val bitsValue =  bits match {
+         |
+         |      val logFile = argMap.result().get("logfile")
+         |      val logfilePath = logFile match {
          |        case Some(value) => value.toString
+         |        case None =>
+         |          println(s"*** program must be called with logfile argument")
+         |          println(usage)
+         |          return
+         |      }
+         |
+         |      val dir = new File(logfilePath)
+         |      if (!dir.exists) {
+         |        println(s" ***logfile is not a valid file")
+         |        sys.exit()
+         |      }
+         |
+         |      val bits = argMap.result().get("bits")
+         |      val bitsValue = bits match {
+         |        case Some(value) =>
+         |          if (!value.toString.matches(\"\"\"\\d+\"\"\")) {
+         |            println(s"*** bits argument must be an integer")
+         |            return
+         |          } else {
+         |            value.toString
+         |          }
          |        case None => "20" // Default is 20 bits length
          |      }
          |      Options.BITS = bitsValue.toInt
          |
          |      val prediction = argMap.result().get("prediction")
          |      val predictionValue = prediction match {
-         |        case Some(value) => {
-         |          Options.PREDICTION = true
-         |          value.toString
+         |        case Some(value) =>
+         |          if (!value.toString.matches(\"\"\"\\d+\"\"\")) {
+         |            println(s"*** prediction argument must be an integer)
+         |            return
+         |          } else {
+         |            Options.PREDICTION = true
+         |            value.toString
          |        }
          |        case None => "0"
          |      }
          |      Options.PREDICTION_K = predictionValue.toInt
-         |
-         |      val m = new PropertyMonitor
-         |
-         |      val file = argMap.result()("logfile").toString
          |
          |      val mode = argMap.result().get("mode")
          |      mode match {
          |        case Some(value) =>
          |          val modeValue = value.toString.toLowerCase()
          |          if (modeValue == "debug") Options.DEBUG = true
-         |          if (modeValue == "profile") Options.PROFILE = true
+         |          else if (modeValue == "profile") Options.PROFILE = true
+         |          else {
+         |            println(s"*** mode argument must be: debug or profile")
+         |            return
+         |          }
          |        case None => println("No mode was selected")
          |      }
+         |
+         |      val m = new PropertyMonitor
          |
          |      try {
          |        openResultFile("$generatedMonitorsPath/dejavu-results")
