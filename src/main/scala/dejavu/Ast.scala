@@ -339,53 +339,61 @@ case class Spec(properties: List[Property]) {
     writeln(
       """
         | // ### Prediction Extension ###
-        |class Prediction(G: BDDGenerator) {
+        |class Prediction(monitor: Monitor) {
         |
-        | def prediction(monitor: Monitor, k: Int, predictEvents: ListBuffer[(String, List[Any])]): Unit = {
+        |   val G: BDDGenerator = monitor.formulae.head.bddGenerator
         |
-        |    // Recursion Base case
-        |    if (k == 0) {
-        |      // Prints the selected path
-        |      for (event <- predictEvents) {
-        |        print(s"${event._1}(${event._2.head}) -> ")
-        |      }
-        |      println("DONE")
+        |   /***
+        |     * The main prediction function, which is works by recursion.
+        |     *
+        |     * @param k               the k step for the prediction
+        |     * @param predictEvents   the predicts event seen so far
+        |     */
+        |     def prediction(k: Int, predictEvents: ListBuffer[(String, List[Any])]): Unit = {
         |
-        |      // Print the summary of trace (including extension)
-        |      println(s"Processed ${monitor.lineNr} events")
-        |      monitor.end()
-        |      return
-        |    }
+        |       // Recursion Base case
+        |       if (k == 0) {
+        |         // Prints the selected path
+        |         println("\n\n######### SUMMARY OF PREDICTION #########\n")
+        |         for (event <- predictEvents) {
+        |           print(s"${event._1}(${event._2.head}) -> ")
+        |         }
+        |         println("DONE")
+        |
+        |         // Print the summary of trace (including extension)
+        |         println(s"Processed ${monitor.lineNr} events")
+        |         monitor.end()
+        |         return
+        |       }
         """.stripMargin)
     writeln(
       s"""
-        |    var tmpLineNr: Int = 0
-        |    var tmpError: Int = 0
-        |    var tmpPredictEvents: ListBuffer[(String, List[Any])] = predictEvents
-        |    var tmpEventTable: Map[String, Long] = null
-        |    var tmpVarBdds: Map[Any, BDD] = null
-        |    var tmpFree: BDD = null
-        |    var tmpSeen: BDD = null
-        |    var tmpInRelation: BDD = null
-        |    val tmpPre: Array[BDD] = Array.fill(${LTL.next})(G.False)
-        |    val tmpNow: Array[BDD] = Array.fill(${LTL.next})(G.False)
-        |
-        |    val F: Formula = monitor.formulae.head
-        |    val vars: Map[String, Variable] = G.varMap
-        |    val isoBdd: Array[BDD] = Array.fill(${LTL.next})(G.False)
-        |
-        |    // Loop through all property variables
-        |    for (v <- vars) {
-        |      var ghBdd = G.True
-        |      val varName = v._1
-        |      val varObject = v._2
-        |      val varBits = varObject.bits
-        |      val varBitsLength = varBits.length
-        |
-        |      // Loop through all tmp relations, represent as BDDs
-        |      // The tmp array holds the latest relations.
-        |      for (i <- F.tmp.indices) {
-        |        val otherQuantVars = G.otherQuantVars(varName)
+       |      // Defines all the tmp objects in order to have the ability to restore previous
+       |      // states while going back and forth in recursion.
+       |      var tmpEventTable: Map[String, Long] = null
+       |      var tmpVarBdds: Map[Any, BDD] = null
+       |      val tmpStat: Array[Int] = Array.fill(2)(0)
+       |      val tmpVariableBdds = Array.fill(3)(G.False)
+       |      val tmpPre: Array[BDD] = Array.fill(${LTL.next})(G.False)
+       |      val tmpNow: Array[BDD] = Array.fill(${LTL.next})(G.False)
+       |      var tmpPredictEvents: ListBuffer[(String, List[Any])] = predictEvents
+       |
+       |      val F: Formula = monitor.formulae.head
+       |      val vars: Map[String, Variable] = G.varMap
+       |      val isoBdd: Array[BDD] = Array.fill(${LTL.next})(G.False)
+       |
+       |      // Loop through all property variables
+       |      for (v <- vars) {
+       |        var ghBdd = G.True
+       |         val varName = v._1
+       |        val varObject = v._2
+       |      val varBits = varObject.bits
+       |      val varBitsLength = varBits.length
+       |
+       |      // Loop through all tmp relations, represent as BDDs
+       |      // The tmp array holds the latest relations.
+       |      for (i <- F.tmp.indices) {
+       |        val otherQuantVars = G.otherQuantVars(varName)
         |
         |        // If the target BDD is true or false, this has no influence on the result.
         |        if (!F.tmp(i).isZero && !F.tmp(i).isOne) {
@@ -425,63 +433,114 @@ case class Spec(properties: List[Property]) {
         |        // Fetch one value of corresponds isomorphic assignment.
         |        val fetchedValue = fetchingValue(iaBDD, varObject)
         |
-        |        // Loop through all relevant event types
-        |        for (event <- monitor.eventsInVars(varName)) {
+        |          // Loop through all relevant event types
+        |          for (event <- monitor.eventsInVars(varName)) {
         |
-        |          storePreviousMonitorState(F.now, F.pre, tmpNow, tmpPre)
-        |          tmpLineNr = monitor.lineNr
-        |          tmpError = monitor.errors
-        |          monitor.lineNr += 1
-        |          tmpEventTable = monitor.statistics.eventTable
-        |          tmpVarBdds = v._2.bdds
-        |          tmpFree = v._2.free
-        |          tmpSeen = v._2.seen
-        |          tmpInRelation = v._2.inRelation
-        |          monitor.submit(event, List(fetchedValue))
-        |          tmpPredictEvents.append((event, List(fetchedValue)))
+        |            // Store the current state, before taking the recursion step.
+        |            storePreviousState(F, monitor, v._2, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
+        |            tmpEventTable = monitor.statistics.eventTable
+        |            tmpVarBdds = v._2.bdds
         |
-        |          prediction(monitor, k - 1, tmpPredictEvents)
+        |            monitor.submit(event, List(fetchedValue))
+        |            tmpPredictEvents.append((event, List(fetchedValue)))
         |
-        |          tmpPredictEvents = tmpPredictEvents.dropRight(k)
-        |          restorePreviousMonitorState(F.now, F.pre, tmpNow, tmpPre)
-        |          monitor.lineNr = tmpLineNr
-        |          monitor.errors = tmpError
-        |          monitor.statistics.eventTable = tmpEventTable
-        |          v._2.free = tmpFree
-        |          v._2.seen = tmpSeen
-        |          v._2.inRelation = tmpInRelation
-        |          v._2.bdds = tmpVarBdds
+        |            prediction(k - 1, tmpPredictEvents)
+        |
+        |            // When arrives here we need to recover to previous state
+        |            tmpPredictEvents = tmpPredictEvents.dropRight(k)
+        |            restorePreviousState(F, monitor, v._2, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
+        |            monitor.statistics.eventTable = tmpEventTable
+        |            v._2.bdds = tmpVarBdds
+        |          }
         |        }
         |      }
         |    }
-        |  }
         |
-        |   def storePreviousMonitorState(
-        |           nowOrigin: Array[BDD],
-        |           preOrigin: Array[BDD],
+        |   /**
+        |     * Store the current state of the monitoring process.
+        |     * This is necessary before taking any recursion step in the prediction process.
+        |     *
+        |     * @param F                 the monitored formula object
+        |     * @param M                 the monitor object
+        |     * @param V                 a variable object which is the one we wants to store his dynamically states.
+        |     * @param nowTmp            a tmp array which save the F.now BDDs array.
+        |     * @param preTmp            a tmp array which save the F.pre BDDs array.
+        |     * @param statTmp           a tmp array which save the M.error and M.lineNr values.
+        |     * @param variableBddsTmp   a tmp array which save the V.free, V.seen, V.inRelation BDDs.
+        |     */
+        |
+        |   def storePreviousState(
+        |           F: Formula,
+        |           M: Monitor,
+        |           V: Variable,
         |           nowTmp: Array[BDD],
-        |           preTmp: Array[BDD]): Unit = {
-        |     for ((bdd: BDD, i: Int) <- nowOrigin.toList.zipWithIndex) {
+        |           preTmp: Array[BDD],
+        |           statTmp: Array[Int],
+        |           variableBddsTmp: Array[BDD] ): Unit = {
+        |     for ((bdd: BDD, i: Int) <- F.now.toList.zipWithIndex) {
         |       nowTmp(i) = bdd
         |     }
-        |     for ((bdd: BDD, i: Int) <- preOrigin.toList.zipWithIndex) {
+        |     for ((bdd: BDD, i: Int) <- F.pre.toList.zipWithIndex) {
         |       preTmp(i) = bdd
         |     }
+        |
+        |     statTmp(0) = M.lineNr
+        |     statTmp(1) = M.errors
+        |     M.lineNr += 1
+        |
+        |     variableBddsTmp(0) = V.free
+        |     variableBddsTmp(1) = V.seen
+        |     variableBddsTmp(2) = V.inRelation
         |   }
         |
-        |   def restorePreviousMonitorState(
-        |           nowOrigin: Array[BDD],
-        |           preOrigin: Array[BDD],
-        |           nowTmp: Array[BDD],
-        |           preTmp: Array[BDD]): Unit = {
+        |   /**
+        |     * Restore the previous state of the monitoring process.
+        |     * This is necessary right after any recursion step is done in the prediction process.
+        |     *
+        |     * @param F               the monitored formula object
+        |     * @param M               the monitor object
+        |     * @param V               a variable object which is the one we wants to store his dynamically states.
+        |     * @param nowTmp          a tmp array which hold the previous F.now BDDs array.
+        |     * @param preTmp          a tmp array which hold the previous the F.pre BDDs array.
+        |     * @param statTmp         a tmp array which hold the previous the M.error and M.lineNr values.
+        |     * @param variableBddsTmp a tmp array which hold the previous the V.free, V.seen, V.inRelation BDDs.
+        |     */
+        |
+        |   def restorePreviousState(
+        |          F: Formula,
+        |          M: Monitor,
+        |          V: Variable,
+        |          nowTmp: Array[BDD],
+        |          preTmp: Array[BDD],
+        |          statTmp: Array[Int],
+        |          variableBddsTmp: Array[BDD]): Unit = {
+        |
         |     for ((bdd: BDD, i: Int) <- nowTmp.toList.zipWithIndex) {
-        |       nowOrigin(i) = bdd
+        |       F.now(i) = bdd
         |     }
         |     for ((bdd: BDD, i: Int) <- preTmp.toList.zipWithIndex) {
-        |       preOrigin(i) = bdd
+        |       F.pre(i) = bdd
         |     }
+        |
+        |     M.lineNr = statTmp(0)
+        |     M.errors = statTmp(1)
+        |
+        |     V.free = variableBddsTmp(0)
+        |     V.seen = variableBddsTmp(1)
+        |     V.inRelation = variableBddsTmp(2)
         |   }
         |
+        |  /**
+        |   * In this function we fetching a value which will use for the prediction.
+        |   * The fetching process search for a matching value between the 'ia' BDD and the variable
+        |   * related values. In a case where no matching was found (should happens only when '11...11'
+        |   * appears on is own in equivalence class), we generate a new value which is not seen yet.
+        |   *
+        |   * @param ia  a BDD which hold isomorphic values related to the
+        |   *            current variable in the prediction process.
+        |   * @param v   the current variable in the prediction process.
+        |   * @return    the fetched/generated value.
+        |   */
         |   def fetchingValue(ia: BDD, v: Variable): String = {
         |     val varAssignments = v.bdds
         |     val varAssignmentsInList = new ListBuffer[Int]()
@@ -623,9 +682,9 @@ case class Spec(properties: List[Property]) {
          |        m.submitCSVFile(file)
          |        if (Options.PREDICTION) {
          |          val G = m.formulae.head.bddGenerator
-         |          val prediction = new Prediction(G)
+         |          val prediction = new Prediction(m)
          |          val events = new ListBuffer[(String, List[Any])]()
-         |          prediction.prediction(m, Options.PREDICTION_K, events)
+         |          prediction.prediction(Options.PREDICTION_K, events)
          |        } else {
          |          println("Prediction was not activated")
          |        }

@@ -448,7 +448,6 @@ class TraceStatistics(events: Set[String]) {
 
   override def toString: String = {
     var result: String = ""
-    result += "\n"
     result += "==================\n"
     result += "  Event Counts:\n"
     result += "------------------\n"
@@ -466,7 +465,6 @@ class TraceStatistics(events: Set[String]) {
       }
     }
     result += "==================\n"
-    result += "\n"
     result
   }
 }
@@ -640,9 +638,9 @@ abstract class Monitor {
     println(s"\n$errors errors detected!\n")
     if (Options.STATISTICS) println(statistics)
     if (garbageWasCollected) {
-      println("\n*** GARBAGE COLLECTOR WAS ACTIVATED!")
+      println("*** GARBAGE COLLECTOR WAS ACTIVATED!")
     } else {
-      println("\n- Garbage collector was not activated")
+      println("- Garbage collector was not activated")
     }
   }
 
