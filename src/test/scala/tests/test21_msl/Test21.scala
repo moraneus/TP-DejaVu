@@ -6,6 +6,7 @@ import tests.util.testcase.TestCase
 
 class Test21 extends TestCase {
   val TEST = PATH_TO_TESTS + "/test21_msl"
+  val resultfile = s"$TEST/dejavu-results"
   val spec1 = s"$TEST/spec1.qtl"
   val spec2 = s"$TEST/spec2.qtl"
   val spec1Timed = s"$TEST/spec1_timed.qtl"
@@ -19,7 +20,7 @@ class Test21 extends TestCase {
 
   @Test def test1_msl(): Unit = {
     Verify(spec1, logMSL, "20")
-    checkResults(
+    checkResults(resultfile,
       1672,1673,
       1678,1679,
       15807,
@@ -30,7 +31,7 @@ class Test21 extends TestCase {
 
   @Test def test1_msl_5bits(): Unit = {
     Verify(spec1, logMSL, "5")
-    checkResultsBrief(
+    checkResultsBrief(TEST,
       1672,1673,
       1678,1679,
       15807,
@@ -43,7 +44,7 @@ class Test21 extends TestCase {
 
   @Test def test2_msl(): Unit = {
     Verify(spec2, logMSL, "20")
-    checkResults()
+    checkResults(resultfile)
   }
 
   // =============================
@@ -56,7 +57,7 @@ class Test21 extends TestCase {
 
   @Test def test1Timed_msl(): Unit = {
     Verify.long(spec1Timed, logMSLTimed, "20")
-    checkResults(
+    checkResults(resultfile,
       1672,1673,
       1678,1679,
       15807,
@@ -76,12 +77,12 @@ class Test21 extends TestCase {
 
   @Test def test1_1(): Unit = {
     Verify(spec1, log1, "3")
-    checkResults(7)
+    checkResults(resultfile, 7)
   }
 
   @Test def test1_2(): Unit = {
     Verify(spec1, log2, "20")
-    checkResults(
+    checkResults(resultfile,
       2,3,
       6,7,
       10,
@@ -92,7 +93,7 @@ class Test21 extends TestCase {
 
   @Test def test1Timed_3(): Unit = {
     Verify(spec1Timed, log3, "20")
-    checkResults(
+    checkResults(resultfile,
       2,3,
       6,7,
       10,
@@ -108,12 +109,12 @@ class Test21 extends TestCase {
 
   @Test def test1_4(): Unit = {
     Verify(spec1, log4, "3")
-    checkResults(2)
+    checkResults(resultfile,2)
   }
 
   @Test def test1Timed_5(): Unit = {
     Verify(spec1Timed, log5, "3")
-    checkResults(2,5)
+    checkResults(resultfile,2,5)
   }
 
 }

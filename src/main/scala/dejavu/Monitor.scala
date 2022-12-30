@@ -22,6 +22,7 @@ object Options {
   // ### Prediction Extension ###
   var PREDICTION: Boolean = false
   var PREDICTION_K: Int = 0
+  var RESULT_FILE: String = ""
 }
 
 object Util {

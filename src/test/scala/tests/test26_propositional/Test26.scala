@@ -6,6 +6,7 @@ import tests.util.testcase.TestCase
 
 class Test26 extends TestCase {
   val TEST = PATH_TO_TESTS + "/test26_propositional"
+  val resultfile = s"$TEST/dejavu-results"
   val spec1 = s"$TEST/spec1.qtl"
   val spec2 = s"$TEST/spec2.qtl"
   val log1 = s"$TEST/log1.csv"
@@ -15,21 +16,21 @@ class Test26 extends TestCase {
 
   @Test def test1_1(): Unit = {
     Verify(spec1,log1)
-    checkResults()
+    checkResults(resultfile)
   }
 
   @Test def test1_2(): Unit = {
     Verify(spec1,log2)
-    checkResults(6)
+    checkResults(resultfile,6)
   }
 
   @Test def test2_3(): Unit = {
     Verify(spec2,log3)
-    checkResults()
+    checkResults(resultfile)
   }
 
   @Test def test2_4(): Unit = {
     Verify(spec2,log4)
-    checkResults(5)
+    checkResults(resultfile,5)
   }
 }

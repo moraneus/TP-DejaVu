@@ -6,6 +6,7 @@ import tests.util.testcase.TestCase
 
 class Test23 extends TestCase {
   val TEST = PATH_TO_TESTS + "/test23_fmsd_locks"
+  val resultfile = s"$TEST/dejavu-results"
   val spec1 = s"$TEST/spec1.qtl"
   val spec2 = s"$TEST/spec2.qtl"
   val spec3 = s"$TEST/spec3.qtl"
@@ -26,57 +27,57 @@ class Test23 extends TestCase {
 
   @Test def test1_1(): Unit = {
     Verify(spec1,log1)
-    checkResults()
+    checkResults(resultfile)
   }
 
   @Test def test1_2(): Unit = {
     Verify(spec1,log2)
-    checkResults(5,10,11)
+    checkResults(resultfile,5,10,11)
   }
 
   @Test def test2_3(): Unit = {
     Verify(spec2,log3)
-    checkResults()
+    checkResults(resultfile)
   }
 
   @Test def test2_4(): Unit = {
     Verify(spec2,log4)
-    checkResults(10)
+    checkResults(resultfile,10)
   }
 
   @Test def test3_5(): Unit = {
     Verify(spec3,log5)
-    checkResults()
+    checkResults(resultfile)
   }
 
   @Test def test3_6(): Unit = {
     Verify(spec3,log6)
-    checkResults(5,13)
+    checkResults(resultfile,5,13)
   }
 
   @Test def test4_7(): Unit = {
     Verify(spec4,log7)
-    checkResults()
+    checkResults(resultfile)
   }
 
   @Test def test4_8(): Unit = {
     Verify(spec4,log8)
-    checkResults(5,6)
+    checkResults(resultfile,5,6)
   }
 
   @Test def test4_9(): Unit = {
     Verify(spec4,log9)
-    checkResults(7)
+    checkResults(resultfile,7)
   }
 
   @Test def test5_10(): Unit = {
     Verify(spec5,log10)
-    checkResults()
+    checkResults(resultfile)
   }
 
   @Test def test5_11(): Unit = {
     Verify(spec5,log11)
-    checkResults(5,10,11)
+    checkResults(resultfile,5,10,11)
   }
 
   // TODO: testing large traces
@@ -84,18 +85,18 @@ class Test23 extends TestCase {
   // cycles:
   @Test def test2_12(): Unit = {
     Verify(spec2,log12)
-    checkResults()
+    checkResults(resultfile)
   }
 
   // data races:
   @Test def test4_12(): Unit = {
     Verify(spec4,log12)
-    checkResults(37)
+    checkResults(resultfile,37)
   }
 
   // basic:
   @Test def test5_12(): Unit = {
     Verify(spec5,log12)
-    checkResults()
+    checkResults(resultfile)
   }
 }

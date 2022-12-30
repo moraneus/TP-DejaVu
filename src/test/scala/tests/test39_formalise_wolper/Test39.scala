@@ -6,6 +6,7 @@ import tests.util.testcase.TestCase
 
 class Test39 extends TestCase {
   val TEST = PATH_TO_TESTS + "/test39_formalise_wolper"
+  val resultfile = s"$TEST/dejavu-results"
   val spec = s"$TEST/spec.qtl"
   val log1 = s"$TEST/log1.csv"
   val log2 = s"$TEST/log2.csv"
@@ -17,17 +18,17 @@ class Test39 extends TestCase {
 
   @Test def test1(): Unit = {
     Verify(spec,log1,"3")
-    checkResults(1,4,9,14,21,24,26)
+    checkResults(resultfile,1,4,9,14,21,24,26)
   }
 
   @Test def test2(): Unit = {
     Verify(spec,log2,"3")
-    checkResults()
+    checkResults(resultfile)
   }
 
   @Test def test3(): Unit = {
     Verify(spec,log3,"3", "debug")
-    checkResults()
+    checkResults(resultfile)
   }
 
   // --- long traces: ---
@@ -41,7 +42,7 @@ class Test39 extends TestCase {
   // Elapsed trace analysis time: 1.528s
   @Test def test4(): Unit = {
     Verify(spec,biglog100k)
-    checkResults(102001)
+    checkResults(resultfile,102001)
   }
 
   // STTT trace T1:
@@ -51,7 +52,7 @@ class Test39 extends TestCase {
   // Elapsed trace analysis time: 3.274s
   @Test def test5(): Unit = {
     Verify(spec,biglog1000k)
-    checkResults(1200001)
+    checkResults(resultfile,1200001)
   }
 
   // STTT trace T2:
@@ -61,7 +62,7 @@ class Test39 extends TestCase {
   // Elapsed trace analysis time: 7.102s
   @Test def test6(): Unit = {
     Verify(spec,biglog5000k)
-    checkResults(5200001)
+    checkResults(resultfile,5200001)
   }
 
   // STTT trace T3:
@@ -71,7 +72,7 @@ class Test39 extends TestCase {
   // Elapsed trace analysis time: 12.777s
   @Test def test7(): Unit = {
     Verify(spec,biglog10000k)
-    checkResults(10200001)
+    checkResults(resultfile,10200001)
   }
 }
 

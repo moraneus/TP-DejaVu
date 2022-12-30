@@ -355,10 +355,14 @@ case class Spec(properties: List[Property]) {
         |       if (k == 0) {
         |         // Prints the selected path
         |         println("\n\n######### SUMMARY OF PREDICTION #########\n")
+        |
+        |         var predictionAsString = ""
         |         for (event <- predictEvents) {
+        |           predictionAsString += s"${event._1}(${event._2.head})"
         |           print(s"${event._1}(${event._2.head}) -> ")
         |         }
         |         println("DONE")
+        |         writelnResult(s"[PREDICTION]: $predictionAsString")
         |
         |         // Print the summary of trace (including extension)
         |         println(s"Processed ${monitor.lineNr} events")
@@ -642,6 +646,7 @@ case class Spec(properties: List[Property]) {
          |        case Array("--bits", numOfBits: String) => argMap.+=("bits" -> numOfBits)
          |        case Array("--mode", mode: String) => argMap.+=("mode" -> mode)
          |        case Array("--prediction", predictionLength: String) => argMap.+=("prediction" -> predictionLength)
+         |        case Array("--resultfile", resultfile: String) => argMap.+=("resultfile" -> resultfile)
          |      }
          |
          |      val logFile = argMap.result().get("logfile")
@@ -653,10 +658,22 @@ case class Spec(properties: List[Property]) {
          |          return
          |      }
          |
-         |      val dir = new File(logfilePath)
+         |      var dir = new File(logfilePath)
          |      if (!dir.exists) {
          |        println(s" ***logfile is not a valid file")
-         |        sys.exit()
+         |        return
+         |      }
+         |
+         |      val resultfile = argMap.result().get("resultfile")
+         |      Options.RESULT_FILE = resultfile match {
+         |        case Some(value) => value.toString
+         |        case None => "$generatedMonitorsPath/dejavu-results"
+         |      }
+         |
+         |      dir = new File(Options.RESULT_FILE)
+         |      if (!dir.getParentFile.exists) {
+         |        println(s" ***resultfile parent is not a valid folder")
+         |        return
          |      }
          |
          |      val bits = argMap.result().get("bits")
@@ -676,7 +693,7 @@ case class Spec(properties: List[Property]) {
          |      val predictionValue = prediction match {
          |        case Some(value) =>
          |          if (!value.toString.matches(\"\"\"\\d+\"\"\")) {
-         |            println(s"*** prediction argument must be an integer)
+         |            println(s"*** prediction argument must be an integer")
          |            return
          |          } else {
          |            Options.PREDICTION = true
@@ -702,12 +719,12 @@ case class Spec(properties: List[Property]) {
          |      val m = new PropertyMonitor
          |
          |      try {
-         |        openResultFile("$generatedMonitorsPath/dejavu-results")
+         |        openResultFile(Options.RESULT_FILE)
          |        if (Options.PROFILE) {
          |          openProfileFile("dejavu-profile.csv")
          |          m.printProfileHeader()
          |        }
-         |        m.submitCSVFile(file)
+         |        m.submitCSVFile(logfilePath)
          |        if (Options.PREDICTION) {
          |          val G = m.formulae.head.bddGenerator
          |          val prediction = new Prediction(m)

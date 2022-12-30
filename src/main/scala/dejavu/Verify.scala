@@ -1,5 +1,6 @@
 package dejavu
 
+import java.io.File
 import scala.io.Source
 
 /**
@@ -93,15 +94,15 @@ object Verify {
     * @param args
     */
 
-  def compileAndExecute(args: String): Unit = {
+  def compileAndExecute(args: String, generatedMonitorsPath: String): Unit = {
     val lib = Settings.PROJECT_DIR + "/lib"
     time("monitor compilation") {
       println("Compiling generated monitor ...")
-      exec(s"scalac -cp .:$lib/commons-csv-1.1.jar:$lib/javabdd-1.0b2.jar TraceMonitor.scala")
+      exec(s"scalac -cp .:$lib/commons-csv-1.1.jar:$lib/javabdd-1.0b2.jar $generatedMonitorsPath/TraceMonitor.scala")
     }
     time("trace analysis") {
       println("Analyzing trace ...")
-      exec(s"scala -J-Xmx16g -cp .:$lib/commons-csv-1.1.jar:$lib/javabdd-1.0b2.jar TraceMonitor $args")
+      exec(s"scala -J-Xmx16g -cp .:$lib/commons-csv-1.1.jar:$lib/javabdd-1.0b2.jar $generatedMonitorsPath/TraceMonitor.scala $args")
     }
     exec("sh", "-c", "rm *.class") // multi-argument call needed due to occurrence of *
   }
@@ -115,33 +116,113 @@ object Verify {
     * latter mode is useful when e.g. working in an IDE such as IntelliJ where no script exists.
     *
     * @param arguments following the pattern:
-    *                  <code><specfile> [ <logfile> [ <bitspervar> [debug|profile] ] ]</code>
+    *                  <code>(--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)] [--prediction num]</code>
     */
 
-  def main(arguments: Array[String]) {
+  def main(arguments: Array[String]): Unit = {
+    val usage = "Usage: (--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)] [--prediction num] [--result <filename>]"
     SymbolTable.reset()
+
     val args = arguments.toList
-    if (args.length < 1 || args.length > 4) {
-      println("*** wrong number of arguments, call with: <specfile> [ <logfile> [ <bitspervar> [debug|profile] ] ]")
-      return
-    }
-    if (args.length > 2 && !args(2).matches("""\d+""")) {
-      println(s"*** third argument must be an integer, and not ${args(2)}")
-      return
-    }
-    if (args.length == 4 && args(3) != "debug" && args(3) != "profile") {
-      println(s"*** fourth argument must be: debug or profile, and not ${args(3)}")
-      return
-    }
-    time("total") {
-      time("monitor synthesis") {
-        val p = new Parser
-        val file = arguments(0)
-        val spec = p.parseFile(file)
-        println(spec)
-        spec.translate()
+
+    if (2 <= arguments.length && arguments.length <= 12 && arguments.length % 2 == 0) {
+      val argMap = Map.newBuilder[String, Any]
+      arguments.sliding(2, 2).toList.collect {
+        case Array("--specfile", specfile: String) => argMap.+=("specfile" -> specfile)
+        case Array("--logfile", logfile: String) => argMap.+=("logfile" -> logfile)
+        case Array("--bits", numOfBits: String) => argMap.+=("bits" -> numOfBits)
+        case Array("--mode", mode: String) => argMap.+=("mode" -> mode)
+        case Array("--prediction", predictionLength: String) => argMap.+=("prediction" -> predictionLength)
+        case Array("--resultfile", resultfile: String) => argMap.+=("resultfile" -> resultfile)
       }
-      if (args.length > 1) compileAndExecute(args.tail.mkString(" "))
+
+      val specFile = argMap.result().get("specfile")
+      val specFilePath = specFile match {
+        case Some(value) => value.toString
+        case None =>
+          println(s"*** program must be called with specfile argument ($usage)")
+          return
+      }
+
+      var dir = new File(specFilePath)
+      if (!dir.exists) {
+        println(s"*** given specfile is not a valid file ($specFilePath)")
+        return
+      }
+
+      val logFile = argMap.result().get("logfile")
+      val logFilePath = logFile match {
+        case Some(value) => value.toString
+        case None => null
+      }
+
+      if (logFilePath != null) {
+        dir = new File(logFilePath)
+        if (!dir.exists) {
+          println(s"*** given logfile is not a valid file ($logFilePath)")
+          return
+        }
+      }
+
+      val resultFile = argMap.result().get("resultfile")
+      val resultFilePath = resultFile match {
+        case Some(value) => value.toString
+        case None => null
+      }
+
+      if (resultFilePath != null) {
+        dir = new File(resultFilePath)
+        if (!dir.getParentFile.exists) {
+          println(s" ***resultfile parent is not a valid folder")
+          return
+        }
+      }
+
+      val bits = argMap.result().get("bits")
+      bits match {
+        case Some(value) =>
+          if (!value.toString.matches("""\d+""")) {
+            println(s"*** bits argument must be an integer, and not ${value.toString}")
+            return
+          }
+        case None => println("bits argument not activated")
+      }
+
+      val prediction = argMap.result().get("prediction")
+      prediction match {
+        case Some(value) =>
+          if (!value.toString.matches("""\d+""")) {
+            println(s"*** prediction argument must be an integer, and not ${value.toString}")
+            return
+        }
+        case None => println("bits argument not activated")
+      }
+
+      val mode = argMap.result().get("mode")
+      mode match {
+        case Some(value) =>
+          val modeValue = value.toString.toLowerCase()
+          if (!(modeValue != "debug" || modeValue != "profile")) {
+            println(s"*** mode argument must be: debug or profile, and not ${value.toString}")
+            return
+          }
+        case None => println("mode argument not activated")
+      }
+
+      var generatedMonitorsPath: String = null
+
+      time("total") {
+        time("monitor synthesis") {
+          val p = new Parser
+          val spec = p.parseFile(specFilePath)
+          println(spec)
+          spec.translate()
+          generatedMonitorsPath = spec.generatedMonitorsPath
+        }
+        val logfileIndex = args.indexOf("--specfile")
+        val evaluationArguments = args.take(logfileIndex) ++ args.drop(logfileIndex + 2)
+        if (args.length > 2) compileAndExecute(evaluationArguments.mkString(" "), generatedMonitorsPath)
+      }
     }
   }
 

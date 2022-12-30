@@ -6,6 +6,7 @@ import tests.util.testcase.TestCase
 
 class Test18 extends TestCase {
   val TEST = PATH_TO_TESTS + "/test18_gc"
+  val resultfile = s"$TEST/dejavu-results"
   val spec1 = s"$TEST/spec1.qtl"
   val spec2 = s"$TEST/spec2.qtl"
   val spec3 = s"$TEST/spec3.qtl"
@@ -25,35 +26,35 @@ class Test18 extends TestCase {
 
   @Test def test1_1(): Unit = {
     Verify(spec1,log1, "3")
-    checkResults(12 oom)
+    checkResults(resultfile, 12 oom)
   }
 
   // --- spec 2: ---
 
   @Test def test2_1(): Unit = {
     Verify(spec2,log1, "3")
-    checkResults(12 -- 2,12 -- 1,14 -- 3)
+    checkResults(resultfile, 12 -- 2,12 -- 1,14 -- 3)
   }
 
   // --- spec 3: ---
 
   @Test def test3_1(): Unit = {
     Verify(spec3,log1, "3")
-    checkResults(12 oom)
+    checkResults(resultfile, 12 oom)
   }
 
   // -- spec 4: ---
 
   @Test def test4_1(): Unit = {
     Verify(spec4,log1, "3")
-    checkResults(12 -- 2,12 -- 1,14 -- 3)
+    checkResults(resultfile, 12 -- 2,12 -- 1,14 -- 3)
   }
 
   // -- spec 5: --
 
   @Test def test5_1(): Unit = {
     Verify(spec5,log1, "3")
-    checkResults(12 oom)  // it should record all errors, for all properties, needs fix.
+    checkResults(resultfile, 12 oom)  // it should record all errors, for all properties, needs fix.
   }
 
   // ============================================
@@ -64,48 +65,48 @@ class Test18 extends TestCase {
 
   @Test def test1_2_21(): Unit = {
     Verify.long(spec1,log2, "21")
-    checkResultsBrief(2052002)
+    checkResultsBrief(TEST, 2052002)
   }
 
   @Test def test1_2_20(): Unit = {
     Verify.long(spec1,log2, "20")
-    checkResultsBrief(2047575 oom)
+    checkResultsBrief(TEST, 2047575 oom)
   }
 
   // --- spec 2: ---
 
   @Test def test2_2_20(): Unit = {
     Verify.long(spec2,log2, "20")
-    checkResultsBrief(2052002, 998998 gc)
+    checkResultsBrief(TEST, 2052002, 998998 gc)
   }
 
   @Test def test2_2_15(): Unit = {
     Verify.long(spec2,log2, "16")
-    checkResultsBrief(2052002,992992 gc)
+    checkResultsBrief(TEST, 2052002,992992 gc)
   }
 
   // --- spec 3: ---
 
   @Test def test3_2_21(): Unit = {
     Verify.long(spec3,log2, "21")
-    checkResultsBrief(2052003)
+    checkResultsBrief(TEST, 2052003)
   }
 
   @Test def test3_2_20(): Unit = {
     Verify.long(spec3,log2, "20")
-    checkResultsBrief(2047575 oom)
+    checkResultsBrief(TEST, 2047575 oom)
   }
 
   // --- spec 4: ---
 
   @Test def test4_2_20(): Unit = {
     Verify.long(spec4,log2, "20")
-    checkResultsBrief(2052003,998998 gc)
+    checkResultsBrief(TEST, 2052003,998998 gc)
   }
 
   @Test def test4_2_16(): Unit = {
     Verify.long(spec4,log2, "16")
-    checkResultsBrief(2052003,992992 gc)
+    checkResultsBrief(TEST, 2052003,992992 gc)
   }
 
   // =========================================
@@ -116,53 +117,53 @@ class Test18 extends TestCase {
 
   @Test def test1_3_21(): Unit = {
     Verify.long(spec1,log3, "21")
-    checkResultsBrief(3007002)
+    checkResultsBrief(TEST, 3007002)
   }
 
   @Test def test1_3_20(): Unit = {
     Verify.long(spec1,log3, "20")
-    checkResultsBrief(2096168 oom)
+    checkResultsBrief(TEST, 2096168 oom)
   }
 
   // --- spec 2: ---
 
   @Test def test2_3_21(): Unit = {
     Verify.long(spec2,log3, "21")
-    checkResultsBrief(3007002)
+    checkResultsBrief(TEST, 3007002)
   }
 
   @Test def test2_3_20(): Unit = {
     Verify.long(spec2,log3, "20")
-    checkResultsBrief(3007002,1047591 gc)
+    checkResultsBrief(TEST, 3007002,1047591 gc)
   }
 
   @Test def test2_3_10(): Unit = {
     Verify.long(spec2,log3, "10")
-    checkResultsBrief(3007002,1503000 gc)
+    checkResultsBrief(TEST, 3007002,1503000 gc)
   }
 
   // --- spec 3: ---
 
   @Test def test3_3_21(): Unit = {
     Verify.long(spec3,log3, "21")
-    checkResultsBrief(3007003)
+    checkResultsBrief(TEST, 3007003)
   }
 
   @Test def test3_3_20(): Unit = {
     Verify.long(spec3,log3, "20")
-    checkResultsBrief(2096168 oom)
+    checkResultsBrief(TEST, 2096168 oom)
   }
 
   // --- spec 4: ---
 
   @Test def test4_3_20(): Unit = {
     Verify.long(spec4,log3, "20")
-    checkResultsBrief(3007003,1047591 gc)
+    checkResultsBrief(TEST, 3007003,1047591 gc)
   }
 
   @Test def test4_3_10(): Unit = {
     Verify.long(spec4,log3, "10")
-    checkResultsBrief(3007003,1503000 gc)
+    checkResultsBrief(TEST, 3007003,1503000 gc)
   }
 
   // ======================================
@@ -173,63 +174,63 @@ class Test18 extends TestCase {
 
   @Test def test1_4_21(): Unit = {
     Verify.long(spec1,log4, "21")
-    checkResultsBrief(2400008)
+    checkResultsBrief(TEST, 2400008)
   }
 
   @Test def test1_4_20(): Unit = {
     Verify.long(spec1,log4, "20")
-    checkResultsBrief(2097149 oom)
+    checkResultsBrief(TEST, 2097149 oom)
   }
 
   // --- spec 2: ---
 
   @Test def test2_4_21(): Unit = {
     Verify.long(spec2,log4, "21")
-    checkResultsBrief(2400008)
+    checkResultsBrief(TEST, 2400008)
   }
 
   @Test def test2_4_20(): Unit = {
     Verify.long(spec2,log4, "20")
-    checkResultsBrief(2400008,1048572 gc)
+    checkResultsBrief(TEST, 2400008,1048572 gc)
   }
 
   @Test def test2_4_10(): Unit = {
     Verify.long(spec2,log4, "10")
-    checkResultsBrief(2400008,1199520 gc)
+    checkResultsBrief(TEST, 2400008,1199520 gc)
   }
 
   @Test def test2_4_3(): Unit = {
     Verify.long(spec2,log4, "3")
-    checkResultsBrief(2400008,1200000 gc)
+    checkResultsBrief(TEST, 2400008,1200000 gc)
   }
 
   // --- spec 3: ---
 
   @Test def test3_4_21(): Unit = {
     Verify.long(spec3,log4, "21")
-    checkResultsBrief(2400009)
+    checkResultsBrief(TEST, 2400009)
   }
 
   @Test def test3_4_20(): Unit = {
     Verify.long(spec3,log4, "20")
-    checkResultsBrief(2097149 oom)
+    checkResultsBrief(TEST, 2097149 oom)
   }
 
   // --- spec 4: ---
 
   @Test def test4_4_20(): Unit = {
     Verify.long(spec4,log4, "20")
-    checkResultsBrief(2400009,1048572 gc)
+    checkResultsBrief(TEST, 2400009,1048572 gc)
   }
 
   @Test def test4_4_10(): Unit = {
     Verify.long(spec4,log4, "10")
-    checkResultsBrief(2400009,1199520 gc)
+    checkResultsBrief(TEST, 2400009,1199520 gc)
   }
 
   @Test def test4_4_3(): Unit = {
     Verify.long(spec4,log4, "3")
-    checkResultsBrief(2400009,1200000 gc)
+    checkResultsBrief(TEST, 2400009,1200000 gc)
   }
 
   // =================================================
@@ -240,48 +241,48 @@ class Test18 extends TestCase {
 
   @Test def test1_5_20(): Unit = {
     Verify.long(spec1,log5, "20")
-    checkResultsBrief(2000002)
+    checkResultsBrief(TEST, 2000002)
   }
 
   @Test def test1_5_2(): Unit = {
     Verify(spec1,log5, "2")
-    checkResultsBrief(8 oom)
+    checkResultsBrief(TEST, 8 oom)
   }
 
   // --- spec 2: ---
 
   @Test def test2_5_20(): Unit = {
     Verify.long(spec2,log5, "20")
-    checkResultsBrief(2000002)
+    checkResultsBrief(TEST, 2000002)
   }
 
   @Test def test2_5_2(): Unit = {
     Verify.long(spec2,log5, "2")
-    checkResultsBrief(2000002,999998 gc)
+    checkResultsBrief(TEST, 2000002,999998 gc)
   }
 
   // --- spec 3: ---
 
   @Test def test3_5_20(): Unit = {
     Verify.long(spec3,log5, "20")
-    checkResultsBrief(2000004)
+    checkResultsBrief(TEST, 2000004)
   }
 
   @Test def test3_5_2(): Unit = {
     Verify(spec3,log5, "2")
-    checkResultsBrief(8 oom)
+    checkResultsBrief(TEST, 8 oom)
   }
 
   // --- spec 4: ---
 
   @Test def test4_5_20(): Unit = {
     Verify.long(spec4,log5, "20")
-    checkResultsBrief(2000004)
+    checkResultsBrief(TEST, 2000004)
   }
 
   @Test def test4_5_2(): Unit = {
     Verify.long(spec4,log5, "2")
-    checkResultsBrief(2000004,999998 gc)
+    checkResultsBrief(TEST, 2000004,999998 gc)
   }
 }
 

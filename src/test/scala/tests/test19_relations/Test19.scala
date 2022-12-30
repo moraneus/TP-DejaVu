@@ -15,22 +15,22 @@ class Test19 extends TestCase {
 
   @Test def test1_1(): Unit = {
     Verify(spec1,log1, "3")
-    checkResultsBrief(7)
+    checkResultsBrief(TEST, 7)
   }
 
   @Test def test2_1(): Unit = {
     Verify(spec2,log1, "3")
-    checkResultsBrief(8,11)
+    checkResultsBrief(TEST, 8,11)
   }
 
   @Test def test3_1(): Unit = {
     Verify(spec3,log1, "3")
-    checkResultsBrief(12)
+    checkResultsBrief(TEST, 12)
   }
 
   @Test def test4_1(): Unit = {
     Verify(spec4,log1, "3")
-    checkResultsBrief(9)
+    checkResultsBrief(TEST, 9)
   }
 
   // TODO: large traces stress testing relations

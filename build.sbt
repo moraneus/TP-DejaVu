@@ -1,6 +1,6 @@
 name := "dejavu"
 
-version := "0.1"
+version := "2.0"
 
-scalaVersion := "2.11.1"
+scalaVersion := "2.11.12"
         

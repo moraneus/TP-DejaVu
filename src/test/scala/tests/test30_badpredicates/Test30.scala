@@ -6,6 +6,7 @@ import tests.util.testcase.TestCase
 
 class Test30 extends TestCase {
   val TEST = PATH_TO_TESTS + "/test30_badpredicates"
+  val resultfile = s"$TEST/dejavu-results"
   val spec1 = s"$TEST/spec1.qtl"
   val spec2 = s"$TEST/spec2.qtl"
   val log1 = s"$TEST/log1.csv"
@@ -17,6 +18,6 @@ class Test30 extends TestCase {
 
   @Test def test2_1(): Unit = {
     Verify(spec2, log1)
-    checkResults()
+    checkResults(resultfile)
   }
 }

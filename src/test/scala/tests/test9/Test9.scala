@@ -11,6 +11,7 @@ import tests.util.testcase.TestCase
 
 class Test9 extends TestCase {
   val TEST = PATH_TO_TESTS + "/test9"
+  val resultfile = s"$TEST/dejavu-results"
   val spec = s"$TEST/spec.qtl"
   val log1 = s"$TEST/log1.csv"
   val log2 = s"$TEST/log2.csv"
@@ -19,22 +20,22 @@ class Test9 extends TestCase {
 
   @Test def test1(): Unit = {
     Verify(spec, log1, "3")
-    checkResults()
+    checkResults(resultfile)
   }
 
   @Test def test2(): Unit = {
-    Verify(spec, log2, "3")
-    checkResults(1)
+    Verify("--specfile", spec, "--logfile", log2, "--bits", "3")
+    checkResults(resultfile, 1)
   }
 
   @Test def test3(): Unit = {
     Verify(spec, log3, "3")
-    checkResults(1, 2)
+    checkResults(resultfile, 1, 2)
   }
 
   @Test def test4(): Unit = {
     Verify(spec, log4, "2")
-    checkResults(1, 2, 3)
+    checkResults(resultfile, 1, 2, 3)
   }
 }
 

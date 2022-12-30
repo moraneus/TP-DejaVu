@@ -6,6 +6,7 @@ import tests.util.testcase.TestCase
 
 class Test1 extends TestCase {
   val TEST = PATH_TO_TESTS + "/test1_fmcad_access"
+  val resultfile = s"$TEST/dejavu-results"
   val spec = s"$TEST/spec.qtl"
   val log1 = s"$TEST/log1.csv"
   val log2 = s"$TEST/log2.csv"
@@ -13,16 +14,16 @@ class Test1 extends TestCase {
 
   @Test def test1(): Unit = {
     Verify(spec,log1)
-    checkResults(11006)
+    checkResults(resultfile, 11006)
   }
 
   @Test def test2(): Unit = {
     Verify(spec,log2)
-    checkResults(110006)
+    checkResults(resultfile,110006)
   }
 
   @Test def test3(): Unit = {
     Verify.long(spec,log3)
-    checkResults(1100006)
+    checkResults(resultfile,1100006)
   }
 }

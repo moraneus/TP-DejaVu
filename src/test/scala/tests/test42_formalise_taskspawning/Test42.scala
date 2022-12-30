@@ -6,6 +6,7 @@ import tests.util.testcase.TestCase
 
 class Test42 extends TestCase {
   val TEST = PATH_TO_TESTS + "/test42_formalise_taskspawning"
+  val resultfile = s"$TEST/dejavu-results"
   val spec = s"$TEST/spec.qtl"
   val log1 = s"$TEST/log1.csv"
   val log2 = s"$TEST/log2.csv"
@@ -15,12 +16,12 @@ class Test42 extends TestCase {
 
   @Test def test1(): Unit = {
     Verify(spec,log1)
-    checkResults(16,22,27,30)
+    checkResults(resultfile,16,22,27,30)
   }
 
   @Test def test2(): Unit = {
     Verify(spec,log2)
-    checkResults()
+    checkResults(resultfile)
   }
 
   // --- long tests: ---
@@ -38,7 +39,7 @@ class Test42 extends TestCase {
 
   @Test def test3(): Unit = {
     Verify(spec,biglog10k)
-    checkResults(9899)
+    checkResults(resultfile,9899)
   }
 
   // STTT trace T5:
@@ -52,7 +53,7 @@ class Test42 extends TestCase {
   // @Test
   def test4(): Unit = {
     Verify(spec,biglog20k)
-    checkResults(19999)
+    checkResults(resultfile,19999)
   }
 
   // STTT trace T6:
@@ -66,7 +67,7 @@ class Test42 extends TestCase {
   // @Test
   def test5(): Unit = {
     Verify(spec,biglog40k)
-    checkResults(39799)
+    checkResults(resultfile,39799)
   }
 }
 

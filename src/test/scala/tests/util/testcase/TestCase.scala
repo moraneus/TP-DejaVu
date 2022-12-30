@@ -30,14 +30,17 @@ class TestCase {
     assert(wfErrorOccurred)
   }
 
-  def readResult(): List[String] = {
-    Source.fromFile("dejavu-results").getLines.toList
+  def readResult(resultfile: String): List[String] = {
+    val data = Source.fromFile(resultfile)
+    val result = data.getLines.toList
+    data.close()
+    result
   }
 
-  def checkResults(lines: Any*): Unit = {
+  def checkResults(resultfile: String, lines: Any*): Unit = {
     if (Verify.verified) {
       val expect = lines.toList.map(_.toString)
-      val result = readResult()
+      val result = readResult(resultfile)
       assert(expect == result,
         s"""
            |expected : (${expect.mkString(",")})
@@ -47,10 +50,10 @@ class TestCase {
     }
   }
 
-  def checkResultsBrief(lines: Any*): Unit = {
+  def checkResultsBrief(resultfile: String, lines: Any*): Unit = {
     if (Verify.verified) {
       val expect = lines.toList.map(_.toString)
-      val result = readResult()
+      val result = readResult(resultfile)
       val gcSize = result.filter(_.contains("--")).size // GC: 'lineNr -- value'
       println(s"GARBAGE COLLECTED $gcSize VALUES")
       val resultWithoutGC = result.filterNot(_.contains("--"))
