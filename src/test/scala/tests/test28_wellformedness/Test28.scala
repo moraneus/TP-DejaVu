@@ -8,7 +8,6 @@ import tests.util.testcase.TestCase
 
 class Test28 extends TestCase {
   val TEST = PATH_TO_TESTS + "/test28_wellformedness"
-  val resultfile = s"$TEST/dejavu-results"
   val spec = s"$TEST/spec.qtl"
 
   @Test def test1(): Unit = {

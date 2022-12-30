@@ -33,6 +33,12 @@ object Verify {
   val LONGTEST : Boolean = true
 
   /**
+    * Flag indicating whether to clear generated files and folder.
+    */
+
+  private var CLEAR: Boolean = true
+
+  /**
     * Flag indicating whether a test took place. Becomes false when a long test is executed but the <code>LONGTEST</code> flag is false.
     * Is called by the result verification functions.
     */
@@ -105,6 +111,7 @@ object Verify {
       exec(s"scala -J-Xmx16g -cp .:$lib/commons-csv-1.1.jar:$lib/javabdd-1.0b2.jar $generatedMonitorsPath/TraceMonitor.scala $args")
     }
     exec("sh", "-c", "rm *.class") // multi-argument call needed due to occurrence of *
+    if (CLEAR) exec("sh", "-c", s"rm -rf $generatedMonitorsPath") // Delete generated files
   }
 
   /**
@@ -125,7 +132,7 @@ object Verify {
 
     val args = arguments.toList
 
-    if (2 <= arguments.length && arguments.length <= 12 && arguments.length % 2 == 0) {
+    if (2 <= arguments.length && arguments.length <= 14 && arguments.length % 2 == 0) {
       val argMap = Map.newBuilder[String, Any]
       arguments.sliding(2, 2).toList.collect {
         case Array("--specfile", specfile: String) => argMap.+=("specfile" -> specfile)
@@ -134,6 +141,7 @@ object Verify {
         case Array("--mode", mode: String) => argMap.+=("mode" -> mode)
         case Array("--prediction", predictionLength: String) => argMap.+=("prediction" -> predictionLength)
         case Array("--resultfile", resultfile: String) => argMap.+=("resultfile" -> resultfile)
+        case Array("--clear", mode: String) => argMap.+=("clear" -> mode)
       }
 
       val specFile = argMap.result().get("specfile")
@@ -195,7 +203,7 @@ object Verify {
             println(s"*** prediction argument must be an integer, and not ${value.toString}")
             return
         }
-        case None => println("bits argument not activated")
+        case None => println("prediction argument not activated")
       }
 
       val mode = argMap.result().get("mode")
@@ -207,6 +215,17 @@ object Verify {
             return
           }
         case None => println("mode argument not activated")
+      }
+
+      val clear = argMap.result().get("clear")
+      clear match {
+        case Some(value) =>
+          if (!(value != "0" || value != "1")) {
+            println(s"*** clear argument must be: 1 or 0, and not ${value.toString}")
+            return
+          }
+          if (value == "0") CLEAR = false else CLEAR = true
+        case None => println(s"clear is set to default value (CLEAR=$CLEAR)")
       }
 
       var generatedMonitorsPath: String = null

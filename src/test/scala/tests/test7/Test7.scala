@@ -13,12 +13,12 @@ class Test7 extends TestCase {
 
   @Test def test1(): Unit = {
     // println(System.getProperty("user.dir"))
-    Verify(spec,log1)
+    Verify("--specfile", spec, "--logfile", log1, "--resultfile", resultfile)
     checkResults(resultfile, 7,9)
   }
 
   @Test def test2(): Unit = {
-    Verify(spec,log2)
+    Verify("--specfile", spec, "--logfile", log2, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 }

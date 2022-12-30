@@ -13,17 +13,17 @@ class Test8 extends TestCase {
   val log3 = s"$TEST/log3.csv"
 
   @Test def test1(): Unit = {
-    Verify(spec,log1, "3")
+    Verify("--specfile", spec, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile)
   }
 
   @Test def test2(): Unit = {
-    Verify(spec,log2, "3")
+    Verify("--specfile", spec, "--logfile", log2, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile, 7)
   }
 
   @Test def test3(): Unit = {
-    Verify(spec,log3, "3")
+    Verify("--specfile", spec, "--logfile", log3, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile, 7, 8)
   }
 }

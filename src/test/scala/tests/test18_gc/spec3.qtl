@@ -1,6 +1,6 @@
 
 
-prop p : Forall f . open(f) -> @ (((!open(f) S close(f))) | ! P open(f))
+prop p : Forall f . ( open(f) -> @ (((!open(f) S close(f))) | ! P open(f)) )
 
 // Well, the previous property is too strong, requiring a file to have been closed
 // before it can be opened. The following property is weaker:

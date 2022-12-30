@@ -17,7 +17,7 @@ class Test30 extends TestCase {
   }
 
   @Test def test2_1(): Unit = {
-    Verify(spec2, log1)
+    Verify("--specfile", spec2, "--logfile", log1, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 }

@@ -21,7 +21,7 @@ class TestCase {
 
   def VerifyNotWF(spec: String): Unit = {
     try {
-      Verify(spec, null)
+      Verify("--specfile", spec)
     } catch {
       case e: Throwable if e.getMessage == "WF_ERROR" =>
         wfErrorOccurred = true
@@ -39,8 +39,8 @@ class TestCase {
 
   def checkResults(resultfile: String, lines: Any*): Unit = {
     if (Verify.verified) {
-      val expect = lines.toList.map(_.toString)
-      val result = readResult(resultfile)
+      val expect = lines.toList.map(_.toString).sorted
+      val result = readResult(resultfile).sorted
       assert(expect == result,
         s"""
            |expected : (${expect.mkString(",")})

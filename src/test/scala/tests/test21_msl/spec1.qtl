@@ -1,9 +1,9 @@
 
-prop p : Forall c .
+prop p : Forall c . (
   [ CMD_DISPATCH(c) , CMD_COMPLETE(c) ) &
   (c = "MOB_NAV_PRM_SET" | c = "ARM_PRM_SETDMP")
     ->
-  !TLM_TR_ERROR
+  !TLM_TR_ERROR )
 
 
 // cmdExec :- CMD_DISPATCH before CMD_COMPLETE

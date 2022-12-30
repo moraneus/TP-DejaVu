@@ -1,13 +1,13 @@
 
 prop p :
-  Forall c .
+  Forall c . (
     (
       [ COMM_BEGIN(c) , COMM_END(c) )
         &
       [ VDP_START , VDP_STOP )
     )
     ->
-    !TASK_STARVATION
+    !TASK_STARVATION )
 
 
 //  comm :- COMM_BEGIN before COMM_END

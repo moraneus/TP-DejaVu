@@ -1,5 +1,5 @@
 
 prop commands :
- Forall m .
+ Forall m . (
     suc(m) ->
-      Exists p . !fail(m) S dis(m,p)
+      Exists p .  ( !fail(m) S dis(m,p) ))

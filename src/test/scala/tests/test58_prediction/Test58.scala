@@ -12,13 +12,39 @@ class Test58 extends TestCase {
   val log2 = s"$TEST/log2.csv"
 
   @Test def test1_1(): Unit = {
-    Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile)
-    checkResults(resultfile,4,5,6)
+    Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--prediction", "2")
+    val expected = List[String](
+      "1",
+      "2",
+      "q(3)=1;q(4)=1",
+      "q(3)=1;q(3)=1",
+      "q(3)=1;q(1)=1",
+      "q(1)=1;q(3)=1",
+      "q(1)=1;q(1)=1",
+      "q(1)=1;q(2)=1",
+      "q(2)=1;q(3)=1",
+      "q(2)=1;q(1)=1",
+      "q(2)=1;q(2)=1"
+    )
+    checkResults(resultfile, expected:_*)
   }
 
   @Test def test1_2(): Unit = {
-    Verify(spec1, log2)
-    checkResults(resultfile, 2,3,5,6)
+    Verify("--specfile", spec1, "--logfile", log2, "--resultfile", resultfile, "--prediction", "2")
+    val expected = List[String](
+      "1",
+      "2",
+      "3",
+      "q(2)=1;q(2)=1",
+      "q(2)=1;q(4)=1",
+      "q(2)=1;q(7)=1",
+      "q(6)=1;q(2)=1",
+      "q(6)=1;q(6)=1",
+      "q(6)=1;q(7)=1",
+      "q(7)=1;q(2)=1",
+      "q(7)=1;q(7)=1",
+      "q(7)=1;q(8)=1")
+    checkResults(resultfile, expected:_*)
   }
 }
 

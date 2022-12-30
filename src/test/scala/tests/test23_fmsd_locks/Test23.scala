@@ -26,57 +26,57 @@ class Test23 extends TestCase {
   val log12 = s"$TEST/log12.csv"
 
   @Test def test1_1(): Unit = {
-    Verify(spec1,log1)
+    Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 
   @Test def test1_2(): Unit = {
-    Verify(spec1,log2)
+    Verify("--specfile", spec1, "--logfile", log2, "--resultfile", resultfile)
     checkResults(resultfile,5,10,11)
   }
 
   @Test def test2_3(): Unit = {
-    Verify(spec2,log3)
+    Verify("--specfile", spec2, "--logfile", log3, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 
   @Test def test2_4(): Unit = {
-    Verify(spec2,log4)
+    Verify("--specfile", spec2, "--logfile", log4, "--resultfile", resultfile)
     checkResults(resultfile,10)
   }
 
   @Test def test3_5(): Unit = {
-    Verify(spec3,log5)
+    Verify("--specfile", spec3, "--logfile", log5, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 
   @Test def test3_6(): Unit = {
-    Verify(spec3,log6)
+    Verify("--specfile", spec3, "--logfile", log6, "--resultfile", resultfile)
     checkResults(resultfile,5,13)
   }
 
   @Test def test4_7(): Unit = {
-    Verify(spec4,log7)
+    Verify("--specfile", spec4, "--logfile", log7, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 
   @Test def test4_8(): Unit = {
-    Verify(spec4,log8)
+    Verify("--specfile", spec4, "--logfile", log8, "--resultfile", resultfile)
     checkResults(resultfile,5,6)
   }
 
   @Test def test4_9(): Unit = {
-    Verify(spec4,log9)
+    Verify("--specfile", spec4, "--logfile", log9, "--resultfile", resultfile)
     checkResults(resultfile,7)
   }
 
   @Test def test5_10(): Unit = {
-    Verify(spec5,log10)
+    Verify("--specfile", spec5, "--logfile", log10, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 
   @Test def test5_11(): Unit = {
-    Verify(spec5,log11)
+    Verify("--specfile", spec5, "--logfile", log11, "--resultfile", resultfile)
     checkResults(resultfile,5,10,11)
   }
 
@@ -84,19 +84,19 @@ class Test23 extends TestCase {
 
   // cycles:
   @Test def test2_12(): Unit = {
-    Verify(spec2,log12)
+    Verify("--specfile", spec2, "--logfile", log12, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 
   // data races:
   @Test def test4_12(): Unit = {
-    Verify(spec4,log12)
+    Verify("--specfile", spec4, "--logfile", log12, "--resultfile", resultfile)
     checkResults(resultfile,37)
   }
 
   // basic:
   @Test def test5_12(): Unit = {
-    Verify(spec5,log12)
+    Verify("--specfile", spec5, "--logfile", log12, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 }

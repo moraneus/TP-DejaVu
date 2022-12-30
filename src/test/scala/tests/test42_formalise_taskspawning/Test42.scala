@@ -15,12 +15,12 @@ class Test42 extends TestCase {
   val biglog40k = s"$TEST/biglog40k.csv"
 
   @Test def test1(): Unit = {
-    Verify(spec,log1)
+    Verify("--specfile", spec, "--logfile", log1, "--resultfile", resultfile)
     checkResults(resultfile,16,22,27,30)
   }
 
   @Test def test2(): Unit = {
-    Verify(spec,log2)
+    Verify("--specfile", spec, "--logfile", log2, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 
@@ -38,7 +38,7 @@ class Test42 extends TestCase {
   // Elapsed trace analysis time: 34.67s
 
   @Test def test3(): Unit = {
-    Verify(spec,biglog10k)
+    Verify("--specfile", spec, "--logfile", biglog10k, "--resultfile", resultfile)
     checkResults(resultfile,9899)
   }
 
@@ -52,7 +52,7 @@ class Test42 extends TestCase {
   // 2m10s
   // @Test
   def test4(): Unit = {
-    Verify(spec,biglog20k)
+    Verify("--specfile", spec, "--logfile", biglog20k, "--resultfile", resultfile)
     checkResults(resultfile,19999)
   }
 
@@ -66,7 +66,7 @@ class Test42 extends TestCase {
   // 8m52s
   // @Test
   def test5(): Unit = {
-    Verify(spec,biglog40k)
+    Verify("--specfile", spec, "--logfile", biglog40k, "--resultfile", resultfile)
     checkResults(resultfile,39799)
   }
 }

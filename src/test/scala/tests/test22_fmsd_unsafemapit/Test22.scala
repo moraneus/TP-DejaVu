@@ -16,28 +16,28 @@ class Test22 extends TestCase {
   val log5 = s"$TEST/log5.csv" // for long traces
 
   @Test def test1_1(): Unit = {
-    Verify(spec1,log1)
+    Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 
   @Test def test1_2(): Unit = {
-    Verify(spec1,log2)
+    Verify("--specfile", spec1, "--logfile", log2, "--resultfile", resultfile)
     checkResults(resultfile,11)
   }
 
   @Test def test1_3(): Unit = {
-    Verify(spec1,log3)
+    Verify("--specfile", spec1, "--logfile", log3, "--resultfile", resultfile)
     checkResults(resultfile,14)
   }
 
   @Test def test1_4(): Unit = {
-    Verify(spec1,log4)
+    Verify("--specfile", spec1, "--logfile", log4, "--resultfile", resultfile)
     checkResults(resultfile)
   }
 
   // This test was used for trying out large traces
   @Test def test2_5(): Unit = {
-    Verify.long(spec2,log5)
+    Verify.long("--specfile", spec2, "--logfile", log5, "--resultfile", resultfile)
     checkResults(resultfile,10801)
   }
 }

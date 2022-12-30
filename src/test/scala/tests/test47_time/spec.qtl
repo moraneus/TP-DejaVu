@@ -1,8 +1,9 @@
 
-prop p : Forall x .
+prop p : Forall x . (
   r(x) ->
     (
-      (Exists y . true S[<=3] p(y))
+      (Exists y . (true S[<=3] p(y)))
       &
-      (Exists z . true S[<=4] q(z))
+      (Exists z . (true S[<=4] q(z)))
     )
+)

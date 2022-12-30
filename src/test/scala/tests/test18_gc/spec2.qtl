@@ -1,5 +1,5 @@
 
-prop p : Forall f . close(f) -> @ (!close(f) S open(f))
+prop p : Forall f . ( close(f) -> @ (!close(f) S open(f)) )
 
 // This property needs as much memory as the number of
 // simultaneously opened files, and is more accurate (not only we cannot

@@ -1,2 +1,2 @@
 
-prop p : Exists x . ( P q(x) | q(x) )
+prop p : Forall x . ( P q(x) )

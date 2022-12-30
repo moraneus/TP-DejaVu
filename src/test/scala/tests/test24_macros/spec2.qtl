@@ -5,4 +5,6 @@ pred safe        = ! [login("putin"),logout("putin"))
 
 prop access :
   Forall u . Forall f .
+  (
     access(u,f) -> loggedIn(u) & opened(f) & safe
+  )

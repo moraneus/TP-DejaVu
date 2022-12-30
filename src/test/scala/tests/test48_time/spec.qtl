@@ -1,6 +1,7 @@
 
 prop Better :
- forall cmd .
+ forall cmd . (
     success(cmd) ->
       !fail(cmd) S[<=4] dispatch(cmd)
+  )
 

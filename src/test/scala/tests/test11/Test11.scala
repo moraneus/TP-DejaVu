@@ -17,48 +17,48 @@ class Test11 extends TestCase {
   // --- spec 1: ---
 
   @Test def test1(): Unit = { // b(1,10).a(1).c(10).b(1,20).a(1).c(20)
-    Verify(spec1,log1, "3")   // |=
+    Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")   // |=
     checkResults(resultfile)         // forall x . (a(x) -> exists y . !c(y) S b(x,y))
   }
 
   @Test def test2(): Unit = { // b(1,10).a(1).c(10).b(1,10).a(1).c(10)
-    Verify(spec1,log2, "3")   // |=
+    Verify("--specfile", spec1, "--logfile", log2, "--resultfile", resultfile, "--bits", "3")   // |=
     checkResults(resultfile)         // forall x . (a(x) -> exists y . !c(y) S b(x,y))
   }
 
   // --- spec 2: ---
 
   @Test def test3(): Unit = { // b(1,10).a(1).c(10).b(1,20).a(1).c(20)
-    Verify(spec2,log1, "3")   // |=
+    Verify("--specfile", spec2, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")   // |=
     checkResults(resultfile)         // forall x . exists y . (a(x) -> !c(y) S b(x,y))
   }
 
   @Test def test4(): Unit = { // b(1,10).a(1).c(10).b(1,10).a(1).c(10)
-    Verify(spec2,log2, "3")   // |=
+    Verify("--specfile", spec2, "--logfile", log2, "--resultfile", resultfile, "--bits", "3")   // |=
     checkResults(resultfile)         // forall x . exists y . (a(x) -> !c(y) S b(x,y))
   }
 
   // --- spec 3: ---
 
   @Test def test5(): Unit = { // b(1,10).a(1).c(10).b(1,20).a(1).c(20)
-    Verify(spec3,log1, "3")   // |=
+    Verify("--specfile", spec3, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")   // |=
     checkResults(resultfile)         // forall x . H ((a(x) -> exists y . [ b(x,y) , c(y) )))
   }
 
   @Test def test6(): Unit = { // b(1,10).a(1).c(10).b(1,10).a(1).c(10)
-    Verify(spec3,log2, "3")   // |=
+    Verify("--specfile", spec3, "--logfile", log2, "--resultfile", resultfile, "--bits", "3")   // |=
     checkResults(resultfile)         // forall x . H ((a(x) -> exists y . [ b(x,y) , c(y) )))
   }
 
   // --- spec 4: ---
 
   @Test def test7(): Unit = { // b(1,10).a(1).c(10).b(1,20).a(1).c(20)
-    Verify(spec4,log1, "3")   // not |=
+    Verify("--specfile", spec4, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")   // not |=
     checkResults(resultfile, 5,6)         // forall x . exists y . H ((a(x) -> [ b(x,y) , c(y) )))
   }
 
   @Test def test8(): Unit = { // b(1,10).a(1).c(10).b(1,10).a(1).c(10)
-    Verify(spec4,log2, "3")   // |=
+    Verify("--specfile", spec4, "--logfile", log2, "--resultfile", resultfile, "--bits", "3")   // |=
     checkResults(resultfile)         // forall x . exists y . H ((a(x) -> [ b(x,y) , c(y) )))
   }
 

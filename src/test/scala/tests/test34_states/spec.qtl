@@ -1,4 +1,4 @@
 
 
-prop p : Forall x . r(x) -> !q(x)
+prop p : Forall x . ( r(x) -> !q(x) )
   where r(x) := p(x) | @ r(x)

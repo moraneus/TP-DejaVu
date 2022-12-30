@@ -19,7 +19,7 @@ class Test21 extends TestCase {
   val log5 = s"$TEST/log5.csv"
 
   @Test def test1_msl(): Unit = {
-    Verify(spec1, logMSL, "20")
+    Verify("--specfile", spec1, "--logfile", logMSL, "--resultfile", resultfile, "--bits", "20")
     checkResults(resultfile,
       1672,1673,
       1678,1679,
@@ -30,8 +30,8 @@ class Test21 extends TestCase {
   }
 
   @Test def test1_msl_5bits(): Unit = {
-    Verify(spec1, logMSL, "5")
-    checkResultsBrief(TEST,
+    Verify("--specfile", spec1, "--logfile", logMSL, "--resultfile", resultfile, "--bits", "5")
+    checkResultsBrief(resultfile,
       1672,1673,
       1678,1679,
       15807,
@@ -43,7 +43,7 @@ class Test21 extends TestCase {
   // TODO:
 
   @Test def test2_msl(): Unit = {
-    Verify(spec2, logMSL, "20")
+    Verify("--specfile", spec2, "--logfile", logMSL, "--resultfile", resultfile, "--bits", "20")
     checkResults(resultfile)
   }
 
@@ -56,7 +56,7 @@ class Test21 extends TestCase {
     */
 
   @Test def test1Timed_msl(): Unit = {
-    Verify.long(spec1Timed, logMSLTimed, "20")
+    Verify.long("--specfile", spec1Timed, "--logfile", logMSLTimed, "--resultfile", resultfile, "--bits", "20")
     checkResults(resultfile,
       1672,1673,
       1678,1679,
@@ -76,12 +76,12 @@ class Test21 extends TestCase {
   // =============================
 
   @Test def test1_1(): Unit = {
-    Verify(spec1, log1, "3")
+    Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile, 7)
   }
 
   @Test def test1_2(): Unit = {
-    Verify(spec1, log2, "20")
+    Verify("--specfile", spec1, "--logfile", log2, "--resultfile", resultfile, "--bits", "20")
     checkResults(resultfile,
       2,3,
       6,7,
@@ -92,7 +92,7 @@ class Test21 extends TestCase {
   }
 
   @Test def test1Timed_3(): Unit = {
-    Verify(spec1Timed, log3, "20")
+    Verify("--specfile", spec1Timed, "--logfile", log3, "--resultfile", resultfile, "--bits", "20")
     checkResults(resultfile,
       2,3,
       6,7,
@@ -108,12 +108,12 @@ class Test21 extends TestCase {
   }
 
   @Test def test1_4(): Unit = {
-    Verify(spec1, log4, "3")
+    Verify("--specfile", spec1, "--logfile", log4, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile,2)
   }
 
   @Test def test1Timed_5(): Unit = {
-    Verify(spec1Timed, log5, "3")
+    Verify("--specfile", spec1Timed, "--logfile", log5, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile,2,5)
   }
 

@@ -22,6 +22,7 @@ object Options {
   // ### Prediction Extension ###
   var PREDICTION: Boolean = false
   var PREDICTION_K: Int = 0
+  var PREDICTION_RUNNING_STATE: Boolean = false
   var RESULT_FILE: String = ""
 }
 
@@ -231,7 +232,9 @@ class Variable(F: Formula)(name: String, bounded: Boolean, offset: Int, nrOfBits
       free.dot(s"free before get new BDD for variable $name for positions ${bits.mkString(",")}")
       if (timeToGarbageCollect) collectGarbage()
       if (free.isZero) {
-        writelnResult(s"${F.monitor.lineNr} oom")
+
+        // ### Prediction Extension ###
+        if (!Options.PREDICTION_RUNNING_STATE) writelnResult(s"${F.monitor.lineNr} oom")
         assert(false, s"Out of memory for variable $name!")
       }
       val result = free.satOne(allOnes, true)
@@ -292,7 +295,9 @@ class Variable(F: Formula)(name: String, bounded: Boolean, offset: Int, nrOfBits
       val bdd = bdds(v)
       if (bdd.imp(free).isOne) {
         debug(s"removing variable $name's entry for value $v")
-        writelnResult(s"${F.monitor.lineNr} -- $v")
+
+        // ### Prediction Extension ###
+        if (!Options.PREDICTION_RUNNING_STATE) writelnResult(s"${F.monitor.lineNr} -- $v")
         bdds -= v
       }
     }
@@ -669,7 +674,8 @@ abstract class Monitor {
     */
 
   def recordResult(): Unit = {
-    writelnResult(lineNr)
+    // ### Prediction Extension ###
+    if (!Options.PREDICTION_RUNNING_STATE) writelnResult(lineNr)
   }
 
   /**

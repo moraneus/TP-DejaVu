@@ -19,27 +19,27 @@ class Test25 extends TestCase {
   }
 
   @Test def test1_2(): Unit = {
-    Verify(spec1,log2)
+    Verify("--specfile", spec1, "--logfile", log2, "--resultfile", resultfile)
     checkResults(resultfile,19,40,59,79,99)
   }
 
   @Test def test2_1(): Unit = {
-    Verify(spec2,log1,"3")
+    Verify("--specfile", spec2, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile)
   }
 
   @Test def test2_2(): Unit = {
-    Verify(spec2,log2)
+    Verify("--specfile", spec2, "--logfile", log2, "--resultfile", resultfile)
     checkResults(resultfile,19,40,59,79,99)
   }
 
   @Test def test3_1(): Unit = {
-    Verify(spec3,log1,"3")
+    Verify("--specfile", spec3, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile)
   }
 
   @Test def test3_2(): Unit = {
-    Verify(spec3,log2)
+    Verify("--specfile", spec3, "--logfile", log2, "--resultfile", resultfile)
     checkResults(resultfile,19,40,59,79,99)
   }
   

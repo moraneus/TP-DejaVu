@@ -1,8 +1,8 @@
 
 
 prop spawning :
-  Forall x . Forall y .
-    report(y,x) -> spawned(x,y)
+  Forall x . Forall y . (
+    report(y,x) -> spawned(x,y) )
     where
     spawned(x,y) := @ spawned(x,y) | spawn(x,y) | Exists d . (@spawned(x,d) & spawn(d,y))
 

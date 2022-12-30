@@ -304,14 +304,16 @@ case class Spec(properties: List[Property]) {
     val property = properties.head
     var eventsInVarsMapping = Map[String, mSet[String]]()
     for (a <- property.getPredicateTerms) {
-      val currVar = a.values.head.toString
-      if (eventsInVarsMapping.contains(currVar)) {
-        eventsInVarsMapping(currVar) += a.name
-      } else {
-        eventsInVarsMapping += currVar -> mSet(a.name)
+      if (a.values.size > 0) {
+        val currVar = a.values.head.toString
+        if (eventsInVarsMapping.contains(currVar)) {
+          eventsInVarsMapping(currVar) += a.name
+        } else {
+          eventsInVarsMapping += currVar -> mSet(a.name)
+        }
       }
     }
-    var eventsInVarsString: String = """Map("""
+    var eventsInVarsString: String = """Map( """
     for (event <- eventsInVarsMapping) {
       eventsInVarsString += s""""${event._1}" -> List("""
       for (e <- event._2) {
@@ -320,7 +322,7 @@ case class Spec(properties: List[Property]) {
       eventsInVarsString = eventsInVarsString.dropRight(1)
       eventsInVarsString += "),"
     }
-    eventsInVarsString = eventsInVarsString.dropRight(1) + ")"
+    eventsInVarsString = eventsInVarsString.dropRight(1) + " )"
 
 
     writeln(
@@ -342,6 +344,7 @@ case class Spec(properties: List[Property]) {
         |class Prediction(monitor: Monitor) {
         |
         |   val G: BDDGenerator = monitor.formulae.head.bddGenerator
+        |   Options.PREDICTION_RUNNING_STATE = true
         |
         |   /***
         |     * The main prediction function, which is works by recursion.
@@ -349,7 +352,7 @@ case class Spec(properties: List[Property]) {
         |     * @param k               the k step for the prediction
         |     * @param predictEvents   the predicts event seen so far
         |     */
-        |     def prediction(k: Int, predictEvents: ListBuffer[(String, List[Any])]): Unit = {
+        |     def prediction(k: Int, predictEvents: ListBuffer[(String, String, Int)]): Unit = {
         |
         |       // Recursion Base case
         |       if (k == 0) {
@@ -358,11 +361,12 @@ case class Spec(properties: List[Property]) {
         |
         |         var predictionAsString = ""
         |         for (event <- predictEvents) {
-        |           predictionAsString += s"${event._1}(${event._2.head})"
-        |           print(s"${event._1}(${event._2.head}) -> ")
+        |           val currEventState = s"${event._1}(${event._2})=${event._3}"
+        |           predictionAsString += currEventState + ";"
+        |           print(s"$currEventState -> ")
         |         }
         |         println("DONE")
-        |         writelnResult(s"[PREDICTION]: $predictionAsString")
+        |         writelnResult(s"${predictionAsString.dropRight(1)}")
         |
         |         // Print the summary of trace (including extension)
         |         println(s"Processed ${monitor.lineNr} events")
@@ -380,7 +384,7 @@ case class Spec(properties: List[Property]) {
        |      val tmpVariableBdds = Array.fill(3)(G.False)
        |      val tmpPre: Array[BDD] = Array.fill(${LTL.next})(G.False)
        |      val tmpNow: Array[BDD] = Array.fill(${LTL.next})(G.False)
-       |      var tmpPredictEvents: ListBuffer[(String, List[Any])] = predictEvents
+       |      var tmpPredictEvents: ListBuffer[(String, String, Int)] = predictEvents
        |
        |      val F: Formula = monitor.formulae.head
        |      val vars: Map[String, Variable] = G.varMap
@@ -446,7 +450,8 @@ case class Spec(properties: List[Property]) {
         |            tmpVarBdds = v._2.bdds
         |
         |            monitor.submit(event, List(fetchedValue))
-        |            tmpPredictEvents.append((event, List(fetchedValue)))
+        |            val eventError = if(tmpStat(1) < monitor.errors) 1 else 0
+        |            tmpPredictEvents.append((event, fetchedValue, eventError))
         |
         |            prediction(k - 1, tmpPredictEvents)
         |
@@ -726,9 +731,8 @@ case class Spec(properties: List[Property]) {
          |        }
          |        m.submitCSVFile(logfilePath)
          |        if (Options.PREDICTION) {
-         |          val G = m.formulae.head.bddGenerator
          |          val prediction = new Prediction(m)
-         |          val events = new ListBuffer[(String, List[Any])]()
+         |          val events = new ListBuffer[(String, String, Int)]()
          |          prediction.prediction(Options.PREDICTION_K, events)
          |        } else {
          |          println("Prediction was not activated")
