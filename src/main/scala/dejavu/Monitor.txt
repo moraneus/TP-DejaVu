@@ -525,6 +525,15 @@ abstract class Monitor {
 
     def eventsInVars: Map[String, List[String]]
 
+   /**
+     * Returns the mapping of constants referred to each value in the specification.
+     * Must be overridden by generated specification specific monitor.
+     *
+     * @return mapping of constants referred to each value.
+     */
+
+    def eventsInConstants: Map[String, List[String]]
+
   /**
     * Used for timing performance. The timing is printed on standard output.
     *

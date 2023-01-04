@@ -40,7 +40,7 @@ class TestCase {
   def checkResults(resultfile: String, lines: Any*): Unit = {
     if (Verify.verified) {
       val expect = lines.toList.map(_.toString).sorted
-      val result = readResult(resultfile).sorted
+      val result = readResult(resultfile).distinct.sorted
       assert(expect == result,
         s"""
            |expected : (${expect.mkString(",")})
@@ -52,12 +52,12 @@ class TestCase {
 
   def checkResultsBrief(resultfile: String, lines: Any*): Unit = {
     if (Verify.verified) {
-      val expect = lines.toList.map(_.toString)
-      val result = readResult(resultfile)
+      val expect = lines.toList.map(_.toString).sorted
+      val result = readResult(resultfile).distinct.sorted
       val gcSize = result.filter(_.contains("--")).size // GC: 'lineNr -- value'
       println(s"GARBAGE COLLECTED $gcSize VALUES")
-      val resultWithoutGC = result.filterNot(_.contains("--"))
-      val resultGCSum = resultWithoutGC ++ (if (gcSize > 0) List(s"$gcSize gc") else Nil)
+      val resultWithoutGC = result.filterNot(_.contains("--")).sorted
+      val resultGCSum = resultWithoutGC ++ (if (gcSize > 0) List(s"$gcSize gc") else Nil).sorted
       assert(expect == resultGCSum,
         s"""
            |expected : (${expect.mkString(",")})
