@@ -127,12 +127,12 @@ object Verify {
     */
 
   def main(arguments: Array[String]): Unit = {
-    val usage = "Usage: (--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)] [--prediction num] [--result <filename>]"
+    val usage = "Usage: (--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)] [--prediction num] [--prediction_type (smart | brute)] [--result <filename>]"
     SymbolTable.reset()
 
     val args = arguments.toList
 
-    if (2 <= arguments.length && arguments.length <= 14 && arguments.length % 2 == 0) {
+    if (2 <= arguments.length && arguments.length <= 16 && arguments.length % 2 == 0) {
       val argMap = Map.newBuilder[String, Any]
       arguments.sliding(2, 2).toList.collect {
         case Array("--specfile", specfile: String) => argMap.+=("specfile" -> specfile)
@@ -140,6 +140,7 @@ object Verify {
         case Array("--bits", numOfBits: String) => argMap.+=("bits" -> numOfBits)
         case Array("--mode", mode: String) => argMap.+=("mode" -> mode)
         case Array("--prediction", predictionLength: String) => argMap.+=("prediction" -> predictionLength)
+        case Array("--prediction_type", predictionType: String) => argMap.+=("prediction_type" -> predictionType)
         case Array("--resultfile", resultfile: String) => argMap.+=("resultfile" -> resultfile)
         case Array("--clear", mode: String) => argMap.+=("clear" -> mode)
       }
@@ -204,6 +205,17 @@ object Verify {
             return
         }
         case None => println("prediction argument not activated")
+      }
+
+      val predictionType = argMap.result().get("prediction_type")
+      predictionType match {
+        case Some(value) =>
+          val predictionTypeValue = value.toString.toLowerCase()
+          if (!(predictionTypeValue != "smart" || predictionTypeValue != "brute")) {
+            println(s"*** prediction type argument must be: smart or brute, and not ${value.toString}")
+            return
+          }
+        case None => println("prediction type argument not activated")
       }
 
       val mode = argMap.result().get("mode")

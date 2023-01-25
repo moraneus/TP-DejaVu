@@ -22,6 +22,7 @@ object Options {
   // ### Prediction Extension ###
   var PREDICTION: Boolean = false
   var PREDICTION_K: Int = 0
+  var PREDICTION_TYPE: String = "smart"
   var PREDICTION_RUNNING_STATE: Boolean = false
   var RESULT_FILE: String = ""
 }
