@@ -367,6 +367,7 @@ case class Spec(properties: List[Property]) {
         |abstract class Prediction(monitor: Monitor) {
         |  val G: BDDGenerator = monitor.formulae.head.bddGenerator
         |  Options.PREDICTION_RUNNING_STATE = true
+        |  var counter = 0
         |
         |  /**
         |    *
@@ -483,6 +484,7 @@ case class Spec(properties: List[Property]) {
         |
         |    // Recursion Base case
         |    if (k == 0) {
+        |      counter += 1
         |      printPredictionSummary(predictEvents)
         |      monitor.end()
         |      return
@@ -503,7 +505,6 @@ case class Spec(properties: List[Property]) {
          |
          |      val F: Formula = monitor.formulae.head
          |      val vars: Map[String, Variable] = G.varMap
-         |      val isoBdd: Array[BDD] = Array.fill(${LTL.next})(G.False)
          |
          |      // Used to avoid duplicates when spec have constants
          |      var constFlag = true
@@ -602,6 +603,7 @@ case class Spec(properties: List[Property]) {
         |
         |       // Recursion Base case
         |       if (k == 0) {
+        |         counter += 1
         |         printPredictionSummary(predictEvents)
         |         monitor.end()
         |         return
@@ -918,7 +920,10 @@ case class Spec(properties: List[Property]) {
          |          m.printProfileHeader()
          |        }
          |        m.submitCSVFile(logfilePath)
-         |        if (Options.PREDICTION) {
+         """.stripMargin)
+
+    writeln(
+      """ if (Options.PREDICTION) {
          |          if (m.eventsInVars.isEmpty) {
          |            println(s"*** Prediction is not available for this spec")
          |          } else {
@@ -930,13 +935,12 @@ case class Spec(properties: List[Property]) {
          |            }
          |            val events = new ListBuffer[(String, String, Int)]()
          |            prediction.prediction(Options.PREDICTION_K, events)
+         |            println(s"### Total Predictions: ${prediction.counter}")
          |          }
          |        } else {
          |          println("Prediction was not activated")
          |        }
-         """.stripMargin)
-    writeln(
-      """       } catch {
+         |     } catch {
          |        case e: Throwable =>
          |          println(s"\n*** $e\n")
          |        // e.printStackTrace()

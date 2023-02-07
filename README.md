@@ -7,9 +7,9 @@
        |_____/ \___| |\__,_| \/  \__,_|
                   _/ |                 
                  |__/                  
-                            First-order past time LTL with recursive rules and time!
+                            First-order past time LTL with recursive rules, time and prediction!
  
-        Version 2.1, March 4 - 2020
+        Version 3.0, Februar - 2023
 
   
 ## Overview
@@ -22,7 +22,9 @@ An example of a property in its most basic form is the following:
 
 The property has the name `closeOnlyOpenFiles` and states that for any file `f`, if a `close(f)` event is observed, then there exists a mode `m` (e.g 'read' or 'write') such that in the previous step (`@`), some time in the past was observed an `open(f,m)` event, and since then no `close(f)` event has been observed. 
 
-The implementation uses BDDs (Binary Decision Diagrams) for representing assinments to quantified variables (such as `f` and `m` above).
+The implementation uses BDDs (Binary Decision Diagrams) for representing assignments to quantified variables (such as `f` and `m` above).
+
+In this version of DejaVu we add the ability to predict the next `k` steps in 2 modes of prediction.
 
 ## Installing DejaVu:
 
@@ -30,11 +32,11 @@ The directly ``out`` contains files and directories useful for installing and ru
 
 * README.pdf                      : this document in pdf format
 * dejavu                          : script to run the system
-* artifacts/dejavu_jar/dejavu.jar : the dejavu jar file
+* artifacts                       : should contain the dejavu jar file (not built for this version)
 * papers                          : a directory containing papers published about DejaVu
 * examples                        : an example directory containing properties and logs
 
-DejavU is implemented in Scala.
+DejaVu is implemented in Scala. In this version we used Scala 2.11.12
 
 1. Install the Scala programming language if not already installed (https://www.scala-lang.org/download)
 2. Place the files ``dejavu`` and ``dejavu.jar`` mentioned above in some directory **DIR** (standing for the total path to this directory).
@@ -50,18 +52,23 @@ DejavU is implemented in Scala.
 
 The script is applied as follows:
 
-    dejavu <docFile> <logFile> [<bitsPerVariable> [debug]]
+    dejavu (--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)] [--prediction num] [--prediction_type (smart | brute)] [--result <filename>]
 
-* The ``<docFile>`` is the path to a file containing the specification document. 
-* The ``<logFile>`` is the path to a file containing the log in CSV format to be analyzed.
-* The ``<bitsPerVariable>`` is a number indicating how many bits should be assigned to each variable in the BDD representation.
-* The ``debug`` flag will cause debugging output to be generated on standard out.
+* ``--specfile <filename>`` is the path to a file containing the specification document. This is a mandatory field.
+* ``--logfile <filename>`` is the path to a file containing the log in CSV format to be analyzed.
+* ``---bits numOfBits`` is a number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
+* ``---mode (debug | profile)`` specifies one of 2 modes:
+    * ``debug`` cause debugging output to be generated to the console.
+    * ``profile`` cause some BDDs profile data to be written to a file. These fields will be explained in more detail in the following. 
+* ``--prediction num`` indicates whether prediction is required, along with the size of the prediction parameters.
+* ``--prediction_type (smart | brute)`` specifies one of 2 modes:
+    * ``smart`` means that DejaVu to uses our efficient algorithm for prediction.
+    * ``brute`` means that DejaVu to uses the trivial (brute force) prediction approach.
+* ``--result <filename>`` is the path to a result filename. If not specify the default is the running DejaVu folder.
 
-These fields will be explained in more detail in the following. 
-        
-**The specification document file** (``<docFile>``) This is the temporal specification that the trace must satisfy. See explanation of the specification language below.
+**The specification document file** (``--specfile <filename>``) This is the temporal specification that the trace must satisfy. See explanation of the specification language below.
 
-**The log file** (``<logFile>``) should be in comma separated value format (CSV): http://edoceo.com/utilitas/csv-file-format. For example, a file of
+**The log file** (``--logfile <filename>``) should be in comma separated value format (CSV): http://edoceo.com/utilitas/csv-file-format. For example, a file of
 the form:
 
     list,chair,500
@@ -98,15 +105,14 @@ events in specification format:
 In case the log file is not timed (as described just above), time is considered as always being 0.
 One can still check timed properties against such a log, but of course it makes little sense.
 
-**The bits per variable** (``<bitsPerVariable>``) indicates how many bits are assigned to each variable in the BDDs. This parameter is optional with the default value being 20. If the number is too low an error message will be issued during analysis as explained below. A too high number can have impact on the efficiency of the algorithm. Note that the number of values representable by N bits is 2^N, so one in general does not need very large numbers.  
+**The bits per variable** (``---bits numOfBits``) indicates how many bits are assigned to each variable in the BDDs. This parameter is optional with the default value being 20. If the number is too low an error message will be issued during analysis as explained below. A too high number can have impact on the efficiency of the algorithm. Note that the number of values representable by N bits is 2^N, so one in general does not need very large numbers.  
 
 The algorithm/implementation will perform garbage collection on allocated
 BDDs, re-using BDDs that are no longer needed for checking the property, depending on the form of the formula.
 
-**Debugging** (``debug``) The debugging flag can only be provided if also
-< bitsPerVariable > is provided. Usually one picks a low number of bits
+**Debugging** (``---mode debug``) Usually one picks a low number of bits
 for debugging purposes (e.g. 3). The result is debugging output showing
-the progress of formula evaluation for each event. Amongst the output
+the progress of formula evaluation for each event and the progress of the prediction if activated. Amongst the output
 is BDD graphs visualizable with GraphViz (http://www.graphviz.org).
 
 ## Results from DejaVu
@@ -174,6 +180,30 @@ If not enough bits have been allocated for a variable to hold the number of valu
         10 bits is not enough to represent variable i.
 
 One can/should experiment with BDD sizes.
+
+**Prediction results**
+The tool will notify for a new prediction by printing it to console along with the summary for this prediction.
+
+    ######### SUMMARY OF PREDICTION #########
+
+        b(1)=0 -> g(2)=0 -> v(8)=1 -> DONE
+        Processed 3 events
+        
+        3 errors detected!
+        
+        ==================
+        Event Counts:
+        ------------------
+        g : 12
+        t : 13
+        v : 2
+        b : 7
+        ==================
+
+    - Garbage collector was not activated
+
+indicates that DejaVu predicts k=3 events ("Processed 3 events"). The first two events didn't fail the property (they both equal to 0), while the third event failed the property (equal to 1).
+The rest of the output information is a statistic about the evaluation with the addition of the currently predicted events.
 
 **Timing results**
 The system will print the following timings:
@@ -436,6 +466,31 @@ The same property can altermatively be expressed using two rules, more closely r
 
 The rule `closed(x)` is defined as a disjunction between three alternatives. The first alternative states that this predicate is true if we are in the initial state (the only state where `@true` is false), and there is no `toggle(x)` event. The next alternative states that `closed(x)` was true in the previous state and there is no `toggle(x)` event now. The third alternative states that we in the previous state were in the `open(x)` state and we observe a `toggle(x)` event. Similarly for the `open(x)` rule.
 
+## The DejaVu Prediction Expansion
+
+In our expansion we add the ability to predict the next `k` steps in 2 modes of prediction.
+The core of DejaVu remains as it was, without any improvements or changes. 
+In order to handle the prediction requests, we had to change the way that DejaVu gets and parses his arguments as it describe [above](#running-dejavu).
+
+### Prediction Modes
+We have two prediction modes.
+* ``brute`` - This mode is the trivial mode based on the brute force approach, trying all options without 
+any improvements to make it faster or more efficient. This mode was added for testing and experimentation purposes 
+and for comparison with our ``smart`` prediction approach.
+* ``smart`` - This mode is at the heart of our study. The smart prediction approach takes advantage of the fact that 
+some values are equivalent in a given time, reducing our predictive options. In some cases, e.g., after evaluating
+a long trace file with different events, the reduction is so significant that prediction is possible with the ``smart``
+approach, while it fails with the ``brute`` approach due to excessive memory consumption.
+
+### Prediction Limitations
+* In our experiments we have seen that the prediction possibilities grow exponentially with respect to 
+the prediction parameter 'k', therefore the prediction is limited to a certain 'k' which depends on the 
+environment, the evaluated specification and the evaluated trace.
+* The prediction process is limited to specification, where each predicate has one value only. 
+* The prediction process generate only one event per time point. 
+* No tests were performed for specifications containing op, e.g., x < 10, x <= y. The prediction 
+procedure disregards these operators.
+
 ## Experiments for publications
 
 - Experiments for FMSD journal paper 2018 "_First-Order Temporal Logic Monitoring with BDDs_": [experiments](https://github.com/havelund/dejavu/tree/master/src/test/scala/tests_fmsd) 
@@ -447,10 +502,11 @@ The rule `closed(x)` is defined as a disjunction between three alternatives. The
   * [Wolper's property as state machine](https://github.com/havelund/dejavu/tree/master/src/test/scala/tests/test41_formalise_statemachine)
   * [task spawning](https://github.com/havelund/dejavu/tree/master/src/test/scala/tests/test42_formalise_taskspawning)
 
-## Contributors
-
+## Contributors - For Original DejaVu
 * [Klaus Havelund](http://www.havelund.com), Jet Propulsion Laboratory/NASA, USA
 * [Doron Peled](http://u.cs.biu.ac.il/~doronp), Bar Ilan University, Israel
 * [Dogan Ulus](https://www.linkedin.com/in/doganulus), Boston University, USA
 
-    
+## Contributors - For Prediction Expansion
+* [Doron Peled](http://u.cs.biu.ac.il/~doronp), Bar Ilan University, Israel
+* [Moran Omer](https://github.com/moraneus), Bar Ilan University, Israel

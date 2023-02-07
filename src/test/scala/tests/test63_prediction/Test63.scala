@@ -11,9 +11,6 @@ class Test63 extends TestCase {
   val spec2 = s"$TEST/spec2.qtl"
   val log1 = s"$TEST/log1.csv"
 
-  /**
-    * Should never failed with prediction size of 2
-    */
   @Test def test1_1(): Unit = {
     Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "5", "--prediction", "2")
     // *=0 for success, *=1 for failure
@@ -42,9 +39,6 @@ class Test63 extends TestCase {
     checkResults(resultfile, expected:_*)
   }
 
-  /**
-    * Should failed with prediction size of 3, but it could happen only in the last predicts event
-    */
   @Test def test1_2(): Unit = {
     Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "5", "--prediction", "3")
     // *=0 for success, *=1 for failure
@@ -173,9 +167,6 @@ class Test63 extends TestCase {
     checkResults(resultfile, expected: _*)
   }
 
-  /**
-    * Should failed with prediction size of 4, but it happen only if the last predicts event is 't'
-    */
   @Test def test2_1(): Unit = {
     Verify("--specfile", spec2, "--logfile", log1, "--resultfile", resultfile, "--bits", "5", "--prediction", "2")
     // *=0 for success, *=1 for failure

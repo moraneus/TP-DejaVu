@@ -105,7 +105,6 @@ class Test59 extends TestCase {
       "success(stop1)=1;success(stop)=0",
       "success(stop1)=1;success(stop1)=1"
     )
-    val b = expected.distinct
     checkResults(resultfile, expected:_*)
   }
 }

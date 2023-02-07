@@ -30,7 +30,7 @@ object Verify {
     * Flag indicating whether long tests (> 7 seconds) should be executed.
     */
 
-  val LONGTEST : Boolean = true
+  private val LONGTEST : Boolean = true
 
   /**
     * Flag indicating whether to clear generated files and folder.
@@ -123,7 +123,7 @@ object Verify {
     * latter mode is useful when e.g. working in an IDE such as IntelliJ where no script exists.
     *
     * @param arguments following the pattern:
-    *                  <code>(--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)] [--prediction num]</code>
+    *                  <code>(--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)] [--prediction num] [--prediction_type (smart | brute)] [--result <filename>]</code>
     */
 
   def main(arguments: Array[String]): Unit = {
