@@ -20,27 +20,27 @@ class Test10 extends TestCase {
   val log6 = s"$TEST/log6.csv"
 
   @Test def test1(): Unit = {
-    Verify("--specfile", spec, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile)
   }
 
   @Test def test2(): Unit = {
-    Verify("--specfile", spec, "--logfile", log2, "--resultfile", resultfile, "--bits", "3")
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log2, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile)
   }
 
   @Test def test3(): Unit = {
-    Verify("--specfile", spec, "--logfile", log3, "--resultfile", resultfile, "--bits", "3")
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log3, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile,5)
   }
 
   @Test def test4(): Unit = {
-    Verify.long("--specfile", spec, "--logfile", log4, "--resultfile", resultfile)
+    Verify.long("--execution", "0", "--specfile", spec, "--logfile", log4, "--resultfile", resultfile)
     checkResults(resultfile, 1003001)
   }
 
   @Test def test5(): Unit = {
-    Verify("--specfile", spec, "--logfile", log5, "--resultfile", resultfile, "--bits", "3", "--mode", "debug")
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log5, "--resultfile", resultfile, "--bits", "3", "--mode", "debug")
     checkResults(resultfile,
       10 -- 2,
       10 -- 3,
@@ -50,7 +50,7 @@ class Test10 extends TestCase {
   }
 
   @Test def test6(): Unit = {
-    Verify("--specfile", spec, "--logfile", log6, "--resultfile", resultfile, "--bits", "2")
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log6, "--resultfile", resultfile, "--bits", "2")
     checkResults(resultfile,
       6 -- 1,
       6 -- 2,

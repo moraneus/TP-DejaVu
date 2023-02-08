@@ -12,7 +12,7 @@ class Test47 extends TestCase {
 
   @Test def test1(): Unit = {
     println("Test number 47")
-    Verify("--specfile", spec, "--logfile", log1, "--resultfile", resultfile, "--bits", "3", "--mode", "debug")
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log1, "--resultfile", resultfile, "--bits", "3", "--mode", "debug")
     checkResults(resultfile, 7,8)
   }
 }

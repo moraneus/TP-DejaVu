@@ -15,7 +15,7 @@ class Test65 extends TestCase {
     * Should success only for g(a).
     */
   @Test def test1_1(): Unit = {
-    Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "7", "--prediction", "2")
+    Verify("--execution", "0", "--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "7", "--prediction", "2")
     // *=0 for success, *=1 for failure
     val expected = List[String](
       "1",
@@ -47,7 +47,7 @@ class Test65 extends TestCase {
     * Should success only for g(a).
     */
   @Test def test1_2(): Unit = {
-    Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "5", "--prediction", "3")
+    Verify("--execution", "0", "--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "5", "--prediction", "3")
     // *=0 for success, *=1 for failure
     val expected = List[String](
       "1",

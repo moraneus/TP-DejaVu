@@ -12,12 +12,12 @@ class Test3 extends TestCase {
   val log2 = s"$TEST/log2.csv"
 
   @Test def test1(): Unit = {
-    Verify("--specfile", spec, "--logfile", log1, "--resultfile", resultfile)
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log1, "--resultfile", resultfile)
     checkResults(resultfile,6,14,16,17,21)
   }
 
   @Test def test2(): Unit = {
-    Verify.long("--specfile", spec, "--logfile", log2, "--resultfile", resultfile, "--bits", "13")
+    Verify.long("--execution", "0", "--specfile", spec, "--logfile", log2, "--resultfile", resultfile, "--bits", "13")
     checkResults(resultfile,5051)
   }
 }

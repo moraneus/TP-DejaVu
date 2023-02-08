@@ -52,23 +52,39 @@ DejaVu is implemented in Scala. In this version we used Scala 2.11.12
 
 The script is applied as follows:
 
-    dejavu (--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)] [--prediction num] [--prediction_type (smart | brute)] [--result <filename>]
+    dejavu (--specfile=<filename>) (--logfile=<filename>) [--bits=numOfBits] [--mode=(debug | profile)]
+          [--prediction=num] [--prediction_type=(smart | brute)] [--clear=(0 | 1)]
 
-* ``--specfile <filename>`` is the path to a file containing the specification document. This is a mandatory field.
-* ``--logfile <filename>`` is the path to a file containing the log in CSV format to be analyzed.
-* ``---bits numOfBits`` is a number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
-* ``---mode (debug | profile)`` specifies one of 2 modes:
-    * ``debug`` cause debugging output to be generated to the console.
-    * ``profile`` cause some BDDs profile data to be written to a file. These fields will be explained in more detail in the following. 
-* ``--prediction num`` indicates whether prediction is required, along with the size of the prediction parameters.
-* ``--prediction_type (smart | brute)`` specifies one of 2 modes:
-    * ``smart`` means that DejaVu to uses our efficient algorithm for prediction.
-    * ``brute`` means that DejaVu to uses the trivial (brute force) prediction approach.
-* ``--result <filename>`` is the path to a result filename. If not specify the default is the running DejaVu folder.
+    Options:
+        -s, --specfile          the path to a file containing the specification document. This is a mandatory field.
+        -l, --logfile           the path to a file containing the log in CSV format to be analyzed.
+        -b, --bits              number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
+        -m, --mode              specifies output modes. by default no one is active.
+        -p, --prediction        indicates whether prediction is required, along with the size of the prediction parameters.
+        -t, --prediction_type   specifies prediction approach. by default smart approach is activated.
+        -c, --clear             indicating whether to clear generated files and folder. value of '1' is for cleaning.
 
-**The specification document file** (``--specfile <filename>``) This is the temporal specification that the trace must satisfy. See explanation of the specification language below.
+#### Some Execution Examples
 
-**The log file** (``--logfile <filename>``) should be in comma separated value format (CSV): http://edoceo.com/utilitas/csv-file-format. For example, a file of
+```bash
+ ./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=10
+ ```
+```bash
+./dejavu -s=/path/to/specfile --logfile=/path/to/logfile -b=7 --clear=1
+```
+```bash
+./dejavu --specfile=/path/to/specfile -l=/path/to/logfile --mode=debug
+```
+```bash
+./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=5 --prediction=3 --prediction_type=brute
+```
+```bash
+./dejavu -s=/path/to/specfile -l=/path/to/logfile -b=5 -p=3 -t=smart
+```
+
+**The specification document file** (``--specfile=<filename>``) This is the temporal specification that the trace must satisfy. See explanation of the specification language below.
+
+**The log file** (``--logfile=<filename>``) should be in comma separated value format (CSV): http://edoceo.com/utilitas/csv-file-format. For example, a file of
 the form:
 
     list,chair,500
@@ -105,15 +121,23 @@ events in specification format:
 In case the log file is not timed (as described just above), time is considered as always being 0.
 One can still check timed properties against such a log, but of course it makes little sense.
 
-**The bits per variable** (``---bits numOfBits``) indicates how many bits are assigned to each variable in the BDDs. This parameter is optional with the default value being 20. If the number is too low an error message will be issued during analysis as explained below. A too high number can have impact on the efficiency of the algorithm. Note that the number of values representable by N bits is 2^N, so one in general does not need very large numbers.  
+**The bits per variable** (``---bits=numOfBits``) indicates how many bits are assigned to each variable in the BDDs. 
+This parameter is optional with the default value being 20. If the number is too low an error message will be issued 
+during analysis as explained below. A too high number can have impact on the efficiency of the algorithm. Note that the 
+number of values representable by N bits is 2^N, so one in general does not need very large numbers.  
 
 The algorithm/implementation will perform garbage collection on allocated
 BDDs, re-using BDDs that are no longer needed for checking the property, depending on the form of the formula.
 
-**Debugging** (``---mode debug``) Usually one picks a low number of bits
+**Debugging** (``---mode=debug``) Usually one picks a low number of bits
 for debugging purposes (e.g. 3). The result is debugging output showing
 the progress of formula evaluation for each event and the progress of the prediction if activated. Amongst the output
 is BDD graphs visualizable with GraphViz (http://www.graphviz.org).
+
+**Delete results and created files** (``--clear=1``) specifies whether created files and folders should be deleted.
+The value `1` means that the files should be deleted, while `0`, the default setting, means that the files 
+remain in the `output` folder. The files created are as follows: 
+`TraceMonitor.scala`, `ast.dot`, `dejavu-results`.
 
 ## Results from DejaVu
 
@@ -484,11 +508,12 @@ approach, while it fails with the ``brute`` approach due to excessive memory con
 
 ### Prediction Limitations
 * In our experiments we have seen that the prediction possibilities grow exponentially with respect to 
-the prediction parameter 'k', therefore the prediction is limited to a certain 'k' which depends on the 
+the prediction parameter `k`, therefore the prediction is limited to a certain `k` which depends on the 
 environment, the evaluated specification and the evaluated trace.
+* The bits used for variables affect the speed of prediction. Make sure you use as few bits as necessary (''--bits=x'').
 * The prediction process is limited to specification, where each predicate has one value only. 
 * The prediction process generate only one event per time point. 
-* No tests were performed for specifications containing op, e.g., x < 10, x <= y. The prediction 
+* No tests were performed for specifications containing op, e.g., x < 10, x <= y or those referring to time units. The prediction 
 procedure disregards these operators.
 
 ## Experiments for publications

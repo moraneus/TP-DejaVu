@@ -131,7 +131,7 @@ import AstUtil._
 
 case class Spec(properties: List[Property]) {
 
-  val generatedMonitorsPath: String = s"${Paths.get(".").toAbsolutePath}/src/test/scala/sandbox/generated_monitors/${getRandomFolderName}"
+  var generatedMonitorsPath: String = ""
 
   private def getRandomFolderName: String = {
     val x = Random.alphanumeric
@@ -152,9 +152,11 @@ case class Spec(properties: List[Property]) {
     eventsString
   }
 
-  def translate(): Unit = {
+  def translate(executionMode: Boolean): Unit = {
     refreshMonitorTextIfDevelopment()
 
+    if (executionMode) generatedMonitorsPath = s"${Paths.get(".").toAbsolutePath}/output"
+    else generatedMonitorsPath = s"${Paths.get(".").toAbsolutePath}/src/test/scala/sandbox/generated_monitors/${getRandomFolderName}"
     val dir = new File(generatedMonitorsPath)
     if (!dir.exists) dir.mkdirs
     openFile(s"$generatedMonitorsPath/TraceMonitor.scala")

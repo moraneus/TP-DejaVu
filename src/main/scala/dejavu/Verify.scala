@@ -33,10 +33,19 @@ object Verify {
   private val LONGTEST : Boolean = true
 
   /**
-    * Flag indicating whether to clear generated files and folder.
+    * Flag indicating whether to clear generated files and folder (relevent in development mode).
     */
 
   private var CLEAR: Boolean = true
+
+  /**
+    * Flag indicating whether to work in production or development mode.
+    * false is set for development.
+    * this execution mode affects where the output files are created. * In production mode they are stored locally in the current directory, while in development mode they
+    * are stored in the /src/test/scala/sandbox/generated_monitors/ path.
+    */
+
+  private var EXECUTION: Boolean = false
 
   /**
     * Flag indicating whether a test took place. Becomes false when a long test is executed but the <code>LONGTEST</code> flag is false.
@@ -123,16 +132,35 @@ object Verify {
     * latter mode is useful when e.g. working in an IDE such as IntelliJ where no script exists.
     *
     * @param arguments following the pattern:
-    *                  <code>(--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)] [--prediction num] [--prediction_type (smart | brute)] [--result <filename>]</code>
+    *                  <code>(--specfile <filename>) [--logfile <filename>] [--bits numOfBits]
+    *                  [--mode (debug | profile)] [--prediction num] [--prediction_type (smart | brute)]
+    *                  [--result <filename>] [--clear (0 | 1)] [--execution (0 | 1)]</code>
     */
 
   def main(arguments: Array[String]): Unit = {
-    val usage = "Usage: (--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)] [--prediction num] [--prediction_type (smart | brute)] [--result <filename>]"
+    val usage =
+      """Usage:
+        |
+        |      (--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)]
+        |      [--prediction num] [--prediction_type (smart | brute)] [--result <filename>]
+        |      [--clear (0 | 1)] [--execution (0 | 1)]
+        |
+        |Options:
+        |   --specfile          the path to a file containing the specification document. This is a mandatory field.
+        |   --logfile           the path to a file containing the log in CSV format to be analyzed.
+        |   --bits              number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
+        |   --mode              specifies output modes. by default no one is active.
+        |   --prediction        indicates whether prediction is required, along with the size of the prediction parameters.
+        |   --prediction_type   specifies prediction approach. by default smart approach is activated.
+        |   --result            the path to a result filename. If not specify the default is the running DejaVu folder. For development mode.
+        |   --execution         indicating whether to work in production or development mode. this execution mode affects where the output files are created.
+        |   --clear             indicating whether to clear generated files and folder. For development mode.
+        """.stripMargin
     SymbolTable.reset()
 
     val args = arguments.toList
 
-    if (2 <= arguments.length && arguments.length <= 16 && arguments.length % 2 == 0) {
+    if (2 <= arguments.length && arguments.length <= 18 && arguments.length % 2 == 0) {
       val argMap = Map.newBuilder[String, Any]
       arguments.sliding(2, 2).toList.collect {
         case Array("--specfile", specfile: String) => argMap.+=("specfile" -> specfile)
@@ -142,9 +170,11 @@ object Verify {
         case Array("--prediction", predictionLength: String) => argMap.+=("prediction" -> predictionLength)
         case Array("--prediction_type", predictionType: String) => argMap.+=("prediction_type" -> predictionType)
         case Array("--resultfile", resultfile: String) => argMap.+=("resultfile" -> resultfile)
+        case Array("--execution", execution: String) => argMap.+=("execution" -> execution)
         case Array("--clear", mode: String) => argMap.+=("clear" -> mode)
       }
 
+      // Validate the spec file argument
       val specFile = argMap.result().get("specfile")
       val specFilePath = specFile match {
         case Some(value) => value.toString
@@ -159,6 +189,7 @@ object Verify {
         return
       }
 
+      // Validate the trace file argument
       val logFile = argMap.result().get("logfile")
       val logFilePath = logFile match {
         case Some(value) => value.toString
@@ -173,6 +204,7 @@ object Verify {
         }
       }
 
+      // Validate the result file argument
       val resultFile = argMap.result().get("resultfile")
       val resultFilePath = resultFile match {
         case Some(value) => value.toString
@@ -187,6 +219,8 @@ object Verify {
         }
       }
 
+
+      // Validate the number of used bits argument
       val bits = argMap.result().get("bits")
       bits match {
         case Some(value) =>
@@ -197,6 +231,7 @@ object Verify {
         case None => println("bits argument not activated")
       }
 
+      // Validate the prediction arguments
       val prediction = argMap.result().get("prediction")
       prediction match {
         case Some(value) =>
@@ -218,6 +253,7 @@ object Verify {
         case None => println("prediction type argument not activated")
       }
 
+      // Validate the output mode argument
       val mode = argMap.result().get("mode")
       mode match {
         case Some(value) =>
@@ -229,6 +265,7 @@ object Verify {
         case None => println("mode argument not activated")
       }
 
+      // Validate the clear files argument
       val clear = argMap.result().get("clear")
       clear match {
         case Some(value) =>
@@ -240,6 +277,18 @@ object Verify {
         case None => println(s"clear is set to default value (CLEAR=$CLEAR)")
       }
 
+      // Validate the execution mode argument
+      val execution = argMap.result().get("execution")
+      execution match {
+        case Some(value) =>
+          if (!(value != "0" || value != "1")) {
+            println(s"*** execution argument must be: 1 or 0, and not ${value.toString}")
+            return
+          }
+          if (value == "0") EXECUTION = false else EXECUTION = true
+        case None => println(s"execution is set to default value development (EXECUTION=$EXECUTION)")
+      }
+
       var generatedMonitorsPath: String = null
 
       time("total") {
@@ -247,13 +296,25 @@ object Verify {
           val p = new Parser
           val spec = p.parseFile(specFilePath)
           println(spec)
-          spec.translate()
+          spec.translate(EXECUTION)
           generatedMonitorsPath = spec.generatedMonitorsPath
         }
-        val logfileIndex = args.indexOf("--specfile")
-        val evaluationArguments = args.take(logfileIndex) ++ args.drop(logfileIndex + 2)
-        if (args.length > 2) compileAndExecute(evaluationArguments.mkString(" "), generatedMonitorsPath)
+
+        // Removes unnecessary arguments for the evaluation step.
+        val specfileIndex = args.indexOf("--specfile")
+        var evaluationArguments = args.take(specfileIndex) ++
+                                  args.drop(specfileIndex + 2)
+        val executionIndex = evaluationArguments.indexOf("--execution")
+        evaluationArguments = evaluationArguments.take(executionIndex) ++
+                              evaluationArguments.drop(executionIndex + 2)
+
+
+        // Execute the evaluation step.
+        if (args.length > 2 && logFilePath != null)
+          compileAndExecute(evaluationArguments.mkString(" "), generatedMonitorsPath)
       }
+    } else {
+      println(s"$usage")
     }
   }
 

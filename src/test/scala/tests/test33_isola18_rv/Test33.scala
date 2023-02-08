@@ -11,7 +11,7 @@ class Test33 extends TestCase {
   val log1 = s"$TEST/log1.csv"
 
   @Test def test1(): Unit = {
-    Verify("--specfile", spec, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile,1)
   }
 }

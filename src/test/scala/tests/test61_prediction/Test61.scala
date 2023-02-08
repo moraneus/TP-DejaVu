@@ -15,7 +15,7 @@ class Test61 extends TestCase {
   val log2 = s"$TEST/log2.csv"
 
   @Test def test1_1(): Unit = {
-    Verify("--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "3", "--prediction", "3")
+    Verify("--execution", "0", "--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "3", "--prediction", "3")
     // *=0 for success, *=1 for failure
     val expected = List[String](
       "r(6)=0;r(61)=1;r(6)=1",
@@ -105,7 +105,7 @@ class Test61 extends TestCase {
   }
 
   @Test def test1_2(): Unit = {
-    Verify("--specfile", spec1, "--logfile", log2, "--resultfile", resultfile, "--prediction", "4", "--bits", "3")
+    Verify("--execution", "0", "--specfile", spec1, "--logfile", log2, "--resultfile", resultfile, "--prediction", "4", "--bits", "3")
     // *=0 for success, *=1 for failure
     val expected = List[String](
       "r(1)=0;r(11)=0;r(1)=0;r(11)=0",

@@ -17,17 +17,17 @@ class Test39 extends TestCase {
   val biglog10000k = s"$TEST/biglog10000k.csv"
 
   @Test def test1(): Unit = {
-    Verify("--specfile", spec, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log1, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile,1,4,9,14,21,24,26)
   }
 
   @Test def test2(): Unit = {
-    Verify("--specfile", spec, "--logfile", log2, "--resultfile", resultfile, "--bits", "3")
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log2, "--resultfile", resultfile, "--bits", "3")
     checkResults(resultfile)
   }
 
   @Test def test3(): Unit = {
-    Verify("--specfile", spec, "--logfile", log3, "--resultfile", resultfile, "--bits", "3", "--mode", "debug")
+    Verify("--execution", "0", "--specfile", spec, "--logfile", log3, "--resultfile", resultfile, "--bits", "3", "--mode", "debug")
     checkResults(resultfile)
   }
 
@@ -41,7 +41,7 @@ class Test39 extends TestCase {
   // Processed 102001 events
   // Elapsed trace analysis time: 1.528s
   @Test def test4(): Unit = {
-    Verify("--specfile", spec, "--logfile", biglog100k, "--resultfile", resultfile)
+    Verify("--execution", "0", "--specfile", spec, "--logfile", biglog100k, "--resultfile", resultfile)
     checkResults(resultfile,102001)
   }
 
@@ -51,7 +51,7 @@ class Test39 extends TestCase {
   // Processed 1200001 events
   // Elapsed trace analysis time: 3.274s
   @Test def test5(): Unit = {
-    Verify("--specfile", spec, "--logfile", biglog1000k, "--resultfile", resultfile)
+    Verify("--execution", "0", "--specfile", spec, "--logfile", biglog1000k, "--resultfile", resultfile)
     checkResults(resultfile,1200001)
   }
 
@@ -61,7 +61,7 @@ class Test39 extends TestCase {
   // Processed 5200001 events
   // Elapsed trace analysis time: 7.102s
   @Test def test6(): Unit = {
-    Verify("--specfile", spec, "--logfile", biglog5000k, "--resultfile", resultfile)
+    Verify("--execution", "0", "--specfile", spec, "--logfile", biglog5000k, "--resultfile", resultfile)
     checkResults(resultfile,5200001)
   }
 
@@ -71,7 +71,7 @@ class Test39 extends TestCase {
   // Processed 10200001 events
   // Elapsed trace analysis time: 12.777s
   @Test def test7(): Unit = {
-    Verify("--specfile", spec, "--logfile", biglog10000k, "--resultfile", resultfile)
+    Verify("--execution", "0", "--specfile", spec, "--logfile", biglog10000k, "--resultfile", resultfile)
     checkResults(resultfile,10200001)
   }
 }
