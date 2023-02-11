@@ -1,0 +1,207 @@
+#!/bin/bash
+
+echo " ===== RESULT ===== " >> result-dejavu-prediction-k-compare
+
+echo "########## spec 1 ##########" >> result-dejavu-prediction-k-compare
+echo "########## experiment 1 ##########"
+echo "########## experiment 1 ##########" >> result-dejavu-prediction-k-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_minimum.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+echo "########## experiment 2 ##########"
+echo "########## experiment 2 ##########" >> result-dejavu-prediction-k-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_minimum.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+echo "########## experiment 3 ##########"
+echo "########## experiment 3 ##########" >> result-dejavu-prediction-k-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_minimum.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+echo "########## experiment 4 ##########"
+echo "########## experiment 4 ##########" >> result-dejavu-prediction-k-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_minimum.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+echo "########## experiment 5 ##########"
+echo "########## experiment 5 ##########" >> result-dejavu-prediction-k-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_medium.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+echo "########## experiment 6 ##########"
+echo "########## experiment 6 ##########" >> result-dejavu-prediction-k-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_medium.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+echo "########## experiment 7 ##########"
+echo "########## experiment 7 ##########" >> result-dejavu-prediction-k-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_medium.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+# echo "########## experiment 8 ##########"
+# echo "########## experiment 8 ##########" >> result-dejavu-prediction-k-compare
+# (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_medium.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+echo "########## experiment 9 ##########"
+echo "########## experiment 9 ##########" >> result-dejavu-prediction-k-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_maximum.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+echo "########## experiment 10 ##########"
+echo "########## experiment 10 ##########" >> result-dejavu-prediction-k-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_maximum.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+echo "########## experiment 11 ##########"
+echo "########## experiment 11 ##########" >> result-dejavu-prediction-k-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_maximum.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+# echo "########## experiment 12 ##########"
+# echo "########## experiment 12 ##########" >> result-dejavu-prediction-k-compare
+# (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala --logfile trace_1_maximum.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+
+ echo "########## spec 2 ##########" >> result-dejavu-prediction-k-compare
+
+ echo "########## experiment 13 ##########"
+ echo "########## experiment 13 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_minimum.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 14 ##########"
+ echo "########## experiment 14 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_minimum.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 15 ##########"
+ echo "########## experiment 15 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_minimum.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 16 ##########"
+ echo "########## experiment 16 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_minimum.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 17 ##########"
+ echo "########## experiment 17 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_medium.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 18 ##########"
+ echo "########## experiment 18 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_medium.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 19 ##########"
+ echo "########## experiment 19 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_medium.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ # echo "########## experiment 20 ##########"
+ # echo "########## experiment 20 ##########" >> result-dejavu-prediction-k-compare
+ # (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_medium.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 21 ##########"
+ echo "########## experiment 21 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_maximum.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 22 ##########"
+ echo "########## experiment 22 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_maximum.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 23 ##########"
+ echo "########## experiment 23 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_maximum.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ # echo "########## experiment 24 ##########"
+ # echo "########## experiment 24 ##########" >> result-dejavu-prediction-k-compare
+ # (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec2.scala --logfile trace_2_maximum.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+
+
+ echo "########## spec 3 ##########" >> result-dejavu-prediction-k-compare
+
+ echo "########## experiment 25 ##########"
+ echo "########## experiment 25 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_minimum.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 26 ##########"
+ echo "########## experiment 26 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_minimum.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 27 ##########"
+ echo "########## experiment 27 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_minimum.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 28 ##########"
+ echo "########## experiment 28 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_minimum.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 29 ##########"
+ echo "########## experiment 29 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_medium.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 30 ##########"
+ echo "########## experiment 30 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_medium.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 31 ##########"
+ echo "########## experiment 31 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_medium.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ # echo "########## experiment 32 ##########"
+ # echo "########## experiment 32 ##########" >> result-dejavu-prediction-k-compare
+ # (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_medium.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 33 ##########"
+ echo "########## experiment 33 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_maximum.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 34 ##########"
+ echo "########## experiment 34 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_maximum.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 35 ##########"
+ echo "########## experiment 35 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_maximum.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ # echo "########## experiment 36 ##########"
+ # echo "########## experiment 36 ##########" >> result-dejavu-prediction-k-compare
+ # (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec3.scala --logfile trace_3_maximum.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+
+
+ echo "########## spec 4 ##########" >> result-dejavu-prediction-k-compare
+
+ echo "########## experiment 37 ##########"
+ echo "########## experiment 37 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_minimum.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 38 ##########"
+ echo "########## experiment 38 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_minimum.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 39 ##########"
+ echo "########## experiment 39 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_minimum.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 40 ##########"
+ echo "########## experiment 40 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_minimum.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 41 ##########"
+ echo "########## experiment 41 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_medium.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 42 ##########"
+ echo "########## experiment 42 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_medium.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 43 ##########"
+ echo "########## experiment 43 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_medium.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ # echo "########## experiment 44 ##########"
+ # echo "########## experiment 44 ##########" >> result-dejavu-prediction-k-compare
+ # (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_medium.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 45 ##########"
+ echo "########## experiment 45 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_maximum.csv --bits 8 --prediction 3 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 46 ##########"
+ echo "########## experiment 46 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_maximum.csv --bits 8 --prediction 3 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1
+
+ echo "########## experiment 47 ##########"
+ echo "########## experiment 47 ##########" >> result-dejavu-prediction-k-compare
+ (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_maximum.csv --bits 8 --prediction 5 --prediction_type smart) >> result-dejavu-prediction-k-compare 2>&1
+
+ # echo "########## experiment 48 ##########"
+ # echo "########## experiment 48 ##########" >> result-dejavu-prediction-k-compare
+ # (gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec4.scala --logfile trace_4_maximum.csv --bits 8 --prediction 5 --prediction_type brute) >> result-dejavu-prediction-k-compare 2>&1

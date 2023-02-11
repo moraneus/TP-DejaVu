@@ -1,0 +1,2 @@
+
+prop p : exists x . ( g(x) & ( P t(x) & P b(x) & P v(x) ) )

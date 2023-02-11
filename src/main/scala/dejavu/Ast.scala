@@ -576,7 +576,7 @@ case class Spec(properties: List[Property]) {
          |
          |
          |  def generateValue(varAssignments: Map[Any, BDD]): String = {
-         |    var tmpVal = varAssignments.head._1.toString
+         |    var tmpVal = if (varAssignments.nonEmpty) varAssignments.head._1.toString else ""
          |    tmpVal += "1"
          |    var foundNewValue = false
          |    while (!foundNewValue) {

@@ -41,7 +41,8 @@ object Verify {
   /**
     * Flag indicating whether to work in production or development mode.
     * false is set for development.
-    * this execution mode affects where the output files are created. * In production mode they are stored locally in the current directory, while in development mode they
+    * this execution mode affects where the output files are created.
+    * * In production mode they are stored locally in the current directory, while in development mode they
     * are stored in the /src/test/scala/sandbox/generated_monitors/ path.
     */
 
