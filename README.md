@@ -53,7 +53,7 @@ DejaVu is implemented in Scala. In this version we used Scala 2.11.12
 The script is applied as follows:
 
     dejavu (--specfile=<filename>) (--logfile=<filename>) [--bits=numOfBits] [--mode=(debug | profile)]
-          [--prediction=num] [--prediction_type=(smart | brute)] [--clear=(0 | 1)]
+          [--prediction=num] [--prediction_type=(smart | brute)] [--expected_verdict=(0 | 1)] [--clear=(0 | 1)]
 
     Options:
         -s, --specfile          the path to a file containing the specification document. This is a mandatory field.
@@ -62,6 +62,7 @@ The script is applied as follows:
         -m, --mode              specifies output modes. by default no one is active.
         -p, --prediction        indicates whether prediction is required, along with the size of the prediction parameters.
         -t, --prediction_type   specifies prediction approach. by default smart approach is activated.
+        -e, --expected_verdict  specifies the expected prediction verdict (1=True, 0=False). By default the tool will predict all possibilities if not expected verdict has given.
         -c, --clear             indicating whether to clear generated files and folder. value of '1' is for cleaning.
 
 #### Some Execution Examples
@@ -76,10 +77,10 @@ The script is applied as follows:
 ./dejavu --specfile=/path/to/specfile -l=/path/to/logfile --mode=debug
 ```
 ```bash
-./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=5 --prediction=3 --prediction_type=brute
+./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=5 --prediction=3 --prediction_type=brute -expected_verdict=0
 ```
 ```bash
-./dejavu -s=/path/to/specfile -l=/path/to/logfile -b=5 -p=3 -t=smart
+./dejavu -s=/path/to/specfile -l=/path/to/logfile -b=5 -p=3 -t=smart -e=1
 ```
 
 **The specification document file** (``--specfile=<filename>``) This is the temporal specification that the trace must satisfy. See explanation of the specification language below.
@@ -121,7 +122,7 @@ events in specification format:
 In case the log file is not timed (as described just above), time is considered as always being 0.
 One can still check timed properties against such a log, but of course it makes little sense.
 
-**The bits per variable** (``---bits=numOfBits``) indicates how many bits are assigned to each variable in the BDDs. 
+**The bits per variable** (``--bits=numOfBits``) indicates how many bits are assigned to each variable in the BDDs. 
 This parameter is optional with the default value being 20. If the number is too low an error message will be issued 
 during analysis as explained below. A too high number can have impact on the efficiency of the algorithm. Note that the 
 number of values representable by N bits is 2^N, so one in general does not need very large numbers.  
@@ -129,12 +130,16 @@ number of values representable by N bits is 2^N, so one in general does not need
 The algorithm/implementation will perform garbage collection on allocated
 BDDs, re-using BDDs that are no longer needed for checking the property, depending on the form of the formula.
 
-**Debugging** (``---mode=debug``) Usually one picks a low number of bits
+**Debugging** (``--mode=debug``) Usually one picks a low number of bits
 for debugging purposes (e.g. 3). The result is debugging output showing
 the progress of formula evaluation for each event and the progress of the prediction if activated. Amongst the output
 is BDD graphs visualizable with GraphViz (http://www.graphviz.org).
 
-**Delete results and created files** (``--clear=1``) specifies whether created files and folders should be deleted.
+**Prediction** (``--prediction=n``) Specifies whether to predict optional events of size 'n'.
+Some supporting flags are ``--prediction_type``, which define the method of prediction, and 
+``--expected_verdict``, which specify a verdict target during evaluation.
+
+**Delete results and created files** (``--clear=1``) Specifies whether created files and folders should be deleted.
 The value `1` means that the files should be deleted, while `0`, the default setting, means that the files 
 remain in the `output` folder. The files created are as follows: 
 `TraceMonitor.scala`, `ast.dot`, `dejavu-results`.
@@ -210,7 +215,7 @@ The tool will notify for a new prediction by printing it to console along with t
 
     ######### SUMMARY OF PREDICTION #########
 
-        b(1)=0 -> g(2)=0 -> v(8)=1 -> DONE
+        b(1)=1 -> g(2)=1 -> v(8)=0 -> DONE
         Processed 3 events
         
         3 errors detected!
@@ -226,8 +231,10 @@ The tool will notify for a new prediction by printing it to console along with t
 
     - Garbage collector was not activated
 
-indicates that DejaVu predicts k=3 events ("Processed 3 events"). The first two events didn't fail the property (they both equal to 0), while the third event failed the property (equal to 1).
-The rest of the output information is a statistic about the evaluation with the addition of the currently predicted events.
+indicates that DejaVu predicts k=3 events ("Processed 3 events"). The first two events didn't fail the property 
+(they both equal to 1 = True), while the third event failed the property (equal to 0 = False).
+The rest of the output information is a statistic about the whole evaluation with the addition of the currently 
+predicted events.
 
 **Timing results**
 The system will print the following timings:
@@ -510,7 +517,6 @@ approach, while it fails with the ``brute`` approach due to excessive memory con
 * In our experiments we have seen that the prediction possibilities grow exponentially with respect to 
 the prediction parameter `k`, therefore the prediction is limited to a certain `k` which depends on the 
 environment, the evaluated specification and the evaluated trace.
-* The bits used for variables affect the speed of prediction. Make sure you use as few bits as necessary (''--bits=x'').
 * The prediction process is limited to specification, where each predicate has one value only. 
 * The prediction process generate only one event per time point. 
 * No tests were performed for specifications containing op, e.g., x < 10, x <= y or those referring to time units. The prediction 

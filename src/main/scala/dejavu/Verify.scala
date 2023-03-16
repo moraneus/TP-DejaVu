@@ -42,7 +42,7 @@ object Verify {
     * Flag indicating whether to work in production or development mode.
     * false is set for development.
     * this execution mode affects where the output files are created.
-    * * In production mode they are stored locally in the current directory, while in development mode they
+    * In production mode they are stored locally in the current directory, while in development mode they
     * are stored in the /src/test/scala/sandbox/generated_monitors/ path.
     */
 
@@ -143,7 +143,7 @@ object Verify {
       """Usage:
         |
         |      (--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)]
-        |      [--prediction num] [--prediction_type (smart | brute)] [--result <filename>]
+        |      [--prediction num] [--prediction_type (smart | brute)] [--expected_verdict (0 | 1)] [--result <filename>]
         |      [--clear (0 | 1)] [--execution (0 | 1)]
         |
         |Options:
@@ -152,7 +152,8 @@ object Verify {
         |   --bits              number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
         |   --mode              specifies output modes. by default no one is active.
         |   --prediction        indicates whether prediction is required, along with the size of the prediction parameters.
-        |   --prediction_type   specifies prediction approach. by default smart approach is activated.
+        |   --prediction_type   specifies prediction approach. By default smart approach is activated.
+        |   --expected_verdict  specifies the expected prediction verdict (1=True, 0=False). By default the tool will predict all possibilities if not expected verdict has given.
         |   --result            the path to a result filename. If not specify the default is the running DejaVu folder. For development mode.
         |   --execution         indicating whether to work in production or development mode. this execution mode affects where the output files are created.
         |   --clear             indicating whether to clear generated files and folder. For development mode.
@@ -161,7 +162,7 @@ object Verify {
 
     val args = arguments.toList
 
-    if (2 <= arguments.length && arguments.length <= 18 && arguments.length % 2 == 0) {
+    if (2 <= arguments.length && arguments.length <= 20 && arguments.length % 2 == 0) {
       val argMap = Map.newBuilder[String, Any]
       arguments.sliding(2, 2).toList.collect {
         case Array("--specfile", specfile: String) => argMap.+=("specfile" -> specfile)
@@ -170,6 +171,7 @@ object Verify {
         case Array("--mode", mode: String) => argMap.+=("mode" -> mode)
         case Array("--prediction", predictionLength: String) => argMap.+=("prediction" -> predictionLength)
         case Array("--prediction_type", predictionType: String) => argMap.+=("prediction_type" -> predictionType)
+        case Array("--expected_verdict", expectedVerdict: String) => argMap.+=("expected_verdict" -> expectedVerdict)
         case Array("--resultfile", resultfile: String) => argMap.+=("resultfile" -> resultfile)
         case Array("--execution", execution: String) => argMap.+=("execution" -> execution)
         case Array("--clear", mode: String) => argMap.+=("clear" -> mode)
@@ -243,6 +245,18 @@ object Verify {
         case None => println("prediction argument not activated")
       }
 
+      // Validate the expected verdict argument
+      val expected = argMap.result().get("expected_verdict")
+      expected match {
+        case Some(value) =>
+          if (!(value != "0" || value != "1")) {
+            println(s"*** expected verdict argument must be: 1 or 0, and not ${value.toString}")
+            return
+          }
+        case None => println(s"expected argument is not set")
+      }
+
+      // Validate the prediction type argument
       val predictionType = argMap.result().get("prediction_type")
       predictionType match {
         case Some(value) =>

@@ -24,6 +24,8 @@ object Options {
   var PREDICTION_K: Int = 0
   var PREDICTION_TYPE: String = "smart"
   var PREDICTION_RUNNING_STATE: Boolean = false
+  var EXPECTED_VERDICT: Int = -1
+  var FOUND_VERDICT: Boolean = false
   var RESULT_FILE: String = ""
 }
 

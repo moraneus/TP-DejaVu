@@ -1,0 +1,2 @@
+
+prop p : forall x . forall y . forall z . forall w . a(5) | r(x) | t(y) | b(5) | c(z) | d(w)

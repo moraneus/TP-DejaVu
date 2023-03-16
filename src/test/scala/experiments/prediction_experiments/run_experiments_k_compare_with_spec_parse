@@ -4,69 +4,69 @@ echo "=== RESULT ===" >> result-dejavu-prediction
 
 echo "########## spec 1 ##########" >> result-dejavu-prediction
 
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_minimum.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_minimum.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_minimum.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_minimum.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_1.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_1.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_1.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_1.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_medium.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_medium.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_medium.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_medium.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_2.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_2.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_2.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_2.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_maximum.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_maximum.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_maximum.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_1_maximum.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_3.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_3.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_3.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec1.qtl --logfile=trace_spec_1_order_3.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
 
 echo "########## spec 2 ##########" >> result-dejavu-prediction
 
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_minimum.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_minimum.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_minimum.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_minimum.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_1.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_1.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_1.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_1.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_medium.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_medium.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_medium.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_medium.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_2.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_2.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_2.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_2.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_maximum.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_maximum.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_maximum.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_2_maximum.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_3.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_3.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_3.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec2.qtl --logfile=trace_spec_2_order_3.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
 echo "########## spec 3 ##########" >> result-dejavu-prediction
 
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_minimum.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_minimum.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_minimum.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_minimum.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_1.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_1.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_1.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_1.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_medium.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_medium.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_medium.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_medium.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_2.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_2.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_2.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_2.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_maximum.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_maximum.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_maximum.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_3_maximum.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_3.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_3.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_3.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec3.qtl --logfile=trace_spec_3_order_3.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
 echo "########## spec 4 ##########" >> result-dejavu-prediction
 
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_minimum.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_minimum.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_minimum.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_minimum.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_1.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_1.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_1.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_1.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_medium.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_medium.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_medium.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_medium.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_2.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_2.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_2.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_2.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
 
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_maximum.csv --bits=5 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_maximum.csv --bits=5 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_maximum.csv --bits=5 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
-(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_4_maximum.csv --bits=5 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_3.csv --bits=20 --prediction=3 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_3.csv --bits=20 --prediction=3 --prediction_type=brute) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_3.csv --bits=20 --prediction=5 --prediction_type=smart) >> result-dejavu-prediction 2>&1
+(gtime ./dejavu --specfile=spec4.qtl --logfile=trace_spec_4_order_3.csv --bits=20 --prediction=5 --prediction_type=brute) >> result-dejavu-prediction 2>&1
