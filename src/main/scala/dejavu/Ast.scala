@@ -376,10 +376,10 @@ case class Spec(properties: List[Property]) {
         |    * The main prediction function, which is works by recursion.
         |    *
         |    * @param k             the k step for the prediction
-        |    * @param predictEvents the predicts event seen so far
+        |    * @param predictedEvents the predicts event seen so far
         |    */
         |
-        |  def prediction(k: Int, predictEvents: ListBuffer[(String, String, Int)]): Unit
+        |  def prediction(k: Int, predictedEvents: ListBuffer[(String, String, Int)]): Unit
         |
         |  /**
         |    * Store the current state of the monitoring process.
@@ -402,12 +402,9 @@ case class Spec(properties: List[Property]) {
         |                          preTmp: Array[BDD],
         |                          statTmp: Array[Int],
         |                          variableBddsTmp: Array[BDD]): Unit = {
-        |    for ((bdd: BDD, i: Int) <- F.now.toList.zipWithIndex) {
-        |      nowTmp(i) = bdd
-        |    }
-        |    for ((bdd: BDD, i: Int) <- F.pre.toList.zipWithIndex) {
-        |      preTmp(i) = bdd
-        |    }
+        |
+        |    nowTmp.indices.foreach(i => nowTmp(i) = F.now(i))
+        |    preTmp.indices.foreach(i => preTmp(i) = F.pre(i))
         |
         |    statTmp(0) = M.lineNr
         |    statTmp(1) = M.errors
@@ -440,12 +437,8 @@ case class Spec(properties: List[Property]) {
         |                            statTmp: Array[Int],
         |                            variableBddsTmp: Array[BDD]): Unit = {
         |
-        |    for ((bdd: BDD, i: Int) <- nowTmp.toList.zipWithIndex) {
-        |      F.now(i) = bdd
-        |    }
-        |    for ((bdd: BDD, i: Int) <- preTmp.toList.zipWithIndex) {
-        |      F.pre(i) = bdd
-        |    }
+        |    nowTmp.indices.foreach(i => F.now(i) = nowTmp(i))
+        |    preTmp.indices.foreach(i => F.pre(i) = preTmp(i))
         |
         |    M.lineNr = statTmp(0)
         |    M.errors = statTmp(1)
@@ -455,12 +448,12 @@ case class Spec(properties: List[Property]) {
         |    V.inRelation = variableBddsTmp(2)
         |  }
         |
-        |  def printPredictionSummary(predictEvents: ListBuffer[(String, String, Int)]): Unit = {
+        |  def printPredictionSummary(predictedEvents: ListBuffer[(String, String, Int)]): Unit = {
         |    // Prints the selected path
         |    println("\n\n######### SUMMARY OF PREDICTION #########\n")
         |
         |    var predictionAsString = ""
-        |    for (event <- predictEvents) {
+        |    for (event <- predictedEvents) {
         |      val currEventState = s"${event._1}(${event._2})=${event._3}"
         |      predictionAsString += currEventState + ";"
         |      print(s"$currEventState -> ")
@@ -480,17 +473,17 @@ case class Spec(properties: List[Property]) {
         |    * The main prediction function, which is works by recursion.
         |    *
         |    * @param k             the k step for the prediction
-        |    * @param predictEvents the predicts event seen so far
+        |    * @param predictedEvents the predicts event seen so far
         |    */
-        |  override def prediction(k: Int, predictEvents: ListBuffer[(String, String, Int)]): Unit = {
+        |  override def prediction(k: Int, predictedEvents: ListBuffer[(String, String, Int)]): Unit = {
         |
         |       // Recursion Base case
         |       if (k == 0) {
-        |         if (predictEvents.last._3 == Options.EXPECTED_VERDICT) {
+        |         if (predictedEvents.last._3 == Options.EXPECTED_VERDICT) {
         |           Options.FOUND_VERDICT = true
         |         }
         |         counter += 1
-        |         printPredictionSummary(predictEvents)
+        |         printPredictionSummary(predictedEvents)
         |         monitor.end()
         |         return
         |       }
@@ -506,7 +499,7 @@ case class Spec(properties: List[Property]) {
          |      val tmpVariableBdds = Array.fill(3)(G.False)
          |      val tmpPre: Array[BDD] = Array.fill(${LTL.next})(G.False)
          |      val tmpNow: Array[BDD] = Array.fill(${LTL.next})(G.False)
-         |      var tmpPredictEvents: ListBuffer[(String, String, Int)] = predictEvents
+         |      var tmpPredictedEvents: ListBuffer[(String, String, Int)] = predictedEvents
          |
          |      val F: Formula = monitor.formulae.head
          |      val vars: Map[String, Variable] = G.varMap
@@ -519,9 +512,7 @@ case class Spec(properties: List[Property]) {
     writeln(
       """
         |      // Loop through all property variables
-        |    for (v <- vars) {
-        |      val varName = v._1
-        |      val varObject = v._2
+        |    for ((varName, varObject) <- vars) {
         |      var equivClassesNum = 0
         |      var varAssignments = varObject.bdds
         |      val unseenValue = generateValue(varAssignments)
@@ -537,33 +528,31 @@ case class Spec(properties: List[Property]) {
         |        val filteredEvents = monitor.eventsInVars filterKeys List(varName).toSet
         |        val allRelevantEvents = if (constFlag) filteredEvents.++(monitor.eventsInConstants) else filteredEvents
         |        constFlag = false
-        |        for (t <- allRelevantEvents) {
-        |          val value = t._1
-        |          val eventList = t._2
+        |        for ((value, eventList) <- allRelevantEvents) {
         |          val evaluationValue: String = if (value != varName) value else fetchedValue
         |          for (event <- eventList) {
         |            // Store the current state, before taking the recursion step.
-        |            storePreviousState(F, monitor, v._2, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
+        |            storePreviousState(F, monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
         |            tmpEventTable = monitor.statistics.eventTable
-        |            tmpVarBdds = v._2.bdds
+        |            tmpVarBdds = varObject.bdds
         |
         |            monitor.submit(event, List(evaluationValue))
         |            val eventError = if (tmpStat(1) < monitor.errors) 0 else 1
-        |            tmpPredictEvents.append((event, evaluationValue, eventError))
+        |            tmpPredictedEvents.append((event, evaluationValue, eventError))
         |
         |            if (!Options.FOUND_VERDICT) {
-        |                prediction(k - 1, tmpPredictEvents)
+        |                prediction(k - 1, tmpPredictedEvents)
         |            }
         |
         |            // When arrives here we need to recover to previous state
-        |            tmpPredictEvents = tmpPredictEvents.dropRight(k)
-        |            restorePreviousState(F, monitor, v._2, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
+        |            tmpPredictedEvents = tmpPredictedEvents.dropRight(k)
+        |            restorePreviousState(F, monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
         |            monitor.statistics.eventTable = tmpEventTable
-        |            v._2.bdds = tmpVarBdds
+        |            varObject.bdds = tmpVarBdds
         |          }
         |        }
         |      }
-        |      debug(s"##### Total Equivalence classes for variable=${v._1} and for k=$k is $equivClassesNum #####")
+        |      debug(s"##### Total Equivalence classes for variable=${varName} and for k=$k is $equivClassesNum #####")
         |    }
         |  }
         |
@@ -604,17 +593,17 @@ case class Spec(properties: List[Property]) {
          |     * The main prediction function, which is works by recursion.
          |     *
          |     * @param k               the k step for the prediction
-         |     * @param predictEvents   the predicts event seen so far
+         |     * @param predictedEvents   the predicts event seen so far
          |     */
-         |     def prediction(k: Int, predictEvents: ListBuffer[(String, String, Int)]): Unit = {
+         |     def prediction(k: Int, predictedEvents: ListBuffer[(String, String, Int)]): Unit = {
          |
          |       // Recursion Base case
          |       if (k == 0) {
-         |         if (predictEvents.last._3 == Options.EXPECTED_VERDICT) {
+         |         if (predictedEvents.last._3 == Options.EXPECTED_VERDICT) {
          |           Options.FOUND_VERDICT = true
          |         }
          |         counter += 1
-         |         printPredictionSummary(predictEvents)
+         |         printPredictionSummary(predictedEvents)
          |         monitor.end()
          |         return
          |       }
@@ -629,7 +618,7 @@ case class Spec(properties: List[Property]) {
          |      val tmpVariableBdds = Array.fill(3)(G.False)
          |      val tmpPre: Array[BDD] = Array.fill(${LTL.next})(G.False)
          |      val tmpNow: Array[BDD] = Array.fill(${LTL.next})(G.False)
-         |      var tmpPredictEvents: ListBuffer[(String, String, Int)] = predictEvents
+         |      var tmpPredictedEvents: ListBuffer[(String, String, Int)] = predictedEvents
          |
          |      val F: Formula = monitor.formulae.head
          |      val vars: Map[String, Variable] = G.varMap
@@ -641,11 +630,9 @@ case class Spec(properties: List[Property]) {
 
     writeln(
       """
-        |      // Loop through all property variables
-        |      for (v <- vars) {
+        |     // Loop through all property variables
+        |     for ((varName, varObject) <- vars) {
         |         var ghBdd = G.True
-        |         val varName = v._1
-        |         val varObject = v._2
         |         val varBits = varObject.bits
         |         val varBitsLength = varBits.length
         |
@@ -687,9 +674,7 @@ case class Spec(properties: List[Property]) {
         |          val filteredEvents = monitor.eventsInVars filterKeys List(varName).toSet
         |          val allRelevantEvents = if (constFlag) filteredEvents.++(monitor.eventsInConstants) else filteredEvents
         |          constFlag = false
-        |           for (t <- allRelevantEvents) {
-        |             val value = t._1
-        |             val eventList = t._2
+        |           for ((value, eventList) <- allRelevantEvents) {
         |             val evaluationValue: String = if (value != varName) value else fetchedValue
         |             for (event <- eventList) {
         |               // Store the current state, before taking the recursion step.
@@ -699,21 +684,21 @@ case class Spec(properties: List[Property]) {
         |
         |               monitor.submit(event, List(evaluationValue))
         |               val eventError = if (tmpStat(1) < monitor.errors) 0 else 1
-        |               tmpPredictEvents.append((event, evaluationValue, eventError))
+        |               tmpPredictedEvents.append((event, evaluationValue, eventError))
         |
         |               if (!Options.FOUND_VERDICT) {
-        |                 prediction(k - 1, tmpPredictEvents)
+        |                 prediction(k - 1, tmpPredictedEvents)
         |               }
         |
-        |                // When arrives here we need to recover to previous state
-        |                tmpPredictEvents = tmpPredictEvents.dropRight(k)
+        |                // Recover to previous state when arriving here
+        |                tmpPredictedEvents = tmpPredictedEvents.dropRight(k)
         |                restorePreviousState(F, monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
         |                monitor.statistics.eventTable = tmpEventTable
         |                varObject.bdds = tmpVarBdds
         |            }
         |          }
         |        }
-        |        debug(s"##### Total Equivalence classes for variable=${v._1} and for k=$k is $equivClassesNum #####")
+        |        debug(s"##### Total Equivalence classes for variable=$varName and for k=$k is $equivClassesNum #####")
         |      }
         |    }
         |
@@ -738,8 +723,8 @@ case class Spec(properties: List[Property]) {
         |       if (!assignment._2.and(ia).equals(G.False)) return assignmentValue
         |     }
         |
-        |     // When no matching is found we return the max value (Alphanumeric order) + 1
-        |     if (varAssignmentsInList.isEmpty) return "1" else return (varAssignmentsInList.max + 1)
+        |     // If no matching is found, return the max value (alphanumeric order) + 1
+        |     if (varAssignmentsInList.isEmpty) "1" else (varAssignmentsInList.max + 1)
         |   }
         |
         |  /**
@@ -792,18 +777,20 @@ case class Spec(properties: List[Property]) {
          |  def main(args: Array[String]): Unit = {
          |
          |    if (2 <= args.length && args.length <= 14 && args.length % 2 == 0) {
-         |      val argMap = Map.newBuilder[String, Any]
+         |      val argMapBuilder = Map.newBuilder[String, Any]
          |      args.sliding(2, 2).toList.collect {
-         |        case Array("--logfile", logfile: String) => argMap.+=("logfile" -> logfile)
-         |        case Array("--bits", numOfBits: String) => argMap.+=("bits" -> numOfBits)
-         |        case Array("--mode", mode: String) => argMap.+=("mode" -> mode)
-         |        case Array("--prediction", predictionLength: String) => argMap.+=("prediction" -> predictionLength)
-         |        case Array("--prediction_type", predictionType: String) => argMap.+=("prediction_type" -> predictionType)
-         |        case Array("--expected_verdict", expectedVerdict: String) => argMap.+=("expected_verdict" -> expectedVerdict)
-         |        case Array("--resultfile", resultfile: String) => argMap.+=("resultfile" -> resultfile)
+         |        case Array("--logfile", logfile: String) => argMapBuilder.+=("logfile" -> logfile)
+         |        case Array("--bits", numOfBits: String) => argMapBuilder.+=("bits" -> numOfBits)
+         |        case Array("--mode", mode: String) => argMapBuilder.+=("mode" -> mode)
+         |        case Array("--prediction", predictionLength: String) => argMapBuilder.+=("prediction" -> predictionLength)
+         |        case Array("--prediction_type", predictionType: String) => argMapBuilder.+=("prediction_type" -> predictionType)
+         |        case Array("--expected_verdict", expectedVerdict: String) => argMapBuilder.+=("expected_verdict" -> expectedVerdict)
+         |        case Array("--resultfile", resultfile: String) => argMapBuilder.+=("resultfile" -> resultfile)
          |      }
          |
-         |      val logFile = argMap.result().get("logfile")
+         |      val argMap = argMapBuilder.result()
+         |
+         |      val logFile = argMap.get("logfile")
          |      val logfilePath = logFile match {
          |        case Some(value) => value.toString
          |        case None =>
@@ -818,7 +805,7 @@ case class Spec(properties: List[Property]) {
          |        return
          |      }
          |
-         |      val resultfile = argMap.result().get("resultfile")
+         |      val resultfile = argMap.get("resultfile")
          |      Options.RESULT_FILE = resultfile match {
          |        case Some(value) => value.toString
          |        case None => "$generatedMonitorsPath/dejavu-results"
@@ -830,7 +817,7 @@ case class Spec(properties: List[Property]) {
          |        return
          |      }
          |
-         |      val bits = argMap.result().get("bits")
+         |      val bits = argMap.get("bits")
          |      val bitsValue = bits match {
          |        case Some(value) =>
          |          if (!value.toString.matches(\"\"\"\\d+\"\"\")) {
@@ -843,7 +830,7 @@ case class Spec(properties: List[Property]) {
          |      }
          |      Options.BITS = bitsValue.toInt
          |
-         |      val prediction = argMap.result().get("prediction")
+         |      val prediction = argMap.get("prediction")
          |      val predictionValue = prediction match {
          |        case Some(value) =>
          |          if (!value.toString.matches(\"\"\"\\d+\"\"\")) {
@@ -857,7 +844,7 @@ case class Spec(properties: List[Property]) {
          |      }
          |      Options.PREDICTION_K = predictionValue.toInt
          |
-         |      val predictionType = argMap.result().get("prediction_type")
+         |      val predictionType = argMap.get("prediction_type")
          |      predictionType match {
          |        case Some(value) =>
          |          val predictionTypeValue = value.toString.toLowerCase()
@@ -870,7 +857,7 @@ case class Spec(properties: List[Property]) {
          |        case None => println("No prediction type was selected (default is smart)")
          |      }
          |
-         |      val expectedType = argMap.result().get("expected_verdict")
+         |      val expectedType = argMap.get("expected_verdict")
          |      expectedType match {
          |        case Some(value) =>
          |          val expectedTypeValue = value.toString
@@ -883,7 +870,7 @@ case class Spec(properties: List[Property]) {
          |        case None => println("No expected verdict type was selected (default is None)")
          |      }
          |
-         |      val mode = argMap.result().get("mode")
+         |      val mode = argMap.get("mode")
          |      mode match {
          |        case Some(value) =>
          |          val modeValue = value.toString.toLowerCase()
