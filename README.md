@@ -83,7 +83,7 @@ The script is applied as follows:
 ./dejavu -s=/path/to/specfile -l=/path/to/logfile -b=5 -p=3 -t=smart -e=1
 ```
 
-**The specification document file** (``--specfile=<filename>``) This is the temporal specification that the trace must satisfy. See explanation of the specification language below.
+**The specification document file** (``--specfile=<filename>``) is the temporal specification that the trace must satisfy. See explanation of the specification language below.
 
 **The log file** (``--logfile=<filename>``) should be in comma separated value format (CSV): http://edoceo.com/utilitas/csv-file-format. For example, a file of
 the form:
@@ -211,7 +211,7 @@ If not enough bits have been allocated for a variable to hold the number of valu
 One can/should experiment with BDD sizes.
 
 **Prediction results**
-The tool will notify for a new prediction by printing it to console along with the summary for this prediction.
+The tool will provide notifications for new predictions by displaying them in the console, accompanied by a concise summary for each prediction.
 
     ######### SUMMARY OF PREDICTION #########
 
@@ -231,10 +231,12 @@ The tool will notify for a new prediction by printing it to console along with t
 
     - Garbage collector was not activated
 
-indicates that DejaVu predicts k=3 events ("Processed 3 events"). The first two events didn't fail the property 
-(they both equal to 1 = True), while the third event failed the property (equal to 0 = False).
-The rest of the output information is a statistic about the whole evaluation with the addition of the currently 
-predicted events.
+DejaVu's prediction indicates that there are k=3 events, as denoted by "Processed 3 events." 
+Among these, the first two events successfully met the property criteria 
+(both equal to 1, which signifies True), whereas the third event failed to do so 
+(equal to 0, representing False). 
+The remaining output information presents a comprehensive evaluation, 
+including statistics and the latest predicted events.
 
 **Timing results**
 The system will print the following timings:
@@ -497,22 +499,32 @@ The same property can altermatively be expressed using two rules, more closely r
 
 The rule `closed(x)` is defined as a disjunction between three alternatives. The first alternative states that this predicate is true if we are in the initial state (the only state where `@true` is false), and there is no `toggle(x)` event. The next alternative states that `closed(x)` was true in the previous state and there is no `toggle(x)` event now. The third alternative states that we in the previous state were in the `open(x)` state and we observe a `toggle(x)` event. Similarly for the `open(x)` rule.
 
-## The DejaVu Prediction Expansion
+## Expanding DejaVu for Enhanced Prediction
 
-In our expansion we add the ability to predict the next `k` steps in 2 modes of prediction.
-The core of DejaVu remains as it was, without any improvements or changes. 
-In order to handle the prediction requests, we had to change the way that DejaVu gets and parses his arguments as it describe [above](#running-dejavu).
+We have extended DejaVu to include the capability of predicting the
+next `k` steps using two different prediction modes. The core
+functionality of DejaVu remains unaltered, without any modifications
+or enhancements. To accommodate the prediction requests, we had to
+modify the way DejaVu obtains and processes its command-line arguments, as
+described [above](#running-dejavu).der to handle the prediction requests, we had to change the way that DejaVu gets and parses his arguments as it describe [above](#running-dejavu).
 
 ### Prediction Modes
-We have two prediction modes.
-* ``brute`` - This mode is the trivial mode based on the brute force approach, trying all options without 
-any improvements to make it faster or more efficient. This mode was added for testing and experimentation purposes 
-and for comparison with our ``smart`` prediction approach.
-* ``smart`` - This mode is at the heart of our study. The smart prediction approach takes advantage of the fact that 
-some values are equivalent in a given time, reducing our predictive options. In some cases, e.g., after evaluating
-a long trace file with different events, the reduction is so significant that prediction is possible with the ``smart``
-approach, while it fails with the ``brute`` approach due to excessive memory consumption.
 
+We offer two distinct prediction modes:
+
+* ``brute`` - This mode utilizes a straightforward brute force approach,
+  exploring all possible options without any optimizations for speed or
+  efficiency. It has been included primarily for testing, experimentation,
+  and comparative purposes, allowing users to contrast it with our
+  ``smart`` prediction method.
+
+* ``smart`` - This mode lies at the core of our research. The smart
+  prediction method leverages the fact that some values are equivalent
+  within a specific time frame, thereby reducing the number of potential
+  predictions. In certain instances, such as after evaluating a lengthy
+  trace file containing various events, the reduction is so substantial
+  that the ``smart`` approach enables successful prediction, while the
+  ``brute`` method fails due to excessive memory usage.
 ### Prediction Limitations
 * In our experiments we have seen that the prediction possibilities grow exponentially with respect to 
 the prediction parameter `k`, therefore the prediction is limited to a certain `k` which depends on the 
