@@ -538,6 +538,15 @@ abstract class Monitor {
   def eventsInConstants: Map[String, List[String]]
 
   /**
+    * Returns the mapping of multiple values predicates referred to each value in the specification.
+    * Must be overridden by generated specification specific monitor.
+    *
+    * @return mapping of multiple values predicates referred to each value.
+    */
+
+  def multipleValuesPredicates: Map[Array[String], List[String]]
+
+  /**
     * Used for timing performance. The timing is printed on standard output.
     *
     * @param block the code block that is being timed.

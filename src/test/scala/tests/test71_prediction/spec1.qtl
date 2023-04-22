@@ -1,0 +1,2 @@
+// prop p: forall y . ( a(y) -> ( forall x . ( P b(x) & x < y ) ) )
+prop p: forall x . r(x) & x < y

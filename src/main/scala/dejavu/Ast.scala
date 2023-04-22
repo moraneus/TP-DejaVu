@@ -138,10 +138,31 @@ case class Spec(properties: List[Property]) {
     s"test_${(x take 10).mkString}"
   }
 
+
   private def buildEventString(eventsMapping: Map[String, mSet[String]]): String = {
     var eventsString: String = """Map( """
     for (event <- eventsMapping) {
       eventsString += s""""${event._1}" -> List("""
+      for (e <- event._2) {
+        eventsString += s""""$e","""
+      }
+      eventsString = eventsString.dropRight(1)
+      eventsString += "),"
+    }
+    eventsString = eventsString.dropRight(1) + " )"
+    eventsString
+  }
+
+  private def buildMultipleEventsString(eventsMapping: Map[String, mSet[String]]): String = {
+    var eventsString: String = """Map( """
+    for (event <- eventsMapping) {
+      eventsString += "Array( "
+      for (value <- event._1.split(",")) {
+        eventsString += s""""${value}","""
+      }
+      eventsString = eventsString.dropRight(1)
+      eventsString += " ) -> List("
+//      eventsString += s""""${event._1.split(",")}" ) -> List("""
       for (e <- event._2) {
         eventsString += s""""$e","""
       }
@@ -319,35 +340,98 @@ case class Spec(properties: List[Property]) {
 
     // ### Prediction Extension ###
     val property = properties.head
-    var eventsInVarsMapping = Map[String, mSet[String]]()
-    var eventsInConstMapping = Map[String, mSet[String]]()
+    val listOfMaps: Array[Map[String, mSet[String]]] = Array.fill(3)(Map.empty[String, mSet[String]])
+
+//    var eventsInVarsMapping = Map[String, mSet[String]]()
+//    var eventsInConstMapping = Map[String, mSet[String]]()
+//    var multipleValuesPredicateMapping = Map[String, mSet[String]]()
+
+//    breakable {
+//      for (a <- property.getPredicateTerms) {
+//        if (a.values.nonEmpty) {
+//          val values = a.values
+//          var currVar = values.mkString.replace("List(","").dropRight(0)
+//          if (values.size == 1) {
+//            if (values.head.getClass.getName == "dejavu.CPat")
+//            {
+//              currVar = currVar.replace("'", "")
+//              if (eventsInConstMapping.contains(currVar)) {
+//                eventsInConstMapping(currVar) += a.name
+//              } else {
+//                eventsInConstMapping += currVar -> mSet(a.name)
+//              }
+//            } else {
+//              if (eventsInVarsMapping.contains(currVar)) {
+//                eventsInVarsMapping(currVar) += a.name
+//              } else {
+//                eventsInVarsMapping += currVar -> mSet(a.name)
+//              }
+//            }
+//          } else {
+//            var multipleValues = ""
+//            for (value <- values) {
+//              if (values.head.getClass.getName == "dejavu.CPat") {
+//                multipleValues += s"${value.toString},"
+//              } else {
+//                multipleValues += s"${value.toString},"
+//              }
+//            }
+//            multipleValues = multipleValues.dropRight(1)
+//            if (multipleValuesPredicateMapping.contains(multipleValues)) {
+//              multipleValuesPredicateMapping(multipleValues) += a.name
+//            } else {
+//              multipleValuesPredicateMapping += multipleValues -> mSet(a.name)
+//            }
+//          }
+//        } else {
+//          eventsInVarsMapping = Map[String, mSet[String]]()
+//          break
+//        }
+//      }
+//    }
+
+    def addEventToMapping(mappingIndex: Int, key: String, eventName: String): Unit = {
+      if (listOfMaps(mappingIndex).contains(key)) {
+        listOfMaps(mappingIndex)(key) += eventName
+      } else {
+        listOfMaps(mappingIndex) += (key -> mSet(eventName))
+      }
+    }
+
+    def processSingleValue(value: Any, eventName: String): Unit = {
+      var currVar = value.toString
+      if (value.getClass.getName == "dejavu.CPat") {
+        currVar = currVar.replace("'", "")
+        addEventToMapping(1, currVar, eventName)
+      } else {
+        addEventToMapping(0, currVar, eventName)
+      }
+    }
+
+    def processMultipleValues(values: List[Any], eventName: String): Unit = {
+      val multipleValues = values.map(_.toString).mkString(",")
+      addEventToMapping(2, multipleValues, eventName)
+    }
+
     breakable {
       for (a <- property.getPredicateTerms) {
-        if (a.values.size == 1) {
-          val value = a.values.head
-          var currVar = value.toString
-          if (value.getClass.getName == "dejavu.CPat" ) {
-            currVar = currVar.replace("'", "")
-            if (eventsInConstMapping.contains(currVar)) {
-              eventsInConstMapping(currVar) += a.name
-            } else {
-              eventsInConstMapping += currVar -> mSet(a.name)
-            }
+        if (a.values.nonEmpty) {
+          val values = a.values
+          if (values.size == 1) {
+            processSingleValue(values.head, a.name)
           } else {
-            if (eventsInVarsMapping.contains(currVar)) {
-              eventsInVarsMapping(currVar) += a.name
-            } else {
-              eventsInVarsMapping += currVar -> mSet(a.name)
-            }
+            processMultipleValues(values, a.name)
           }
         } else {
-          eventsInVarsMapping = Map[String, mSet[String]]()
+//          listOfMaps(0) = Map[String, mSet[String]]()
           break
         }
       }
     }
-    val eventsInVarsString: String = buildEventString(eventsInVarsMapping)
-    val eventsInConstString: String = buildEventString(eventsInConstMapping)
+
+    val eventsInVarsString: String = buildEventString(listOfMaps(0))
+    val eventsInConstString: String = buildEventString(listOfMaps(1))
+    val multipleValuesPredicateString: String = buildMultipleEventsString(listOfMaps(2))
 
     writeln(
       s"""/* The specialized Monitor for the provided properties. */
@@ -358,6 +442,7 @@ case class Spec(properties: List[Property]) {
          |  // ### Prediction Extension ###
          |  val eventsInVars: Map[String, List[String]] = $eventsInVarsString
          |  val eventsInConstants: Map[String, List[String]] = $eventsInConstString
+         |  val multipleValuesPredicates: Map[Array[String], List[String]] = $multipleValuesPredicateString
          |
          |  formulae ++= List($constructors)
          |}
@@ -368,6 +453,8 @@ case class Spec(properties: List[Property]) {
         |// ### Prediction Extension ###
         |abstract class Prediction(monitor: Monitor) {
         |  val G: BDDGenerator = monitor.formulae.head.bddGenerator
+        |  val formula: Formula = monitor.formulae.head
+        |  val vars: Map[String, Variable] = G.varMap
         |  Options.PREDICTION_RUNNING_STATE = true
         |  var counter = 0
         |
@@ -385,7 +472,6 @@ case class Spec(properties: List[Property]) {
         |    * Store the current state of the monitoring process.
         |    * This is necessary before taking any recursion step in the prediction process.
         |    *
-        |    * @param F               the monitored formula object
         |    * @param M               the monitor object
         |    * @param V               a variable object which is the one we wants to store his dynamically states.
         |    * @param nowTmp          a tmp array which save the F.now BDDs array.
@@ -395,7 +481,6 @@ case class Spec(properties: List[Property]) {
         |    */
         |
         |  def storePreviousState(
-        |                          F: Formula,
         |                          M: Monitor,
         |                          V: Variable,
         |                          nowTmp: Array[BDD],
@@ -403,8 +488,8 @@ case class Spec(properties: List[Property]) {
         |                          statTmp: Array[Int],
         |                          variableBddsTmp: Array[BDD]): Unit = {
         |
-        |    nowTmp.indices.foreach(i => nowTmp(i) = F.now(i))
-        |    preTmp.indices.foreach(i => preTmp(i) = F.pre(i))
+        |    nowTmp.indices.foreach(i => nowTmp(i) = formula.now(i))
+        |    preTmp.indices.foreach(i => preTmp(i) = formula.pre(i))
         |
         |    statTmp(0) = M.lineNr
         |    statTmp(1) = M.errors
@@ -419,7 +504,6 @@ case class Spec(properties: List[Property]) {
         |    * Restore the previous state of the monitoring process.
         |    * This is necessary right after any recursion step is done in the prediction process.
         |    *
-        |    * @param F               the monitored formula object
         |    * @param M               the monitor object
         |    * @param V               a variable object which is the one we wants to store his dynamically states.
         |    * @param nowTmp          a tmp array which hold the previous F.now BDDs array.
@@ -429,7 +513,6 @@ case class Spec(properties: List[Property]) {
         |    */
         |
         |  def restorePreviousState(
-        |                            F: Formula,
         |                            M: Monitor,
         |                            V: Variable,
         |                            nowTmp: Array[BDD],
@@ -437,8 +520,8 @@ case class Spec(properties: List[Property]) {
         |                            statTmp: Array[Int],
         |                            variableBddsTmp: Array[BDD]): Unit = {
         |
-        |    nowTmp.indices.foreach(i => F.now(i) = nowTmp(i))
-        |    preTmp.indices.foreach(i => F.pre(i) = preTmp(i))
+        |    nowTmp.indices.foreach(i => formula.now(i) = nowTmp(i))
+        |    preTmp.indices.foreach(i => formula.pre(i) = preTmp(i))
         |
         |    M.lineNr = statTmp(0)
         |    M.errors = statTmp(1)
@@ -464,54 +547,97 @@ case class Spec(properties: List[Property]) {
         |    // Print the summary of trace (including extension)
         |    println(s"Processed ${monitor.lineNr} events")
         |  }
-        |}
+        |
+        |  def handleBaseCase(predictedEvents: ListBuffer[(String, String, Int)]): Unit = {
+        |    if (predictedEvents.last._3 == Options.EXPECTED_VERDICT) {
+        |      Options.FOUND_VERDICT = true
+        |    }
+        |    counter += 1
+        |    printPredictionSummary(predictedEvents)
+        |    monitor.end()
+        |  }
+        """.stripMargin)
+    writeln(
+      s"""
+        | /**
+        |   * Initializes the necessary variables for the prediction function.
+        |   *
+        |   * @param predictedEvents  The ListBuffer of predicted events as tuples (String, String, Int).
+        |   * @return                 A tuple containing the following values:
+        |   *                           - tmpPredictedEvents: ListBuffer[(String, String, Int)]
+        |   *                           - tmpEventTable: Map[String, Long]
+        |   *                           - tmpVarBdds: Map[Any, BDD]
+        |   *                           - tmpStat: Array[Int]
+        |   *                           - tmpVariableBdds: Array[BDD]
+        |   *                           - tmpPre: Array[BDD]
+        |   *                           - tmpNow: Array[BDD]
+        |   *                           - constFlag: Boolean
+        |   */
+        |   def initializeVariables(predictedEvents: ListBuffer[(String, String, Int)]):
+        |   (
+        |     ListBuffer[(String, String, Int)],
+        |     Map[String, Long],
+        |     Map[Any, BDD],
+        |     Array[Int],
+        |     Array[BDD],
+        |     Array[BDD],
+        |     Array[BDD],
+        |     Boolean) = {
+        |
+        |      // Defines all the tmp objects in order to have the ability to restore previous
+        |      // states while going back and forth in recursion.
+        |      val tmpEventTable: Map[String, Long] = null
+        |      val tmpVarBdds: Map[Any, BDD] = null
+        |      val tmpStat: Array[Int] = Array.fill(2)(0)
+        |      val tmpVariableBdds = Array.fill(3)(G.False)
+        |      val tmpPre: Array[BDD] = Array.fill(${LTL.next})(G.False)
+        |      val tmpNow: Array[BDD] = Array.fill(${LTL.next})(G.False)
+        |      val tmpPredictedEvents: ListBuffer[(String, String, Int)] = predictedEvents
+        |
+        |      // Used to avoid duplicates when spec have constants
+        |      val constFlag = true
+        |
+        |      (tmpPredictedEvents, tmpEventTable, tmpVarBdds, tmpStat, tmpVariableBdds,
+        |        tmpPre, tmpNow, constFlag)
+        |   }
+        | }
         |
         |// ### Prediction Extension ###
         |class BruteForcePrediction(monitor: Monitor) extends Prediction(monitor) {
         |
-        |  /** *
-        |    * The main prediction function, which is works by recursion.
-        |    *
-        |    * @param k             the k step for the prediction
-        |    * @param predictedEvents the predicts event seen so far
-        |    */
+        |  /**
+        |   * The main prediction function, which is works by recursion.
+        |   *
+        |   * @param k             the k step for the prediction
+        |   * @param predictedEvents the predicts event seen so far
+        |   */
         |  override def prediction(k: Int, predictedEvents: ListBuffer[(String, String, Int)]): Unit = {
         |
         |       // Recursion Base case
         |       if (k == 0) {
-        |         if (predictedEvents.last._3 == Options.EXPECTED_VERDICT) {
-        |           Options.FOUND_VERDICT = true
-        |         }
-        |         counter += 1
-        |         printPredictionSummary(predictedEvents)
-        |         monitor.end()
+        |         handleBaseCase(predictedEvents)
         |         return
         |       }
         """.stripMargin)
 
     writeln(
       s"""
-         |      // Defines all the tmp objects in order to have the ability to restore previous
-         |      // states while going back and forth in recursion.
-         |      var tmpEventTable: Map[String, Long] = null
-         |      var tmpVarBdds: Map[Any, BDD] = null
-         |      val tmpStat: Array[Int] = Array.fill(2)(0)
-         |      val tmpVariableBdds = Array.fill(3)(G.False)
-         |      val tmpPre: Array[BDD] = Array.fill(${LTL.next})(G.False)
-         |      val tmpNow: Array[BDD] = Array.fill(${LTL.next})(G.False)
-         |      var tmpPredictedEvents: ListBuffer[(String, String, Int)] = predictedEvents
-         |
-         |      val F: Formula = monitor.formulae.head
-         |      val vars: Map[String, Variable] = G.varMap
-         |
-         |      // Used to avoid duplicates when spec have constants
-         |      var constFlag = true
+         |      // Initialize necessary variables
+         |      var
+         |      (tmpPredictedEvents,
+         |      tmpEventTable,
+         |      tmpVarBdds,
+         |      tmpStat,
+         |      tmpVariableBdds,
+         |      tmpPre,
+         |      tmpNow,
+         |      constFlag) = initializeVariables(predictedEvents)
          |
          """.stripMargin)
 
     writeln(
       """
-        |      // Loop through all property variables
+        |    // Loop through all property variables
         |    for ((varName, varObject) <- vars) {
         |      var equivClassesNum = 0
         |      var varAssignments = varObject.bdds
@@ -532,7 +658,7 @@ case class Spec(properties: List[Property]) {
         |          val evaluationValue: String = if (value != varName) value else fetchedValue
         |          for (event <- eventList) {
         |            // Store the current state, before taking the recursion step.
-        |            storePreviousState(F, monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
+        |            storePreviousState(monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
         |            tmpEventTable = monitor.statistics.eventTable
         |            tmpVarBdds = varObject.bdds
         |
@@ -546,7 +672,7 @@ case class Spec(properties: List[Property]) {
         |
         |            // When arrives here we need to recover to previous state
         |            tmpPredictedEvents = tmpPredictedEvents.dropRight(k)
-        |            restorePreviousState(F, monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
+        |            restorePreviousState(monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
         |            monitor.statistics.eventTable = tmpEventTable
         |            varObject.bdds = tmpVarBdds
         |          }
@@ -599,108 +725,122 @@ case class Spec(properties: List[Property]) {
          |
          |       // Recursion Base case
          |       if (k == 0) {
-         |         if (predictedEvents.last._3 == Options.EXPECTED_VERDICT) {
-         |           Options.FOUND_VERDICT = true
-         |         }
-         |         counter += 1
-         |         printPredictionSummary(predictedEvents)
-         |         monitor.end()
+         |         handleBaseCase(predictedEvents)
          |         return
          |       }
         """.stripMargin)
     writeln(
-      s"""
-         |      // Defines all the tmp objects in order to have the ability to restore previous
-         |      // states while going back and forth in recursion.
-         |      var tmpEventTable: Map[String, Long] = null
-         |      var tmpVarBdds: Map[Any, BDD] = null
-         |      val tmpStat: Array[Int] = Array.fill(2)(0)
-         |      val tmpVariableBdds = Array.fill(3)(G.False)
-         |      val tmpPre: Array[BDD] = Array.fill(${LTL.next})(G.False)
-         |      val tmpNow: Array[BDD] = Array.fill(${LTL.next})(G.False)
-         |      var tmpPredictedEvents: ListBuffer[(String, String, Int)] = predictedEvents
-         |
-         |      val F: Formula = monitor.formulae.head
-         |      val vars: Map[String, Variable] = G.varMap
-         |      val isoBdd: Array[BDD] = Array.fill(${LTL.next})(G.False)
-         |
-         |      // Used to avoid duplicates when spec have constants
-         |      var constFlag = true
+      s"""// Initialize necessary variables
+         |      var
+         |      (tmpPredictedEvents,
+         |      tmpEventTable,
+         |      tmpVarBdds,
+         |      tmpStat,
+         |      tmpVariableBdds,
+         |      tmpPre,
+         |      tmpNow,
+         |      constFlag) = initializeVariables(predictedEvents)
        """.stripMargin)
 
     writeln(
       """
-        |     // Loop through all property variables
-        |     for ((varName, varObject) <- vars) {
-        |         var ghBdd = G.True
-        |         val varBits = varObject.bits
-        |         val varBitsLength = varBits.length
+        |       // Loop through all property variables
+        |       for ((varName, varObject) <- vars) {
+        |         var (ghBdd, gQuantVars) = calculateGhBdd(varName, varObject, formula)
+        |         var equivClassesNum = 0
         |
-        |         val gArrayBits = Array.range(G.totalNumberOfBits,
-        |          G.totalNumberOfBits + varBitsLength)
-        |         val gQuantVars = G.getQuantVars(gArrayBits)
+        |         while (!ghBdd.equals(G.False) && ghBdd != null) {
+        |           equivClassesNum += 1
         |
-        |         // Loop through all tmp relations, represent as BDDs
-        |         // The tmp array holds the latest relations.
-        |         for (i <- F.tmp.indices) {
-        |           val otherQuantVars = G.otherQuantVars(varName)
+        |           // Represent satisfying assignment and its isomorphic assignments for a given ghBdd
+        |           val iaBDD = findSatisfyingAssignment(ghBdd, varObject, gQuantVars)
         |
-        |          // If the target BDD is true or false, this has no influence on the result.
-        |          if (!F.tmp(i).isZero && !F.tmp(i).isOne) {
-        |             isoBdd(i) = IsomorphicPairsCalculator(varObject, otherQuantVars, F.tmp(i), gArrayBits)
-        |             ghBdd = ghBdd.and(isoBdd(i))
-        |          }
-        |        }
+        |           // Removes all isomorphic assignments of 'satAssignmentG' from 'gh' BDD
+        |           ghBdd = ghBdd.and(iaBDD.not())
         |
-        |        var equivClassesNum = 0
+        |           // Fetch one value of corresponds isomorphic assignment.
+        |           val fetchedValue = fetchingValue(iaBDD, varObject)
         |
-        |        while (!ghBdd.equals(G.False) && ghBdd != null) {
-        |          equivClassesNum += 1
+        |           // Loop through all relevant event types
+        |           val filteredEvents = monitor.eventsInVars filterKeys List(varName).toSet
+        |           val allRelevantEvents = if (constFlag) filteredEvents.++(monitor.eventsInConstants) else filteredEvents
+        |           constFlag = false
+        |             for ((value, eventList) <- allRelevantEvents) {
+        |               val evaluationValue: String = if (value != varName) value else fetchedValue
+        |               for (event <- eventList) {
+        |                 // Store the current state, before taking the recursion step.
+        |                 storePreviousState(monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
+        |                 tmpEventTable = monitor.statistics.eventTable
+        |                 tmpVarBdds = varObject.bdds
         |
-        |          // Get one satisfy assignment
-        |          val satAssignmentG = ghBdd.satOne(gQuantVars, true).exist(varObject.quantvar)
+        |                 monitor.submit(event, List(evaluationValue))
+        |                 val eventError = if (tmpStat(1) < monitor.errors) 0 else 1
+        |                 tmpPredictedEvents.append((event, evaluationValue, eventError))
         |
-        |          // Gets all isomorphic assignments of 'satAssignmentG'
-        |          // 'ia' for isomorphic assignments
-        |          val iaBDD = ghBdd.restrict(satAssignmentG)
+        |                 if (!Options.FOUND_VERDICT) {
+        |                   prediction(k - 1, tmpPredictedEvents)
+        |                 }
         |
-        |          // Removes all isomorphic assignments of 'satAssignmentG' from 'gh' BDD
-        |          ghBdd = ghBdd.and(iaBDD.not())
-        |
-        |          // Fetch one value of corresponds isomorphic assignment.
-        |          val fetchedValue = fetchingValue(iaBDD, varObject)
-        |
-        |          // Loop through all relevant event types
-        |          val filteredEvents = monitor.eventsInVars filterKeys List(varName).toSet
-        |          val allRelevantEvents = if (constFlag) filteredEvents.++(monitor.eventsInConstants) else filteredEvents
-        |          constFlag = false
-        |           for ((value, eventList) <- allRelevantEvents) {
-        |             val evaluationValue: String = if (value != varName) value else fetchedValue
-        |             for (event <- eventList) {
-        |               // Store the current state, before taking the recursion step.
-        |               storePreviousState(F, monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
-        |               tmpEventTable = monitor.statistics.eventTable
-        |               tmpVarBdds = varObject.bdds
-        |
-        |               monitor.submit(event, List(evaluationValue))
-        |               val eventError = if (tmpStat(1) < monitor.errors) 0 else 1
-        |               tmpPredictedEvents.append((event, evaluationValue, eventError))
-        |
-        |               if (!Options.FOUND_VERDICT) {
-        |                 prediction(k - 1, tmpPredictedEvents)
+        |                 // Recover to previous state when arriving here
+        |                 tmpPredictedEvents = tmpPredictedEvents.dropRight(k)
+        |                 restorePreviousState(monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
+        |                 monitor.statistics.eventTable = tmpEventTable
+        |                 varObject.bdds = tmpVarBdds
         |               }
+        |             }
+        |           }
+        |           debug(s"##### Total Equivalence classes for variable=$varName and for k=$k is $equivClassesNum #####")
+        |         }
+        |       }
         |
-        |                // Recover to previous state when arriving here
-        |                tmpPredictedEvents = tmpPredictedEvents.dropRight(k)
-        |                restorePreviousState(F, monitor, varObject, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
-        |                monitor.statistics.eventTable = tmpEventTable
-        |                varObject.bdds = tmpVarBdds
-        |            }
-        |          }
-        |        }
-        |        debug(s"##### Total Equivalence classes for variable=$varName and for k=$k is $equivClassesNum #####")
-        |      }
-        |    }
+        |   /**
+        |    * Calculates the ghBdd and gQuantVars values for a given variable and formula.
+        |    *
+        |    * @param varName    The name of the variable.
+        |    * @param varObject  The Variable object associated with the variable name.
+        |    * @return           A tuple containing the calculated ghBdd (BDD) and gQuantVars (Array[BDDVarSet]).
+        |    */
+        |   def calculateGhBdd(varName: String, varObject: Variable, F: Formula): (BDD, BDD) = {
+        |     var ghBdd = G.True
+        |     val varBits = varObject.bits
+        |     val varBitsLength = varBits.length
+        |
+        |     val gArrayBits = Array.range(G.totalNumberOfBits, G.totalNumberOfBits + varBitsLength)
+        |     val gQuantVars = G.getQuantVars(gArrayBits)
+        |
+        |     // Loop through all tmp relations, represent as BDDs
+        |     // The tmp array holds the latest relations.
+        |     for (i <- formula.tmp.indices) {
+        |       val otherQuantVars = G.otherQuantVars(varName)
+        |
+        |       // If the target BDD is true or false, this has no influence on the result.
+        |       if (!formula.tmp(i).isZero && !formula.tmp(i).isOne) {
+        |         val isoBdd = IsomorphicPairsCalculator(varObject, otherQuantVars, formula.tmp(i), gArrayBits)
+        |         ghBdd = ghBdd.and(isoBdd)
+        |       }
+        |     }
+        |
+        |     (ghBdd, gQuantVars)
+        |   }
+        |
+        |   /**
+        |    * Finds a satisfying assignment and its isomorphic assignments for a given ghBdd, varObject, and gQuantVars.
+        |    *
+        |    * @param ghBdd      The BDD object representing the GH relation.
+        |    * @param varObject  The Variable object associated with the variable name.
+        |    * @param gQuantVars The Array of BDDVarSet representing the quantifier variables.
+        |    * @return           A tuple containing the satisfying assignment (satAssignmentG: BDD) and its isomorphic assignments (iaBDD: BDD).
+        |    */
+        |   def findSatisfyingAssignment(ghBdd: BDD, varObject: Variable, gQuantVars: BDD): BDD = {
+        |     // Get one satisfying assignment
+        |     val satAssignmentG = ghBdd.satOne(gQuantVars, true).exist(varObject.quantvar)
+        |
+        |     // Gets all isomorphic assignments of 'satAssignmentG'
+        |     // 'ia' for isomorphic assignments
+        |     val iaBDD = ghBdd.restrict(satAssignmentG)
+        |
+        |     iaBDD
+        |   }
         |
         |  /**
         |   * In this function we fetching a value which will use for the prediction.
@@ -769,7 +909,7 @@ case class Spec(properties: List[Property]) {
       s"""
          | // ### Prediction Extension ###
          |object TraceMonitor {
-         |  val usage =
+         |  private val usage: String =
          | \"\"\"Usage: (--logfile <filename>) [--bits numOfBits] [--mode (debug | profile)]
          |    |         [--prediction num] [--prediction_type (smart | brute)] [--expected_verdict (0 | 1)]
          | \"\"\".stripMargin
@@ -896,8 +1036,8 @@ case class Spec(properties: List[Property]) {
 
     writeln(
       """ if (Options.PREDICTION) {
-        |          if (m.eventsInVars.isEmpty) {
-        |            println(s"*** Prediction is not available for this spec")
+        |          if (m.multipleValuesPredicates.nonEmpty) {
+        |            println(s"*** Prediction is not available for this spec with multiple events per predicate ")
         |          } else {
         |            var prediction: Prediction = null
         |            if (Options.PREDICTION_TYPE == "brute") {
