@@ -9,6 +9,7 @@ import org.apache.commons.csv.{CSVFormat, CSVRecord}
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
+import scala.util.matching.Regex
 
 object Options {
   var DEBUG: Boolean = false

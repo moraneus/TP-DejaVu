@@ -9,7 +9,9 @@ class Test63 extends TestCase {
   val resultfile = s"$TEST/dejavu-results"
   val spec1 = s"$TEST/spec1.qtl"
   val spec2 = s"$TEST/spec2.qtl"
+  val spec3 = s"$TEST/spec3.qtl"
   val log1 = s"$TEST/log1.csv"
+  val log2 = s"$TEST/log2.csv"
 
   @Test def test1_1(): Unit = {
     Verify("--execution", "0", "--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "5", "--prediction", "2")

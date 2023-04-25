@@ -40,7 +40,9 @@ class TestCase {
   def checkResults(resultfile: String, lines: Any*): Unit = {
     if (Verify.verified) {
       val expect = lines.toList.map(_.toString).sorted
-      val result = readResult(resultfile).distinct.sorted
+//      val result = readResult(resultfile).distinct.sorted
+      val result = readResult(resultfile).sorted
+
       assert(expect == result,
         s"""
            |expected : (${expect.mkString(",")})

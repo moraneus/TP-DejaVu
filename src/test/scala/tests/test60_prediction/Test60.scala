@@ -18,22 +18,22 @@ class Test60 extends TestCase {
 
   @Test def test1(): Unit = {
     Verify("--execution", "0", "--specfile", spec1, "--logfile", log1, "--resultfile",
-           resultfile, "--bits", "3", "--prediction", "10")
+           resultfile, "--bits", "3", "--prediction", "10", "--prediction_type", "brute")
     checkResults(resultfile, 1,2,3,4,5,6,7)
   }
 
   @Test def test2(): Unit = {
-    Verify("--execution", "0", "--specfile", spec1, "--logfile", log2, "--resultfile", resultfile, "--bits", "3", "--prediction", "10")
+    Verify("--execution", "0", "--specfile", spec1, "--logfile", log2, "--resultfile", resultfile, "--bits", "3", "--prediction", "10", "--prediction_type", "brute")
     checkResults(resultfile, 1,2,3,4,5,6,7,8)
   }
 
   @Test def test3(): Unit = {
-    Verify("--execution", "0", "--specfile", spec2, "--logfile", log1, "--resultfile", resultfile, "--bits", "3", "--prediction", "10")
+    Verify("--execution", "0", "--specfile", spec2, "--logfile", log1, "--resultfile", resultfile, "--bits", "3", "--prediction", "10", "--prediction_type", "brute")
     checkResults(resultfile, 2,3,4,5,6)
   }
 
   @Test def test4(): Unit = {
-    Verify("--execution", "0", "--specfile", spec2, "--logfile", log2, "--resultfile", resultfile, "--bits", "3", "--prediction", "10")
+    Verify("--execution", "0", "--specfile", spec2, "--logfile", log2, "--resultfile", resultfile, "--bits", "3", "--prediction", "10", "--prediction_type", "brute")
     checkResults(resultfile, 1,3,5,7)
   }
 }

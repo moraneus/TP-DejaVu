@@ -1,2 +1,2 @@
 
-prop p : ! Forall x . ( P q(x) -> P r(x) )
+prop p : Forall x . Forall y. Forall z . ( t(x, y, z) )

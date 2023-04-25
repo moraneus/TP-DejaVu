@@ -1,0 +1,2 @@
+
+prop p : Forall x . Forall y . Forall z .  ( ( w("open") | r(z) | t(x, y) ) -> ( @ q(1, 1) | @ ( @ p(2, 2) ) ) )
