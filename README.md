@@ -516,7 +516,8 @@ We offer two distinct prediction modes:
   exploring all possible options without any optimizations for speed or
   efficiency. It has been included primarily for testing, experimentation,
   and comparative purposes, allowing users to contrast it with our
-  ``smart`` prediction method.
+  ``smart`` prediction method. This prediction mode is limited to specification, 
+  where each predicate has one value only.
 
 * ``smart`` - This mode lies at the core of our research. The smart
   prediction method leverages the fact that some values are equivalent
@@ -525,14 +526,11 @@ We offer two distinct prediction modes:
   trace file containing various events, the reduction is so substantial
   that the ``smart`` approach enables successful prediction, while the
   ``brute`` method fails due to excessive memory usage.
-### Prediction Limitations
-* In our experiments we have seen that the prediction possibilities grow exponentially with respect to 
-the prediction parameter `k`, therefore the prediction is limited to a certain `k` which depends on the 
-environment, the evaluated specification and the evaluated trace.
-* The prediction process is limited to specification, where each predicate has one value only. 
+
+### Smart Prediction Limitations
 * The prediction process generate only one event per time point. 
-* No tests were performed for specifications containing op, e.g., x < 10, x <= y or those referring to time units. The prediction 
-procedure disregards these operators.
+* No tests were performed for specifications containing op, e.g., x < 10, x <= y or those referring to time units. 
+  The prediction procedure disregards these operators.
 
 ## Experiments for publications
 
