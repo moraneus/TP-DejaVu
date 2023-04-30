@@ -1,2 +1,1 @@
-
 prop p : ! forall x . ( P q(x) -> P r(x) )

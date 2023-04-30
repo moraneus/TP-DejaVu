@@ -1,7 +1,9 @@
-b,1
-a,5,2
-a,6,2
-a,1,99
-b,2
-a,5,99
-a,6,99
+open,f1
+open,f2
+open,f3
+close,f1
+close,f2
+close,f3
+open,f1
+open,f4
+write,f4,2

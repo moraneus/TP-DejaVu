@@ -575,7 +575,7 @@ case class Spec(properties: List[Property]) {
         |   * @return                 A tuple containing the following values:
         |   *                           - tmpPredictedEvents: ListBuffer[(String, String, Int)]
         |   *                           - tmpEventTable: Map[String, Long]
-        |   *                           - tmpVarBdds: Map[Any, BDD]
+        |   *                           - tmpVarBdds: Array[Map[Any, BDD]]
         |   *                           - tmpStat: Array[Int]
         |   *                           - tmpVariableBdds: Array[BDD]
         |   *                           - tmpPre: Array[BDD]
@@ -588,7 +588,7 @@ case class Spec(properties: List[Property]) {
         |   (
         |     ListBuffer[(String, String, Int)],
         |     Map[String, Long],
-        |     Map[Any, BDD],
+        |     Array[Map[Any, BDD]],
         |     Array[Int],
         |     Array[BDD],
         |     Array[BDD],
@@ -600,7 +600,7 @@ case class Spec(properties: List[Property]) {
         |      // Defines all the tmp objects in order to have the ability to restore previous
         |      // states while going back and forth in recursion.
         |      val tmpEventTable: Map[String, Long] = null
-        |      val tmpVarBdds: Map[Any, BDD] = null
+        |      val tmpVarBdds: Array[Map[Any, BDD]] = Array.fill(${property.getQuantifiedVariables.size})(null)
         |      val tmpStat: Array[Int] = Array.fill(2)(0)
         |      val tmpVariableBdds = Array.fill(3 * ${property.getQuantifiedVariables.size})(G.False)
         |      val tmpPre: Array[BDD] = Array.fill(${LTL.next})(G.False)
@@ -648,18 +648,18 @@ case class Spec(properties: List[Property]) {
 
     writeln(
       s"""
-         |      // Initialize necessary variables
-         |      var
-         |      (tmpPredictedEvents,
-         |      tmpEventTable,
-         |      tmpVarBdds,
-         |      tmpStat,
-         |      tmpVariableBdds,
-         |      tmpPre,
-         |      tmpNow,
-         |      singleConstValuedPredicateFlag,
-         |      multipleConstValuedPredicatesFlag,
-         |      multipleValuesPredicatesFlag) = initializeVariables(predictedEvents)
+         |    // Initialize necessary variables
+         |    var
+         |    (tmpPredictedEvents,
+         |    tmpEventTable,
+         |    tmpVarBdds,
+         |    tmpStat,
+         |    tmpVariableBdds,
+         |    tmpPre,
+         |    tmpNow,
+         |    singleConstValuedPredicatesFlag,
+         |    multipleConstValuedPredicatesFlag,
+         |    multipleValuesPredicatesFlag) = initializeVariables(predictedEvents)
          |
          """.stripMargin)
 
@@ -668,6 +668,28 @@ case class Spec(properties: List[Property]) {
         |    // Loop through all property variables
         |    for ((varName, varObject) <- vars) {
         |      var equivClassesNum = 0
+        |
+        |      // Filter relevant multiple values predicates
+        |      var relevantMultipleValuesPredicates =
+        |        monitor.multipleValuesPredicates.filterKeys {
+        |          key =>
+        |            val a = key.contains(varName)
+        |            val b = key.forall(item => wrappedPattern.findFirstIn(item).isDefined)
+        |            a || b && multipleConstValuedPredicatesFlag
+        |        }
+        |
+        |      // If false, we are now going to handle multiple values predicates,
+        |      // so in the next iteration the handled multiple values predicates will be ignored.
+        |      if (relevantMultipleValuesPredicates.nonEmpty) {
+        |        for (key <- relevantMultipleValuesPredicates.keys) {
+        |          if (multipleValuesPredicatesFlag(key).value) {
+        |            multipleValuesPredicatesFlag(key).value = false
+        |          } else {
+        |            relevantMultipleValuesPredicates = relevantMultipleValuesPredicates.filterKeys(k => !(k sameElements key))
+        |          }
+        |        }
+        |      }
+        |
         |      var varAssignments = varObject.bdds
         |      val unseenValue = generateValue(varAssignments)
         |      varAssignments += (unseenValue -> null)
@@ -678,35 +700,125 @@ case class Spec(properties: List[Property]) {
         |        // Fetch one value of corresponds isomorphic assignment.
         |        val fetchedValue = assignment._1.toString
         |
-        |        // Loop through all relevant event types
-        |        val filteredEvents = monitor.eventsInVars filterKeys List(varName).toSet
-        |        val allRelevantEvents = if (singleConstValuedPredicateFlag) filteredEvents.++(monitor.eventsInConstants) else filteredEvents
-        |        singleConstValuedPredicateFlag = false
-        |        for ((value, eventList) <- allRelevantEvents) {
-        |          val evaluationValue: String = if (value != varName) value else fetchedValue
-        |          for (event <- eventList) {
-        |            // Store the current state, before taking the recursion step.
-        |            storePreviousState(monitor, Array(varObject), tmpNow, tmpPre, tmpStat, tmpVariableBdds)
+        |        // Filter relevant event types
+        |        val filteredEvents = monitor.eventsInVars.filterKeys(_ == varName)
+        |        // Include eventsInConstants if singleConstValuedPredicatesFlag is true
+        |        val allRelevantEvents = if (singleConstValuedPredicatesFlag) filteredEvents ++ monitor.eventsInConstants else filteredEvents
+        |
+        |        // If false, we are now going to handle constants,
+        |        // so in the next iteration the handled constants will be ignored.
+        |        singleConstValuedPredicatesFlag = false
+        |
+        |        // Process Events
+        |        if (allRelevantEvents.nonEmpty) {
+        |          processRelevantEvents()
+        |        }
+        |        if (relevantMultipleValuesPredicates.nonEmpty) {
+        |          processMultipleValuesPredicates()
+        |        }
+        |        debug(s"##### Total Equivalence classes for variable=$varName and for k=$k is $equivClassesNum #####")
+        |
+        |        // Function to process an event
+        |        def processEvent(eventList: List[String], currentValues: List[String], relevantVars: List[Variable]): Unit = {
+        |          eventList.foreach { event =>
+        |            // Store the current state before taking the recursion step
+        |            storePreviousState(monitor, relevantVars.toArray, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
         |            tmpEventTable = monitor.statistics.eventTable
-        |            tmpVarBdds = varObject.bdds
         |
-        |            monitor.submit(event, List(evaluationValue))
+        |            for (index <- relevantVars.indices) {
+        |                tmpVarBdds(index) = relevantVars(index).bdds
+        |             }
+        |
+        |            // Submit the event with the current values
+        |            monitor.submit(event, currentValues)
+        |
+        |            // Calculate the event error and append the event to the predicted events list
         |            val eventError = if (tmpStat(1) < monitor.errors) 0 else 1
-        |            tmpPredictedEvents.append((event, evaluationValue, eventError))
+        |            tmpPredictedEvents.append((event, currentValues.mkString(","), eventError))
         |
+        |            // Continue prediction if a verdict hasn't been found
         |            if (!Options.FOUND_VERDICT) {
-        |                prediction(k - 1, tmpPredictedEvents)
+        |              prediction(k - 1, tmpPredictedEvents)
         |            }
         |
-        |            // When arrives here we need to recover to previous state
+        |            // Recover the previous state when arriving here
         |            tmpPredictedEvents = tmpPredictedEvents.dropRight(k)
-        |            restorePreviousState(monitor, Array(varObject), tmpNow, tmpPre, tmpStat, tmpVariableBdds)
+        |            restorePreviousState(monitor, relevantVars.toArray, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
         |            monitor.statistics.eventTable = tmpEventTable
-        |            varObject.bdds = tmpVarBdds
+        |
+        |            for (index <- relevantVars.indices) {
+        |               relevantVars(index).bdds = tmpVarBdds(index)
+        |             }
+        |
         |          }
         |        }
+        |
+        |        // Processes relevant events for a given variable and fetched value.
+        |        def processRelevantEvents(): Unit = {
+        |
+        |          // Iterate through all relevant events
+        |          allRelevantEvents.foreach { case (value, eventList) =>
+        |
+        |            // Determine the value to be used for evaluation
+        |            val evaluationValue: String = if (value != varName) value else fetchedValue
+        |
+        |            // Process event
+        |            processEvent(eventList, List(evaluationValue), List(varObject))
+        |          }
+        |        }
+        |
+        |        /**
+        |          * Processes relevant multiple values predicates for a given variable and fetched value.
+        |          */
+        |        def processMultipleValuesPredicates(): Unit = {
+        |          // Iterate through all relevant multiple values predicates
+        |          for ((values, eventList) <- relevantMultipleValuesPredicates) {
+        |            // Call the helper function processValue with the initial index and an empty list
+        |            processValue(0, List.empty[String], List.empty[Variable])
+        |
+        |            // Helper function to process each value in the values array and submit the event
+        |            def processValue(index: Int, currentValues: List[String], relevantVars: List[Variable]): Unit = {
+        |              if (index < values.length) {
+        |                val item = values(index)
+        |
+        |                // Match the item and process accordingly
+        |                item match {
+        |                  case wrappedPattern(value) =>
+        |                    processValue(index + 1, currentValues :+ value, relevantVars)
+        |
+        |                  // If the item is a variable, append the fetched value and continue processing
+        |                  case variable if variable == varName =>
+        |                    val updatedRelevantVars: List[Variable] = relevantVars :+ varObject
+        |                    processValue(index + 1, currentValues :+ fetchedValue, updatedRelevantVars)
+        |
+        |                  // If the item is not the current variable, process it as another variable
+        |                  case _ if item != varName =>
+        |                    val relevantVar = G.varMap.filterKeys(_.contains(item))
+        |                    if (relevantVar.nonEmpty) {
+        |                      val varObject = relevantVar(item)
+        |                      var varAssignments = varObject.bdds
+        |                      val unseenValue = generateValue(varAssignments)
+        |                      varAssignments += (unseenValue -> null)
+        |                      val updatedRelevantVars: List[Variable] = relevantVars :+ varObject
+        |
+        |                      for (assignment <- varAssignments) {
+        |
+        |                        // Fetch one value
+        |                        val anotherFetchedValue = assignment._1.toString
+        |                        processValue(index + 1, currentValues :+ anotherFetchedValue, updatedRelevantVars)
+        |                      }
+        |                    }
+        |                }
+        |              } else {
+        |                // Process event
+        |                processEvent(eventList, currentValues, relevantVars)
+        |              }
+        |            }
+        |          }
+        |        }
+        |
+        |        multipleConstValuedPredicatesFlag = false
         |      }
-        |      debug(s"##### Total Equivalence classes for variable=${varName} and for k=$k is $equivClassesNum #####")
         |    }
         |  }
         |
@@ -829,7 +941,10 @@ case class Spec(properties: List[Property]) {
         |               // Store the current state before taking the recursion step
         |               storePreviousState(monitor, relevantVars.toArray, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
         |               tmpEventTable = monitor.statistics.eventTable
-        |               tmpVarBdds = varObject.bdds
+        |
+        |               for (index <- relevantVars.indices) {
+        |                  tmpVarBdds(index) = relevantVars(index).bdds
+        |               }
         |
         |               // Submit the event with the current values
         |               monitor.submit(event, currentValues)
@@ -847,7 +962,11 @@ case class Spec(properties: List[Property]) {
         |               tmpPredictedEvents = tmpPredictedEvents.dropRight(k)
         |               restorePreviousState(monitor, relevantVars.toArray, tmpNow, tmpPre, tmpStat, tmpVariableBdds)
         |               monitor.statistics.eventTable = tmpEventTable
-        |               varObject.bdds = tmpVarBdds
+        |
+        |
+        |               for (index <- relevantVars.indices) {
+        |                 relevantVars(index).bdds = tmpVarBdds(index)
+        |               }
         |             }
         |           }
         |
@@ -1163,8 +1282,8 @@ case class Spec(properties: List[Property]) {
     writeln(
       """
         |       if (Options.PREDICTION) {
-        |          if (Options.PREDICTION_TYPE == "brute" && m.multipleValuesPredicates.nonEmpty) {
-        |            println(s"*** Prediction is not available for this spec and prediction type (brute) with multiple events per predicate ")
+        |          if (m.multipleValuesPredicates.isEmpty && m.eventsInVars.isEmpty) {
+        |            println(s"*** Prediction is not available for this spec without any predicate with values")
         |          } else {
         |            var prediction: Prediction = null
         |            if (Options.PREDICTION_TYPE == "brute") {

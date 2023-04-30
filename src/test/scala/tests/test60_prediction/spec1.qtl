@@ -1,2 +1,2 @@
 
-prop p: Forall x . Exists y . (x < y & P a(x,y) | r(x))
+prop p: forall f . ( exists d . ( write(f,d) ) -> ( ! close(f) S open(f) ) )

@@ -516,8 +516,7 @@ We offer two distinct prediction modes:
   exploring all possible options without any optimizations for speed or
   efficiency. It has been included primarily for testing, experimentation,
   and comparative purposes, allowing users to contrast it with our
-  ``smart`` prediction method. This prediction mode is limited to specification, 
-  where each predicate has one value only.
+  ``smart`` prediction method.
 
 * ``smart`` - This mode lies at the core of our research. The smart
   prediction method leverages the fact that some values are equivalent
