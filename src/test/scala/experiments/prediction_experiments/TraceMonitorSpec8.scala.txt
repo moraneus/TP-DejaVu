@@ -1214,20 +1214,45 @@ abstract class Formula(val monitor: Monitor) {
 
 
 /*
-  prop p : Forall x . (P q(x))
+  prop P2 : !Exists A . Exists B . Exists C . Exists da . Exists db . Exists dc . (end(A) & @ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))))
 */
 
-class Formula_p(monitor: Monitor) extends Formula(monitor) {
+class Formula_P2(monitor: Monitor) extends Formula(monitor) {
 
   override def evaluate(): Boolean = {
     // assignments1 (leaf nodes that are not rule calls):
-      now(2) = build("q")(V("x"))
+      now(8) = build("end")(V("A"))
+      now(12) = build("end")(V("B"))
+      now(16) = build("end")(V("C"))
+      now(20) = build("begin")(V("C"),V("dc"))
+      now(24) = build("begin")(V("B"),V("db"))
+      now(27) = build("begin")(V("A"),V("da"))
     // assignments2 (rule nodes excluding what is below @ and excluding leaf nodes):
     // assignments3 (rule calls):
     // assignments4 (the rest of rules that are below @ and excluding leaf nodes):
     // assignments5 (main formula excluding leaf nodes):
-      now(1) = now(2).or(pre(1))
-      now(0) = now(1).forAll(var_x.quantvar)
+      now(26) = now(27).or(pre(26))
+      now(25) = pre(26)
+      now(23) = now(24).and(now(25))
+      now(22) = now(23).or(pre(22))
+      now(21) = pre(22)
+      now(19) = now(20).and(now(21))
+      now(18) = now(19).or(pre(18))
+      now(17) = pre(18)
+      now(15) = now(16).and(now(17))
+      now(14) = now(15).or(pre(14))
+      now(13) = pre(14)
+      now(11) = now(12).and(now(13))
+      now(10) = now(11).or(pre(10))
+      now(9) = pre(10)
+      now(7) = now(8).and(now(9))
+      now(6) = now(7).exist(var_dc.quantvar)
+      now(5) = now(6).exist(var_db.quantvar)
+      now(4) = now(5).exist(var_da.quantvar)
+      now(3) = now(4).exist(var_C.quantvar)
+      now(2) = now(3).exist(var_B.quantvar)
+      now(1) = now(2).exist(var_A.quantvar)
+      now(0) = now(1).not()
 
     debugMonitorState()
 
@@ -1240,18 +1265,43 @@ class Formula_p(monitor: Monitor) extends Formula(monitor) {
     !error
   }
 
-  val var_x :: Nil = declareVariables(("x",false))(0)
+  val var_A :: var_B :: var_C :: var_da :: var_db :: var_dc :: Nil = declareVariables(("A",false), ("B",false), ("C",false), ("da",false), ("db",false), ("dc",false))(0)
 
   varsInRelations = Set()
-  val indices: List[Int] = List(1)
+  val indices: List[Int] = List(9,10,13,14,17,18,21,22,25,26)
 
-  pre = Array.fill(3)(bddGenerator.False)
-  now = Array.fill(3)(bddGenerator.False)
+  pre = Array.fill(28)(bddGenerator.False)
+  now = Array.fill(28)(bddGenerator.False)
 
   txt = Array(
-    "Forall x . (P q(x))",
-      "P q(x)",
-      "q(x)"
+    "!Exists A . Exists B . Exists C . Exists da . Exists db . Exists dc . (end(A) & @ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))))",
+      "Exists A . Exists B . Exists C . Exists da . Exists db . Exists dc . (end(A) & @ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))))",
+      "Exists B . Exists C . Exists da . Exists db . Exists dc . (end(A) & @ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))))",
+      "Exists C . Exists da . Exists db . Exists dc . (end(A) & @ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))))",
+      "Exists da . Exists db . Exists dc . (end(A) & @ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))))",
+      "Exists db . Exists dc . (end(A) & @ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))))",
+      "Exists dc . (end(A) & @ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))))",
+      "end(A) & @ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da)))))",
+      "end(A)",
+      "@ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da)))))",
+      "P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da)))))",
+      "end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))",
+      "end(B)",
+      "@ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))",
+      "P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))",
+      "end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da)))",
+      "end(C)",
+      "@ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da)))",
+      "P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da)))",
+      "begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))",
+      "begin(C,dc)",
+      "@ P (begin(B,db) & @ P begin(A,da))",
+      "P (begin(B,db) & @ P begin(A,da))",
+      "begin(B,db) & @ P begin(A,da)",
+      "begin(B,db)",
+      "@ P begin(A,da)",
+      "P begin(A,da)",
+      "begin(A,da)"
   )
 
   debugMonitorState()
@@ -1260,14 +1310,14 @@ class Formula_p(monitor: Monitor) extends Formula(monitor) {
 /* The specialized Monitor for the provided properties. */
 
 class PropertyMonitor extends Monitor {
-  def eventsInSpec: Set[String] = Set("q")
+  def eventsInSpec: Set[String] = Set("end","begin")
 
   // ### Prediction Extension ###
-  val eventsInVars: Map[String, List[String]] = Map( "x" -> List("q") )
+  val eventsInVars: Map[String, List[String]] = Map( "C" -> List("end"),"A" -> List("end"),"B" -> List("end") )
   val eventsInConstants: Map[String, List[String]] = Map( )
-  val multipleValuesPredicates: Map[Array[String], List[String]] = Map( )
+  val multipleValuesPredicates: Map[Array[String], List[String]] = Map( Array( "C","dc" ) -> List("begin"),Array( "B","db" ) -> List("begin"),Array( "A","da" ) -> List("begin") )
 
-  formulae ++= List(new Formula_p(this))
+  formulae ++= List(new Formula_P2(this))
 }
 
 
@@ -1321,10 +1371,12 @@ abstract class Prediction(monitor: Monitor) {
     statTmp(1) = M.errors
     M.lineNr += 1
 
+    var base = 0
     for (index <- V.indices) {
-      variableBddsTmp((index + 1) * 0) = V(index).free
-      variableBddsTmp((index + 1) * 1) = V(index).seen
-      variableBddsTmp((index + 1) * 2) = V(index).inRelation
+      variableBddsTmp(base + 0) = V(index).free
+      variableBddsTmp(base + 1) = V(index).seen
+      variableBddsTmp(base + 2) = V(index).inRelation
+      base += 3
     }
   }
 
@@ -1354,10 +1406,12 @@ abstract class Prediction(monitor: Monitor) {
     M.lineNr = statTmp(0)
     M.errors = statTmp(1)
 
+    var base = 0
     for (index <- V.indices) {
-      V(index).free = variableBddsTmp((index + 1) * 0)
-      V(index).seen = variableBddsTmp((index + 1) * 1)
-      V(index).inRelation = variableBddsTmp((index + 1) * 2)
+      V(index).free = variableBddsTmp(base + 0)
+      V(index).seen = variableBddsTmp(base + 1)
+      V(index).inRelation = variableBddsTmp(base + 2)
+      base += 3
     }
   }
 
@@ -1420,11 +1474,11 @@ abstract class Prediction(monitor: Monitor) {
       // Defines all the tmp objects in order to have the ability to restore previous
       // states while going back and forth in recursion.
       val tmpEventTable: Map[String, Long] = null
-      val tmpVarBdds: Array[Map[Any, BDD]] = Array.fill(1)(null)
+      val tmpVarBdds: Array[Map[Any, BDD]] = Array.fill(6)(null)
       val tmpStat: Array[Int] = Array.fill(2)(0)
-      val tmpVariableBdds = Array.fill(3 * 1)(G.False)
-      val tmpPre: Array[BDD] = Array.fill(3)(G.False)
-      val tmpNow: Array[BDD] = Array.fill(3)(G.False)
+      val tmpVariableBdds = Array.fill(3 * 6)(G.False)
+      val tmpPre: Array[BDD] = Array.fill(28)(G.False)
+      val tmpNow: Array[BDD] = Array.fill(28)(G.False)
       val tmpPredictedEvents: ListBuffer[(String, String, Int)] = predictedEvents
 
       // Used to avoid duplicates when spec have constants or predicate with multiple values.
@@ -1971,6 +2025,14 @@ object TraceMonitor {
     |         [--prediction num] [--prediction_type (smart | brute)] [--expected_verdict (0 | 1)]
  """.stripMargin
 
+   def time[R](block: => R): R = {
+       val t0 = System.nanoTime()
+       val result = block    // call-by-name
+       val t1 = System.nanoTime()
+       println("Prediction time: " + (t1 - t0) / 1e9d + "s")
+       result
+   }
+
   def main(args: Array[String]): Unit = {
 
     if (2 <= args.length && args.length <= 14 && args.length % 2 == 0) {
@@ -2092,22 +2154,24 @@ object TraceMonitor {
 
 
        if (Options.PREDICTION) {
-          if (m.multipleValuesPredicates.isEmpty && m.eventsInVars.isEmpty) {
-            println(s"*** Prediction is not available for this spec without any predicate with values")
-          } else {
-            var prediction: Prediction = null
-            if (Options.PREDICTION_TYPE == "brute") {
-              prediction = new BruteForcePrediction(m)
-            } else {
-              prediction = new SmartPrediction(m)
-            }
-            val events = new ListBuffer[(String, String, Int)]()
-            prediction.prediction(Options.PREDICTION_K, events)
-            println(s"### Total Predictions: ${prediction.counter}")
-          }
-        } else {
-          println("Prediction was not activated")
-        }
+         if (m.multipleValuesPredicates.isEmpty && m.eventsInVars.isEmpty) {
+           println(s"*** Prediction is not available for this spec without any predicate with values")
+         } else {
+         time {
+           var prediction: Prediction = null
+           if (Options.PREDICTION_TYPE == "brute") {
+             prediction = new BruteForcePrediction(m)
+           } else {
+             prediction = new SmartPrediction(m)
+           }
+           val events = new ListBuffer[(String, String, Int)]()
+           prediction.prediction(Options.PREDICTION_K, events)
+           println(s"### Total Predictions: ${prediction.counter}")
+           }
+         }
+       } else {
+         println("Prediction was not activated")
+       }
      } catch {
         case e: Throwable =>
           println(s"\n*** $e\n")
@@ -2122,4 +2186,4 @@ object TraceMonitor {
     }
   }
 }
-
+      

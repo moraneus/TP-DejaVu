@@ -10,6 +10,8 @@ class Test66 extends TestCase {
   val spec1 = s"$TEST/spec1.qtl"
   val spec2 = s"$TEST/spec2.qtl"
   val log1 = s"$TEST/log1.csv"
+  val log2 = s"$TEST/log2.csv"
+
 
   @Test def test1_1(): Unit = {
     Verify("--execution", "0", "--specfile", spec1, "--logfile", log1, "--resultfile", resultfile, "--bits", "5", "--prediction", "2", "--prediction_type", "smart")
@@ -893,5 +895,19 @@ class Test66 extends TestCase {
     )
     checkResults(resultfile, expected: _*)
   }
+
+  @Test def test2_1(): Unit = {
+    Verify("--execution", "0", "--specfile", spec2, "--logfile", log2, "--resultfile", resultfile, "--bits", "5", "--prediction", "1", "--prediction_type", "smart")
+    // *=1 for success, *=0 for failure
+    val expected = List[String](
+      "6",
+      "p(2)=1",
+      "q(2)=0",
+      "p(1)=1",
+      "q(1)=0"
+    )
+    checkResults(resultfile, expected: _*)
+  }
+
 }
 

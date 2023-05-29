@@ -1,4 +1,5 @@
 
+
 /* Generic Monitoring Code common for all properties. */
 
 import net.sf.javabdd.{BDD, BDDFactory}
@@ -1213,11 +1214,11 @@ abstract class Formula(val monitor: Monitor) {
 
 
 /*
-  prop p : forall f . (exists d . (write(f,d)) -> (!close(f) S open(f))) 
+  prop p : forall f . ((exists d . write(f,d)) -> (!close(f) S open(f)))
 */
 
 class Formula_p(monitor: Monitor) extends Formula(monitor) {
-          
+
   override def evaluate(): Boolean = {
     // assignments1 (leaf nodes that are not rule calls):
       now(3) = build("write")(V("f"),V("d"))
@@ -1227,10 +1228,10 @@ class Formula_p(monitor: Monitor) extends Formula(monitor) {
     // assignments3 (rule calls):
     // assignments4 (the rest of rules that are below @ and excluding leaf nodes):
     // assignments5 (main formula excluding leaf nodes):
+      now(2) = var_d.seen.and(now(3)).exist(var_d.quantvar)
       now(5) = now(6).not()
       now(4) = now(7).or(now(5).and(pre(4)))
-      now(2) = now(3).not().or(now(4))
-      now(1) = var_d.seen.and(now(2)).exist(var_d.quantvar)
+      now(1) = now(2).not().or(now(4))
       now(0) = var_f.seen.imp(now(1)).forAll(var_f.quantvar)
 
     debugMonitorState()
@@ -1253,9 +1254,9 @@ class Formula_p(monitor: Monitor) extends Formula(monitor) {
   now = Array.fill(8)(bddGenerator.False)
 
   txt = Array(
-    "forall f . (exists d . (write(f,d)) -> (!close(f) S open(f)))",
-      "exists d . (write(f,d)) -> (!close(f) S open(f))",
-      "(write(f,d)) -> (!close(f) S open(f))",
+    "forall f . ((exists d . write(f,d)) -> (!close(f) S open(f)))",
+      "(exists d . write(f,d)) -> (!close(f) S open(f))",
+      "exists d . write(f,d)",
       "write(f,d)",
       "!close(f) S open(f)",
       "!close(f)",
@@ -1265,7 +1266,7 @@ class Formula_p(monitor: Monitor) extends Formula(monitor) {
 
   debugMonitorState()
 }
-        
+
 /* The specialized Monitor for the provided properties. */
 
 class PropertyMonitor extends Monitor {
@@ -1278,7 +1279,7 @@ class PropertyMonitor extends Monitor {
 
   formulae ++= List(new Formula_p(this))
 }
-      
+
 
 // ### Prediction Extension ###
 
@@ -1395,7 +1396,7 @@ abstract class Prediction(monitor: Monitor) {
     // printPredictionSummary(predictedEvents)
     // monitor.end()
   }
-        
+
 
  /**
    * Initializes the necessary variables for the prediction function.
@@ -1473,7 +1474,7 @@ class BruteForcePrediction(monitor: Monitor) extends Prediction(monitor) {
          handleBaseCase(predictedEvents)
          return
        }
-        
+
 
     // Initialize necessary variables
     var
@@ -1488,7 +1489,7 @@ class BruteForcePrediction(monitor: Monitor) extends Prediction(monitor) {
     multipleConstValuedPredicatesFlag,
     multipleValuesPredicatesFlag) = initializeVariables(predictedEvents)
 
-         
+
 
     // Loop through all property variables
     for ((varName, varObject) <- vars) {
@@ -1672,7 +1673,7 @@ class BruteForcePrediction(monitor: Monitor) extends Prediction(monitor) {
     tmpVal
     }
 }
-       
+
 
  // ### Prediction Extension ###
 class SmartPrediction(monitor: Monitor) extends Prediction(monitor) {
@@ -1690,7 +1691,7 @@ class SmartPrediction(monitor: Monitor) extends Prediction(monitor) {
          handleBaseCase(predictedEvents)
          return
        }
-        
+
 
       // Initialize necessary variables
       var
@@ -1971,7 +1972,7 @@ class SmartPrediction(monitor: Monitor) extends Prediction(monitor) {
      ghBdd.replaceWith(pairsH)
   }
 }
-        
+
 
  // ### Prediction Extension ###
 object TraceMonitor {
@@ -1979,6 +1980,14 @@ object TraceMonitor {
  """Usage: (--logfile <filename>) [--bits numOfBits] [--mode (debug | profile)]
     |         [--prediction num] [--prediction_type (smart | brute)] [--expected_verdict (0 | 1)]
  """.stripMargin
+
+  def time[R](block: => R): R = {
+      val t0 = System.nanoTime()
+      val result = block    // call-by-name
+      val t1 = System.nanoTime()
+      println("Prediction time: " + (t1 - t0) / 1e9d + "s")
+      result
+  }
 
   def main(args: Array[String]): Unit = {
 
@@ -2098,13 +2107,13 @@ object TraceMonitor {
           m.printProfileHeader()
         }
         m.submitCSVFile(logfilePath)
-         
+
 
        if (Options.PREDICTION) {
-          // if (Options.PREDICTION_TYPE == "brute" && m.multipleValuesPredicates.nonEmpty) {
-          if (false) {
-            println(s"*** Prediction is not available for this spec and prediction type (brute) with multiple events per predicate ")
+          if (m.multipleValuesPredicates.isEmpty && m.eventsInVars.isEmpty) {
+            println(s"*** Prediction is not available for this spec without any predicate with values")
           } else {
+          time {
             var prediction: Prediction = null
             if (Options.PREDICTION_TYPE == "brute") {
               prediction = new BruteForcePrediction(m)
@@ -2114,6 +2123,7 @@ object TraceMonitor {
             val events = new ListBuffer[(String, String, Int)]()
             prediction.prediction(Options.PREDICTION_K, events)
             println(s"### Total Predictions: ${prediction.counter}")
+           }
           }
         } else {
           println("Prediction was not activated")

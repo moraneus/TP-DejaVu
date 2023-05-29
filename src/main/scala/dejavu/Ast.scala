@@ -500,10 +500,12 @@ case class Spec(properties: List[Property]) {
         |    statTmp(1) = M.errors
         |    M.lineNr += 1
         |
+        |    var base = 0
         |    for (index <- V.indices) {
-        |      variableBddsTmp((index + 1) * 0) = V(index).free
-        |      variableBddsTmp((index + 1) * 1) = V(index).seen
-        |      variableBddsTmp((index + 1) * 2) = V(index).inRelation
+        |      variableBddsTmp(base + 0) = V(index).free
+        |      variableBddsTmp(base + 1) = V(index).seen
+        |      variableBddsTmp(base + 2) = V(index).inRelation
+        |      base += 3
         |    }
         |  }
         |
@@ -533,10 +535,12 @@ case class Spec(properties: List[Property]) {
         |    M.lineNr = statTmp(0)
         |    M.errors = statTmp(1)
         |
+        |    var base = 0
         |    for (index <- V.indices) {
-        |      V(index).free = variableBddsTmp((index + 1) * 0)
-        |      V(index).seen = variableBddsTmp((index + 1) * 1)
-        |      V(index).inRelation = variableBddsTmp((index + 1) * 2)
+        |      V(index).free = variableBddsTmp(base + 0)
+        |      V(index).seen = variableBddsTmp(base + 1)
+        |      V(index).inRelation = variableBddsTmp(base + 2)
+        |      base += 3
         |    }
         |  }
         |

@@ -1,2 +1,1 @@
-// prop p: forall y . ( a(y) -> ( forall x . ( P b(x) & x < y ) ) )
-prop p: forall x . r(x) & x < y
+prop P1 : !(Exists A . Exists B . Exists d .  P ( end(B)  & @ P ( begin(B, d) & @ P ( end(A) & @ P begin(A, d) ) ) ) )

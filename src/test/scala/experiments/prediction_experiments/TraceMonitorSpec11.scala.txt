@@ -1214,20 +1214,24 @@ abstract class Formula(val monitor: Monitor) {
 
 
 /*
-  prop p : Forall x . (P q(x))
+  prop p : !forall x . (P q(x) -> P r(x))
 */
 
 class Formula_p(monitor: Monitor) extends Formula(monitor) {
 
   override def evaluate(): Boolean = {
     // assignments1 (leaf nodes that are not rule calls):
-      now(2) = build("q")(V("x"))
+      now(4) = build("q")(V("x"))
+      now(6) = build("r")(V("x"))
     // assignments2 (rule nodes excluding what is below @ and excluding leaf nodes):
     // assignments3 (rule calls):
     // assignments4 (the rest of rules that are below @ and excluding leaf nodes):
     // assignments5 (main formula excluding leaf nodes):
-      now(1) = now(2).or(pre(1))
-      now(0) = now(1).forAll(var_x.quantvar)
+      now(3) = now(4).or(pre(3))
+      now(5) = now(6).or(pre(5))
+      now(2) = now(3).not().or(now(5))
+      now(1) = var_x.seen.imp(now(2)).forAll(var_x.quantvar)
+      now(0) = now(1).not()
 
     debugMonitorState()
 
@@ -1240,18 +1244,22 @@ class Formula_p(monitor: Monitor) extends Formula(monitor) {
     !error
   }
 
-  val var_x :: Nil = declareVariables(("x",false))(0)
+  val var_x :: Nil = declareVariables(("x",true))(0)
 
   varsInRelations = Set()
-  val indices: List[Int] = List(1)
+  val indices: List[Int] = List(5,3)
 
-  pre = Array.fill(3)(bddGenerator.False)
-  now = Array.fill(3)(bddGenerator.False)
+  pre = Array.fill(7)(bddGenerator.False)
+  now = Array.fill(7)(bddGenerator.False)
 
   txt = Array(
-    "Forall x . (P q(x))",
+    "!forall x . (P q(x) -> P r(x))",
+      "forall x . (P q(x) -> P r(x))",
+      "P q(x) -> P r(x)",
       "P q(x)",
-      "q(x)"
+      "q(x)",
+      "P r(x)",
+      "r(x)"
   )
 
   debugMonitorState()
@@ -1260,10 +1268,10 @@ class Formula_p(monitor: Monitor) extends Formula(monitor) {
 /* The specialized Monitor for the provided properties. */
 
 class PropertyMonitor extends Monitor {
-  def eventsInSpec: Set[String] = Set("q")
+  def eventsInSpec: Set[String] = Set("q","r")
 
   // ### Prediction Extension ###
-  val eventsInVars: Map[String, List[String]] = Map( "x" -> List("q") )
+  val eventsInVars: Map[String, List[String]] = Map( "x" -> List("r","q") )
   val eventsInConstants: Map[String, List[String]] = Map( )
   val multipleValuesPredicates: Map[Array[String], List[String]] = Map( )
 
@@ -1423,8 +1431,8 @@ abstract class Prediction(monitor: Monitor) {
       val tmpVarBdds: Array[Map[Any, BDD]] = Array.fill(1)(null)
       val tmpStat: Array[Int] = Array.fill(2)(0)
       val tmpVariableBdds = Array.fill(3 * 1)(G.False)
-      val tmpPre: Array[BDD] = Array.fill(3)(G.False)
-      val tmpNow: Array[BDD] = Array.fill(3)(G.False)
+      val tmpPre: Array[BDD] = Array.fill(7)(G.False)
+      val tmpNow: Array[BDD] = Array.fill(7)(G.False)
       val tmpPredictedEvents: ListBuffer[(String, String, Int)] = predictedEvents
 
       // Used to avoid duplicates when spec have constants or predicate with multiple values.
@@ -1971,6 +1979,14 @@ object TraceMonitor {
     |         [--prediction num] [--prediction_type (smart | brute)] [--expected_verdict (0 | 1)]
  """.stripMargin
 
+     def time[R](block: => R): R = {
+         val t0 = System.nanoTime()
+         val result = block    // call-by-name
+         val t1 = System.nanoTime()
+         println("Prediction time: " + (t1 - t0) / 1e9d + "s")
+         result
+     }
+
   def main(args: Array[String]): Unit = {
 
     if (2 <= args.length && args.length <= 14 && args.length % 2 == 0) {
@@ -2095,6 +2111,7 @@ object TraceMonitor {
           if (m.multipleValuesPredicates.isEmpty && m.eventsInVars.isEmpty) {
             println(s"*** Prediction is not available for this spec without any predicate with values")
           } else {
+          time {
             var prediction: Prediction = null
             if (Options.PREDICTION_TYPE == "brute") {
               prediction = new BruteForcePrediction(m)
@@ -2104,6 +2121,7 @@ object TraceMonitor {
             val events = new ListBuffer[(String, String, Int)]()
             prediction.prediction(Options.PREDICTION_K, events)
             println(s"### Total Predictions: ${prediction.counter}")
+            }
           }
         } else {
           println("Prediction was not activated")
