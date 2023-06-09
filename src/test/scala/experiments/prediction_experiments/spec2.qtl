@@ -1,4 +1,3 @@
-
-prop p : exists x . ( @ p(x) & g(x) &
+prop P2 : exists x . ( @ p(x) & g(x) &
                     H ( p(x) -> (! @ p(x) & ! ( @ ( @ ( p(x) ) ) ) ) )  &
                     H ( g(x) -> (! @ g(x) ) ) )

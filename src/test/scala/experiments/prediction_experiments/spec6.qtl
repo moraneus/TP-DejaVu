@@ -1,1 +1,1 @@
-prop p : Forall x . P q(x)
+prop P6 : Forall x . P q(x)

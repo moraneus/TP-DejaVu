@@ -1,0 +1,1 @@
+prop P8 : !Exists A . Exists B . Exists C . Exists da . Exists db . Exists dc . (end(A) & @ P (end(B) & @ P (end(C) & @ P (begin(C,dc) & @ P (begin(B,db) & @ P begin(A,da))))))

@@ -1,0 +1,4 @@
+prop P10 : Forall A . Forall B . Forall C . Forall da . Forall db . Forall dc .
+(  ( P  (end(B) & @ P ( end(A) & @ P ( begin(B,db)  & @ P begin(A,da) ) ) )  &
+                                                  P ( end(C) & @ P ( end(B) & @ P ( begin(C,dc)  & @ P begin(B,db) ) ) ) ) ->
+                                                ! P ( end(C) & @ P ( end(A) & @ P ( begin(C,dc)  & @ P begin(A,da) ) ) ) )

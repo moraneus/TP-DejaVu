@@ -1971,6 +1971,14 @@ object TraceMonitor {
     |         [--prediction num] [--prediction_type (smart | brute)] [--expected_verdict (0 | 1)]
  """.stripMargin
 
+    def time[R](block: => R): R = {
+        val t0 = System.nanoTime()
+        val result = block    // call-by-name
+        val t1 = System.nanoTime()
+        println("Prediction time: " + (t1 - t0) / 1e9d + "s")
+        result
+    }
+
   def main(args: Array[String]): Unit = {
 
     if (2 <= args.length && args.length <= 14 && args.length % 2 == 0) {
@@ -2092,20 +2100,22 @@ object TraceMonitor {
 
 
        if (Options.PREDICTION) {
-          if (m.multipleValuesPredicates.isEmpty && m.eventsInVars.isEmpty) {
-            println(s"*** Prediction is not available for this spec without any predicate with values")
-          } else {
-            var prediction: Prediction = null
-            if (Options.PREDICTION_TYPE == "brute") {
-              prediction = new BruteForcePrediction(m)
+            if (m.multipleValuesPredicates.isEmpty && m.eventsInVars.isEmpty) {
+              println(s"*** Prediction is not available for this spec without any predicate with values")
             } else {
-              prediction = new SmartPrediction(m)
+            time {
+              var prediction: Prediction = null
+              if (Options.PREDICTION_TYPE == "brute") {
+                prediction = new BruteForcePrediction(m)
+              } else {
+                prediction = new SmartPrediction(m)
+              }
+              val events = new ListBuffer[(String, String, Int)]()
+              prediction.prediction(Options.PREDICTION_K, events)
+              println(s"### Total Predictions: ${prediction.counter}")
+             }
             }
-            val events = new ListBuffer[(String, String, Int)]()
-            prediction.prediction(Options.PREDICTION_K, events)
-            println(s"### Total Predictions: ${prediction.counter}")
-          }
-        } else {
+          } else {
           println("Prediction was not activated")
         }
      } catch {

@@ -1,0 +1,3 @@
+prop P9 : Forall A . Forall B . ( ( P end(B) & @ P ( begin(B,2) & @ P ( end(A) & @ P begin(A,2) ) ) ) ->
+              ! Exists C .Exists d . (  P ( begin(B, 2) &  @P ( end(C) &
+                                      @ P ( begin(C, d) & @ P end(A) ) ) ) ) )

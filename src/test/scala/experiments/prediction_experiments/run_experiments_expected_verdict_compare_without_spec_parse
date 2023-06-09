@@ -52,55 +52,57 @@ echo " ===== RESULT ===== " >> result-dejavu-prediction-expected-verdict-compare
 #echo "########## experiment spec1 execute 14 ##########" >> result-dejavu-prediction-expected-verdict-compare
 #(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_order_3.csv --bits 20 --prediction 500 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
+
+
 echo "########## spec 1 Random ##########" >> result-dejavu-prediction-expected-verdict-compare
 
 echo "########## experiment spec1 execute 1 ##########"
 echo "########## experiment spec1 execute 1 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 5 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 5 --prediction_type smart --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 2 ##########"
 echo "########## experiment spec1 execute 2 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 5 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 5 --prediction_type brute --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 3 ##########"
 echo "########## experiment spec1 execute 3 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 10 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 10 --prediction_type smart --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 4 ##########"
 echo "########## experiment spec1 execute 4 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 10 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 10 --prediction_type brute --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 7 ##########"
 echo "########## experiment spec1 execute 7 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 20 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 20 --prediction_type smart --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 8 ##########"
 echo "########## experiment spec1 execute 8 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 20 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 20 --prediction_type brute --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 9 ##########"
 echo "########## experiment spec1 execute 9 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 50 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 50 --prediction_type smart --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 10 ##########"
 echo "########## experiment spec1 execute 10 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 50 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 50 --prediction_type brute --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 11 ##########"
 echo "########## experiment spec1 execute 11 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 100 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 100 --prediction_type smart --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 12 ##########"
 echo "########## experiment spec1 execute 12 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 100 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 100 --prediction_type brute --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 13 ##########"
 echo "########## experiment spec1 execute 13 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 500 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 500 --prediction_type smart --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 echo "########## experiment spec1 execute 14 ##########"
 echo "########## experiment spec1 execute 14 ##########" >> result-dejavu-prediction-expected-verdict-compare
-(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 500 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec1.scala.txt --logfile trace_spec_1_random_3.csv --bits 20 --prediction 500 --prediction_type brute --expected_verdict 1) >> result-dejavu-prediction-expected-verdict-compare 2>&1
 
 
 #echo "########## spec 2 Order ##########" >> result-dejavu-prediction-expected-verdict-compare
@@ -522,3 +524,316 @@ echo "########## experiment spec5 execute 14 ##########"
 echo "########## experiment spec5 execute 14 ##########" >> result-dejavu-prediction-expected-verdict-compare
 #echo "SKIP since it won't stop" >> result-dejavu-prediction-expected-verdict-compare
 #(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec5.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 500 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+
+echo "########## spec 6 Random ##########" >> result-dejavu-prediction-expected-verdict-compare
+
+echo "########## experiment spec6 execute 1 ##########"
+echo "########## experiment spec6 execute 1 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 5 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 2 ##########"
+echo "########## experiment spec6 execute 2 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 5 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 3 ##########"
+echo "########## experiment spec6 execute 3 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 10 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 4 ##########"
+echo "########## experiment spec6 execute 4 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 10 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 7 ##########"
+echo "########## experiment spec6 execute 7 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 20 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 8 ##########"
+echo "########## experiment spec6 execute 8 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 20 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 9 ##########"
+echo "########## experiment spec6 execute 9 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 50 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 10 ##########"
+echo "########## experiment spec6 execute 10 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 50 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 11 ##########"
+echo "########## experiment spec6 execute 11 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 100 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 12 ##########"
+echo "########## experiment spec6 execute 12 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 100 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 13 ##########"
+echo "########## experiment spec6 execute 13 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 500 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec6 execute 14 ##########"
+echo "########## experiment spec6 execute 14 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec6.scala.txt --logfile trace_spec_6_random_3.csv --bits 20 --prediction 500 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+
+echo "########## spec 7 Random ##########" >> result-dejavu-prediction-expected-verdict-compare
+
+echo "########## experiment spec7 execute 1 ##########"
+echo "########## experiment spec7 execute 1 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 5 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 2 ##########"
+echo "########## experiment spec7 execute 2 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 5 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 3 ##########"
+echo "########## experiment spec7 execute 3 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 10 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 4 ##########"
+echo "########## experiment spec7 execute 4 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 10 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 7 ##########"
+echo "########## experiment spec7 execute 7 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 20 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 8 ##########"
+echo "########## experiment spec7 execute 8 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 20 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 9 ##########"
+echo "########## experiment spec7 execute 9 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 50 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 10 ##########"
+echo "########## experiment spec7 execute 10 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 50 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 11 ##########"
+echo "########## experiment spec7 execute 11 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 100 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 12 ##########"
+echo "########## experiment spec7 execute 12 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 100 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 13 ##########"
+echo "########## experiment spec7 execute 13 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 500 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec7 execute 14 ##########"
+echo "########## experiment spec7 execute 14 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec7.scala.txt --logfile trace_spec_7_random_2.csv --bits 20 --prediction 500 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+
+
+echo "########## spec 8 Random ##########" >> result-dejavu-prediction-expected-verdict-compare
+
+echo "########## experiment spec8 execute 1 ##########"
+echo "########## experiment spec8 execute 1 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 5 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 2 ##########"
+echo "########## experiment spec8 execute 2 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 5 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 3 ##########"
+echo "########## experiment spec8 execute 3 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 10 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 4 ##########"
+echo "########## experiment spec8 execute 4 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 10 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 7 ##########"
+echo "########## experiment spec8 execute 7 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 20 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 8 ##########"
+echo "########## experiment spec8 execute 8 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 20 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 9 ##########"
+echo "########## experiment spec8 execute 9 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 50 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 10 ##########"
+echo "########## experiment spec8 execute 10 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 50 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 11 ##########"
+echo "########## experiment spec8 execute 11 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 100 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 12 ##########"
+echo "########## experiment spec8 execute 12 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 100 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 13 ##########"
+echo "########## experiment spec8 execute 13 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 500 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec8 execute 14 ##########"
+echo "########## experiment spec8 execute 14 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec8.scala.txt --logfile trace_spec_8_random_2.csv --bits 20 --prediction 500 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+
+echo "########## spec 9 Random ##########" >> result-dejavu-prediction-expected-verdict-compare
+
+echo "########## experiment spec9 execute 1 ##########"
+echo "########## experiment spec9 execute 1 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 5 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 2 ##########"
+echo "########## experiment spec9 execute 2 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 5 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 3 ##########"
+echo "########## experiment spec9 execute 3 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 10 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 4 ##########"
+echo "########## experiment spec9 execute 4 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 10 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 7 ##########"
+echo "########## experiment spec9 execute 7 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 20 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 8 ##########"
+echo "########## experiment spec9 execute 8 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 20 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 9 ##########"
+echo "########## experiment spec9 execute 9 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 50 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 10 ##########"
+echo "########## experiment spec9 execute 10 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 50 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 11 ##########"
+echo "########## experiment spec9 execute 11 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 100 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 12 ##########"
+echo "########## experiment spec9 execute 12 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 100 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 13 ##########"
+echo "########## experiment spec9 execute 13 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 500 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec9 execute 14 ##########"
+echo "########## experiment spec9 execute 14 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec9.scala.txt --logfile trace_spec_9_random_2.csv --bits 20 --prediction 500 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+
+echo "########## spec 10 Random ##########" >> result-dejavu-prediction-expected-verdict-compare
+
+echo "########## experiment spec10 execute 1 ##########"
+echo "########## experiment spec10 execute 1 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 5 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 2 ##########"
+echo "########## experiment spec10 execute 2 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 5 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 3 ##########"
+echo "########## experiment spec10 execute 3 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 10 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 4 ##########"
+echo "########## experiment spec10 execute 4 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 10 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 7 ##########"
+echo "########## experiment spec10 execute 7 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 20 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 8 ##########"
+echo "########## experiment spec10 execute 8 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 20 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 9 ##########"
+echo "########## experiment spec10 execute 9 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 50 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 10 ##########"
+echo "########## experiment spec10 execute 10 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 50 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 11 ##########"
+echo "########## experiment spec10 execute 11 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 100 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 12 ##########"
+echo "########## experiment spec10 execute 12 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 100 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 13 ##########"
+echo "########## experiment spec10 execute 13 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 500 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec10 execute 14 ##########"
+echo "########## experiment spec10 execute 14 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec10.scala.txt --logfile trace_spec_10_random_2.csv --bits 20 --prediction 500 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+
+echo "########## spec 11 Random ##########" >> result-dejavu-prediction-expected-verdict-compare
+
+echo "########## experiment spec11 execute 1 ##########"
+echo "########## experiment spec11 execute 1 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 5 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 2 ##########"
+echo "########## experiment spec11 execute 2 ##########" >> result-dejavu-prediction-expected-verdict-compare
+echo "SKIP since it won't stop" >> result-dejavu-prediction-expected-verdict-compare
+#(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 5 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 3 ##########"
+echo "########## experiment spec11 execute 3 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 10 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 4 ##########"
+echo "########## experiment spec11 execute 4 ##########" >> result-dejavu-prediction-expected-verdict-compare
+echo "SKIP since it won't stop" >> result-dejavu-prediction-expected-verdict-compare
+#(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 10 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 7 ##########"
+echo "########## experiment spec11 execute 7 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 20 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 8 ##########"
+echo "########## experiment spec11 execute 8 ##########" >> result-dejavu-prediction-expected-verdict-compare
+echo "SKIP since it won't stop" >> result-dejavu-prediction-expected-verdict-compare
+#(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 20 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 9 ##########"
+echo "########## experiment spec11 execute 9 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 50 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 10 ##########"
+echo "########## experiment spec11 execute 10 ##########" >> result-dejavu-prediction-expected-verdict-compare
+echo "SKIP since it won't stop" >> result-dejavu-prediction-expected-verdict-compare
+#(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 50 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 11 ##########"
+echo "########## experiment spec11 execute 11 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 100 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 12 ##########"
+echo "########## experiment spec11 execute 12 ##########" >> result-dejavu-prediction-expected-verdict-compare
+echo "SKIP since it won't stop" >> result-dejavu-prediction-expected-verdict-compare
+#(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 100 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 13 ##########"
+echo "########## experiment spec11 execute 13 ##########" >> result-dejavu-prediction-expected-verdict-compare
+(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 500 --prediction_type smart --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
+
+echo "########## experiment spec11 execute 14 ##########"
+echo "########## experiment spec11 execute 14 ##########" >> result-dejavu-prediction-expected-verdict-compare
+echo "SKIP since it won't stop" >> result-dejavu-prediction-expected-verdict-compare
+#(gtime scala -J-Xmx16g -cp .:dejavu.jar TraceMonitorSpec11.scala.txt --logfile trace_spec_5_random_3.csv --bits 20 --prediction 500 --prediction_type brute --expected_verdict 0) >> result-dejavu-prediction-expected-verdict-compare 2>&1
