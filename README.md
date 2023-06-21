@@ -231,9 +231,9 @@ The tool will provide notifications for new predictions by displaying them in th
 
     - Garbage collector was not activated
 
-DejaVu's prediction indicates that there are k=3 events, as denoted by "Processed 3 events." 
-Among these, the first two events successfully met the property criteria 
-(both equal to 1, which signifies True), whereas the third event failed to do so 
+In the above example the DejaVu's prediction result indicates that there are k=3 events, as denoted by "Processed 3 events." 
+Among these, the first two events satisfy the specification criteria 
+(both equal to 1, which signifies True), whereas the third event violate the specification 
 (equal to 0, representing False). 
 The remaining output information presents a comprehensive evaluation, 
 including statistics and the latest predicted events.
@@ -506,7 +506,14 @@ next `k` steps using two different prediction modes. The core
 functionality of DejaVu remains unaltered, without any modifications
 or enhancements. To accommodate the prediction requests, we had to
 modify the way DejaVu obtains and processes its command-line arguments, as
-described [above](#running-dejavu).der to handle the prediction requests, we had to change the way that DejaVu gets and parses his arguments as it describe [above](#running-dejavu).
+described [above](#running-dejavu).
+
+Our proposed RV prediction method, which we term ``iPRV``, is based on calculating an equivalence relation
+on the observed data values. The equivalence classes are calculated independently for each variable.
+Then, we select a representative for the next event from each equivalence class, making the following event options a minimum required.
+In addition, for values that did not appear so far in the trace, which belong to the same equivalence class, a single representative is enough (after
+using that representative in the current event, one needs a fresh representative for the
+values not seen so far, and so forth).
 
 ### Prediction Modes
 
@@ -516,17 +523,17 @@ We offer two distinct prediction modes:
   exploring all possible options without any optimizations for speed or
   efficiency. It has been included primarily for testing, experimentation,
   and comparative purposes, allowing users to contrast it with our
-  ``smart`` prediction method.
+  ``iPRV`` (Isomorphic Predictive RV) prediction method.
 
-* ``smart`` - This mode lies at the core of our research. The smart
+* ``iPRV`` - This mode lies at the core of our research. The smart
   prediction method leverages the fact that some values are equivalent
   within a specific time frame, thereby reducing the number of potential
   predictions. In certain instances, such as after evaluating a lengthy
   trace file containing various events, the reduction is so substantial
-  that the ``smart`` approach enables successful prediction, while the
-  ``brute`` method fails due to excessive memory usage.
+  that the ``iPRV`` approach enables successful prediction, while the
+  ``iPRV`` method fails due to excessive memory usage.
 
-### Smart Prediction Limitations
+### iPRV Limitations
 * The prediction process generate only one event per time point. 
 * No tests were performed for specifications containing op, e.g., x < 10, x <= y or those referring to time units. 
   The prediction procedure disregards these operators.
