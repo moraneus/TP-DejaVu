@@ -1,12 +1,11 @@
 
-        _____       _    __      __    
-       |  __ \     (_)   \ \    / /    
-       | |  | | ___ _  __ \ \  / /   _ 
-       | |  | |/ _ \ |/ _` \ \/ / | | |
-       | |__| |  __/ | (_| |\  /| |_| |
-       |_____/ \___| |\__,_| \/  \__,_|
-                  _/ |                 
-                 |__/                  
+██║ ██████╗ ██████╗ ██╗   ██╗    ██████╗ ███████╗     ██╗ █████╗ ██╗   ██╗██╗   ██╗
+    ██╔══██╗██╔══██╗██║   ██║    ██╔══██╗██╔════╝     ██║██╔══██╗██║   ██║██║   ██║
+██║ ██████╔╝██████╔╝██║   ██║    ██║  ██║█████╗       ██║███████║██║   ██║██║   ██║
+██║ ██╔═══╝ ██╔══██╗╚██╗ ██╔╝    ██║  ██║██╔══╝  ██   ██║██╔══██║╚██╗ ██╔╝██║   ██║
+██║ ██║     ██║  ██║ ╚████╔╝     ██████╔╝███████╗╚█████╔╝██║  ██║ ╚████╔╝ ╚██████╔╝
+╚═╝ ╚═╝     ╚═╝  ╚═╝  ╚═══╝      ╚═════╝ ╚══════╝ ╚════╝ ╚═╝  ╚═╝  ╚═══╝   ╚═════╝
+
                             First-order past time LTL with recursive rules, time and prediction!
  
         Version 3.0, Februar - 2023
@@ -14,7 +13,10 @@
   
 ## Overview
 
-DejaVu is a program written in Scala for monitoring event streams (traces) against temporal logic formulas. The formulas are written in a first-order past time linear temporal logic, with the addition of macros and recursive rules. The logic also supports reasoning about time.
+DejaVu is a program written in Scala for monitoring event streams (traces) against temporal logic formulas. 
+The formulas are written in a first-order past time linear temporal logic, with the addition of macros and recursive rules. The logic also supports reasoning about time.
+DejaVu contributors are [Klaus Havelund](http://www.havelund.com), [Doron Peled](http://u.cs.biu.ac.il/~doronp) and [Dogan Ulus](https://www.linkedin.com/in/doganulus).
+iPRV DejaVu is an extension of DejaVu that supports prediction of the next k events.
 
 An example of a property in its most basic form is the following:
 
@@ -484,7 +486,7 @@ The property is formalized as follows:
       Forall x . closed(x) -> !telem(x) 
       where closed(x) := toggle(x) <-> @!closed(x) 
 
-The same property can altermatively be expressed using two rules, more closely reflecting how we would model this using a state machine with two states for each channel `x`: `closed(x)` and `open(x)`: 
+The same property can alternatively be expressed using two rules, more closely reflecting how we would model this using a state machine with two states for each channel `x`: `closed(x)` and `open(x)`: 
 
     prop telemetry2: 
       Forall x . closed(x) -> !telem(x) 
@@ -554,6 +556,6 @@ We offer two distinct prediction modes:
 * [Doron Peled](http://u.cs.biu.ac.il/~doronp), Bar Ilan University, Israel
 * [Dogan Ulus](https://www.linkedin.com/in/doganulus), Boston University, USA
 
-## Contributors - For Prediction Expansion
+## Contributors - For iPRV DejaVu
 * [Doron Peled](http://u.cs.biu.ac.il/~doronp), Bar Ilan University, Israel
 * [Moran Omer](https://github.com/moraneus), Bar Ilan University, Israel
