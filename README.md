@@ -34,11 +34,11 @@ The directly ``out`` contains files and directories useful for installing and ru
 
 * README.pdf                      : this document in pdf format
 * dejavu                          : script to run the system
-* artifacts                       : should contain the dejavu jar file (not built for this version)
+* artifacts                       : contain the iPRV-dejavu jar file
 * papers                          : a directory containing papers published about DejaVu
 * examples                        : an example directory containing properties and logs
 
-DejaVu is implemented in Scala. In this version we used Scala 2.11.12
+DejaVu is implemented in Scala. In this version of iPRV-DejaVu we used Scala 2.11.12.
 
 1. Install the Scala programming language if not already installed (https://www.scala-lang.org/download)
 2. Place the files ``dejavu`` and ``dejavu.jar`` mentioned above in some directory **DIR** (standing for the total path to this directory).
@@ -539,6 +539,56 @@ We offer two distinct prediction modes:
 * The prediction process generate only one event per time point. 
 * No tests were performed for specifications containing op, e.g., x < 10, x <= y or those referring to time units. 
   The prediction procedure disregards these operators.
+
+
+## Modifying the DejaVu Runtime Verification Tool
+
+This part provides a detailed guide on how to modify the DejaVu Runtime Verification (RV) tool. The primary functions of DejaVu are found in three main source files: [Verify.scala](https://github.com/moraneus/iPRV-DejaVu/blob/master/src/main/scala/dejavu/Verify.scala), [Monitor.scala](https://github.com/moraneus/iPRV-DejaVu/blob/master/src/main/scala/dejavu/Monitor.scala), and [Ast.scala](https://github.com/moraneus/iPRV-DejaVu/blob/master/src/main/scala/dejavu/Ast.scala).
+
+1. The `Verify.scala` file manages the creation process of the `TraceMonitor.scala` file. 
+It generates this monitor based on the user-provided specifications. Additionally, 
+it is responsible for executing the resulting `TraceMonitor.scala`.
+
+2. The `Monitor.scala` file contains common monitoring code used across all properties. 
+Importantly, `Monitor.scala` should always be identical to `Monitor.txt` to ensure consistency.
+
+3. The `Ast.scala` file has a crucial role in parsing the spec file provided by the user. 
+It generates the appropriate functions to be run on the `TraceMonitor.scala`.
+
+### Guide to Modifying
+
+When `TraceMonitor.scala` is created during the generation process, it uses code templates found in the aforementioned files. 
+If you want to modify the final output of `TraceMonitor.scala`, you'll need to make changes in these source files. 
+This often involves altering the existing code templates or adding new ones as per your needs.
+
+### Build a New DejaVu.jar Artifact in IntelliJ
+
+After making modifications to the DejaVu Runtime Verification (RV) tool, you may want to create a new `dejavu.jar` artifact. Here are the steps to do this using IntelliJ:
+
+#### Pre-requisites
+
+Before you begin, please ensure you have Scala version 2.11.x installed on your computer. DejaVu was developed on Scala version 2.11.12, so using a different minor version may cause unexpected issues.
+
+#### Steps
+
+1. **Open Project in IntelliJ**: Navigate to your project directory and open the project in IntelliJ.
+
+2. **Setup Scala SDK**: Go to `File -> Project Structure -> Global Libraries`, then add the Scala 2.11.12 SDK.
+
+3. **Create Artifact Configuration**: Go to `File -> Project Structure -> Artifacts`, click on the `+` button, and select `JAR -> From modules with dependencies`.
+
+4. **Select Module and Main Class**: A new window will appear. Select the main module and the main class for the JAR artifact ([Verify.scala](https://github.com/moraneus/iPRV-DejaVu/blob/master/src/main/scala/dejavu/Verify.scala)).
+
+5. **Finalize Artifact Configuration**: IntelliJ will automatically select the output directory for the artifact (it can be modified by you). Click `OK` to save the configuration.
+
+6. **Build Artifact**: Go to `Build -> Build Artifacts`, select `dejavu`, and then select `Build`.
+
+The `dejavu.jar` file will be created in the output directory you specified in the artifact configuration.
+
+#### ⚠️ Important Note on Scala Versions
+
+DejaVu is based on an older version of Scala (2.11.12). If you're using a newer version of Scala, you might encounter compatibility issues. Therefore, it's crucial to ensure you have Scala 2.11.x installed and selected as the SDK in IntelliJ before you proceed with the artifact creation.
+
 
 ## Experiments for publications
 
