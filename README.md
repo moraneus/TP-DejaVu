@@ -32,7 +32,6 @@ In this version of DejaVu we add the ability to predict the next `k` steps in 2 
 
 The directly ``out`` contains files and directories useful for installing and running DejaVu:
 
-* README.pdf                      : this document in pdf format
 * dejavu                          : script to run the system
 * artifacts                       : contain the iPRV-dejavu jar file
 * papers                          : a directory containing papers published about DejaVu
@@ -69,23 +68,35 @@ The script is applied as follows:
 
 #### Some Execution Examples
 
-```bash
- ./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=10
- ```
-```bash
-./dejavu -s=/path/to/specfile --logfile=/path/to/logfile -b=7 --clear=1
-```
-```bash
-./dejavu --specfile=/path/to/specfile -l=/path/to/logfile --mode=debug
-```
-```bash
-./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=5 --prediction=3 --prediction_type=brute -expected_verdict=0
-```
-```bash
-./dejavu -s=/path/to/specfile -l=/path/to/logfile -b=5 -p=3 -t=smart -e=1
-```
+* Execute `iPRV-DejaVu`, allocating `10` bits to each variable.
+  ```bash
+  ./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=10
+   ```
+* Execute `iPRV-DejaVu`, allocating `7` bits to each variable, and ensure the clearing of generated files and folders.
+  ```bash
+  ./dejavu -s=/path/to/specfile --logfile=/path/to/logfile -b=7 --clear=1
+  ```
 
-**The specification document file** (``--specfile=<filename>``) is the temporal specification that the trace must satisfy. See explanation of the specification language below.
+* Execute `iPRV-DejaVu` in `debug` mode, where certain parameters like `bits` assume default values.
+  ```bash
+  ./dejavu --specfile=/path/to/specfile -l=/path/to/logfile --mode=debug
+  ```
+
+* Initiate the `iPRV-DejaVu` process, allocating `5` bits to each variable. Set the prediction parameter, `k`, to `3` 
+  and employ a `brute-force` approach for the prediction type. The anticipated outcome is `false`, 
+  indicating that the execution will cease immediately upon encountering a false prediction.
+  ```bash
+  ./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=5 --prediction=3 --prediction_type=brute -expected_verdict=0
+  ```
+* Initiate the `iPRV-DejaVu` process, allocating `5` bits to each variable. Set the prediction parameter, `k`, to `3`
+  and employ a `smart` approach for the prediction type. The anticipated outcome is `true`,
+  indicating that the execution will cease immediately upon encountering a true prediction.
+  ```bash
+  ./dejavu -s=/path/to/specfile -l=/path/to/logfile -b=5 -p=3 -t=smart -e=1
+  ```
+
+The `--specfile=<filename>` is the temporal specification that the trace must satisfy, 
+which is referred to as the **Specification Document File**. See the explanation of the specification language below.
 
 **The log file** (``--logfile=<filename>``) should be in comma separated value format (CSV): http://edoceo.com/utilitas/csv-file-format. For example, a file of
 the form:
@@ -124,7 +135,8 @@ events in specification format:
 In case the log file is not timed (as described just above), time is considered as always being 0.
 One can still check timed properties against such a log, but of course it makes little sense.
 
-**The bits per variable** (``--bits=numOfBits``) indicates how many bits are assigned to each variable in the BDDs. 
+**The bits per variable** (``--bits=numOfBits``):
+Indicates how many bits are assigned to each variable in the BDDs. 
 This parameter is optional with the default value being 20. If the number is too low an error message will be issued 
 during analysis as explained below. A too high number can have impact on the efficiency of the algorithm. Note that the 
 number of values representable by N bits is 2^N, so one in general does not need very large numbers.  
@@ -132,19 +144,23 @@ number of values representable by N bits is 2^N, so one in general does not need
 The algorithm/implementation will perform garbage collection on allocated
 BDDs, re-using BDDs that are no longer needed for checking the property, depending on the form of the formula.
 
-**Debugging** (``--mode=debug``) Usually one picks a low number of bits
-for debugging purposes (e.g. 3). The result is debugging output showing
-the progress of formula evaluation for each event and the progress of the prediction if activated. Amongst the output
-is BDD graphs visualizable with GraphViz (http://www.graphviz.org).
+**Debugging** (`--mode=debug`): 
+Typically, a low number of bits (e.g., `3`) is chosen for 
+debugging purposes. The result is a debugging output that displays the progress of formula 
+evaluation for each event and the progress of the prediction, if activated. The output includes 
+BDD graphs that can be visualized with GraphViz (http://www.graphviz.org).
 
-**Prediction** (``--prediction=n``) Specifies whether to predict optional events of size 'n'.
-Some supporting flags are ``--prediction_type``, which define the method of prediction, and 
-``--expected_verdict``, which specify a verdict target during evaluation.
+**Prediction Parameter** (`--prediction=n`):
+This flag determines whether to predict optional events of size 'n'. 
+Additional supporting flags include `--prediction_type`, which outlines the prediction methodology, 
+and `--expected_verdict`, which sets a target verdict for the evaluation process.
 
-**Delete results and created files** (``--clear=1``) Specifies whether created files and folders should be deleted.
-The value `1` means that the files should be deleted, while `0`, the default setting, means that the files 
-remain in the `output` folder. The files created are as follows: 
-`TraceMonitor.scala`, `ast.dot`, `dejavu-results`.
+**Cleanup of Results and Created Files** (`--clear=1`): 
+This flag indicates whether the files and folders generated during the process should 
+be deleted. A value of `1` signifies deletion of the files, while the default value, `0`, 
+implies that the files will be preserved in the `output` folder. The generated files typically 
+include `TraceMonitor.scala`, `ast.dot`, and `dejavu-results`.
+
 
 ## Results from DejaVu
 
@@ -212,8 +228,9 @@ If not enough bits have been allocated for a variable to hold the number of valu
 
 One can/should experiment with BDD sizes.
 
-**Prediction results**
-The tool will provide notifications for new predictions by displaying them in the console, accompanied by a concise summary for each prediction.
+**Prediction Outcomes**
+The tool will actively present new predictions in the console, each accompanied by a 
+succinct summary to facilitate understanding.
 
     ######### SUMMARY OF PREDICTION #########
 
@@ -501,44 +518,42 @@ The same property can alternatively be expressed using two rules, more closely r
 
 The rule `closed(x)` is defined as a disjunction between three alternatives. The first alternative states that this predicate is true if we are in the initial state (the only state where `@true` is false), and there is no `toggle(x)` event. The next alternative states that `closed(x)` was true in the previous state and there is no `toggle(x)` event now. The third alternative states that we in the previous state were in the `open(x)` state and we observe a `toggle(x)` event. Similarly for the `open(x)` rule.
 
-## Expanding DejaVu for Enhanced Prediction
+## Enhancing DejaVu for Advanced Prediction
 
-We have extended DejaVu to include the capability of predicting the
-next `k` steps using two different prediction modes. The core
-functionality of DejaVu remains unaltered, without any modifications
-or enhancements. To accommodate the prediction requests, we had to
-modify the way DejaVu obtains and processes its command-line arguments, as
-described [above](#running-dejavu).
+We have extended DejaVu to include the capability of predict the next `k` steps using two distinct 
+prediction modes. The fundamental functionality of DejaVu remains intact, with no alterations or 
+enhancements. To facilitate prediction requests, we had to adapt the way DejaVu acquires and processes 
+its command-line arguments, as outlined [above](#running-dejavu).
 
-Our proposed RV prediction method, which we term ``iPRV``, is based on calculating an equivalence relation
-on the observed data values. The equivalence classes are calculated independently for each variable.
-Then, we select a representative for the next event from each equivalence class, making the following event options a minimum required.
-In addition, for values that did not appear so far in the trace, which belong to the same equivalence class, a single representative is enough (after
-using that representative in the current event, one needs a fresh representative for the
-values not seen so far, and so forth).
+Our proposed RV prediction method, termed as ``iPRV``, is predicated on computing an equivalence 
+relation on the observed data values. The equivalence classes are independently calculated for each 
+variable. Subsequently, we select a representative for the next event from each equivalence class, 
+thereby making the following event options a minimum requirement. 
+Moreover, for values that have not yet appeared in the trace and belong to the same equivalence class, 
+a single representative suffices (after using that representative in the current event, 
+a fresh representative is needed for the unseen values, and so on).
 
 ### Prediction Modes
 
-We offer two distinct prediction modes:
+We provide two unique prediction modes:
 
-* ``brute`` - This mode utilizes a straightforward brute force approach,
-  exploring all possible options without any optimizations for speed or
-  efficiency. It has been included primarily for testing, experimentation,
-  and comparative purposes, allowing users to contrast it with our
-  ``iPRV`` (Isomorphic Predictive RV) prediction method.
+* ``brute`` - This mode employs a simple brute force strategy, exploring all possible options 
+without any optimizations for speed or efficiency. It is primarily included for testing, 
+experimentation, and comparative purposes, enabling users to contrast it with our 
+``iPRV`` (Isomorphic Predictive RV) prediction method.
 
-* ``iPRV`` - This mode lies at the core of our research. The smart
-  prediction method leverages the fact that some values are equivalent
-  within a specific time frame, thereby reducing the number of potential
-  predictions. In certain instances, such as after evaluating a lengthy
-  trace file containing various events, the reduction is so substantial
-  that the ``iPRV`` approach enables successful prediction, while the
-  ``iPRV`` method fails due to excessive memory usage.
+* ``iPRV`` - This mode forms the crux of our research. The intelligent prediction method capitalizes 
+on the fact that some values are equivalent within a specific time frame, thereby diminishing the 
+number of potential predictions. In certain scenarios, such as after evaluating a lengthy trace 
+file comprising various events, the reduction is so significant that the ``iPRV`` approach 
+facilitates successful prediction, while the ``brute`` method fails due to excessive memory usage 
+or for reaching to a time limitation.
 
-### iPRV Limitations
-* The prediction process generate only one event per time point. 
-* No tests were performed for specifications containing op, e.g., x < 10, x <= y or those referring to time units. 
-  The prediction procedure disregards these operators.
+### Limitations of iPRV-DejaVu
+* **Single Event Prediction**: The prediction process is limited to generating only one event per time point.
+* **Operator Constraints**: No tests have been conducted for specifications containing operators, such as x < 10, x <= y, or those referring to time units. The prediction procedure currently overlooks these operators.
+* **Specification Support**: The tool is designed to support one specification per monitor.
+
 
 
 ## Modifying the DejaVu Runtime Verification Tool
