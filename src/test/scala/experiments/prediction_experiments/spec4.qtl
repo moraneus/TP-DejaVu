@@ -1,2 +1,0 @@
-prop P4 : forall f . ( ( exists d . write(f,d) ) -> ( !close(f) S open(f) ) )
-

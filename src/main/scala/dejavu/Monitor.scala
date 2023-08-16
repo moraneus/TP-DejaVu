@@ -19,14 +19,6 @@ object Options {
   var PRINT_LINENUMBER_EACH: Int = 1000
   var UNIT_TEST: Boolean = false
   var STATISTICS: Boolean = true
-
-  // ### Prediction Extension ###
-  var PREDICTION: Boolean = false
-  var PREDICTION_K: Int = 0
-  var PREDICTION_TYPE: String = "smart"
-  var PREDICTION_RUNNING_STATE: Boolean = false
-  var EXPECTED_VERDICT: Int = -1
-  var FOUND_VERDICT: Boolean = false
   var RESULT_FILE: String = ""
 }
 
@@ -237,8 +229,7 @@ class Variable(F: Formula)(name: String, bounded: Boolean, offset: Int, nrOfBits
       if (timeToGarbageCollect) collectGarbage()
       if (free.isZero) {
 
-        // ### Prediction Extension ###
-        if (!Options.PREDICTION_RUNNING_STATE) writelnResult(s"${F.monitor.lineNr} oom")
+        writelnResult(s"${F.monitor.lineNr} oom")
         assert(false, s"Out of memory for variable $name!")
       }
       val result = free.satOne(allOnes, true)
@@ -300,8 +291,7 @@ class Variable(F: Formula)(name: String, bounded: Boolean, offset: Int, nrOfBits
       if (bdd.imp(free).isOne) {
         debug(s"removing variable $name's entry for value $v")
 
-        // ### Prediction Extension ###
-        if (!Options.PREDICTION_RUNNING_STATE) writelnResult(s"${F.monitor.lineNr} -- $v")
+        writelnResult(s"${F.monitor.lineNr} -- $v")
         bdds -= v
       }
     }
@@ -345,11 +335,8 @@ class BDDGenerator(F: Formula)(variables: List[(String, Boolean, Int)], bitsPerT
 
   val nrOfTimeVariables = 5
 
-  // ### Prediction Extension ###
   if (totalNumberOfBits > 0 || bitsPerTimeVar > 0) {
-    var predictionExtraBits = 0
-    if (Options.PREDICTION) predictionExtraBits += 2 * variables.head._3
-    B.setVarNum(totalNumberOfBits + predictionExtraBits + (nrOfTimeVariables * bitsPerTimeVar))
+    B.setVarNum(totalNumberOfBits + (nrOfTimeVariables * bitsPerTimeVar))
   }
 
   /**
@@ -373,18 +360,6 @@ class BDDGenerator(F: Formula)(variables: List[(String, Boolean, Int)], bitsPerT
 
   def theOneBDDFor(pos: Int): BDD = {
     B.ithVar(pos)
-  }
-
-  // ### Prediction Extension ###
-  /**
-    * The BDD for a single position that is true only of that bit is 0.
-    *
-    * @param pos the position making part of the resulting BDD.
-    * @return the BDD accepting on 0 for that position.
-    */
-
-  def theZeroBDDFor(pos: Int): BDD = {
-    B.nithVar(pos)
   }
 
   /**
@@ -519,33 +494,6 @@ abstract class Monitor {
     */
 
   def eventsInSpec: Set[String]
-
-  /**
-    * Returns the mapping of variables referred to each event in the specification.
-    * Must be overridden by generated specification specific monitor.
-    *
-    * @return mapping of variables referred to each event.
-    */
-
-  def eventsInVars: Map[String, List[String]]
-
-  /**
-    * Returns the mapping of constants referred to each value in the specification.
-    * Must be overridden by generated specification specific monitor.
-    *
-    * @return mapping of constants referred to each value.
-    */
-
-  def eventsInConstants: Map[String, List[String]]
-
-  /**
-    * Returns the mapping of multiple values predicates referred to each value in the specification.
-    * Must be overridden by generated specification specific monitor.
-    *
-    * @return mapping of multiple values predicates referred to each value.
-    */
-
-  def multipleValuesPredicates: Map[Array[String], List[String]]
 
   /**
     * Used for timing performance. The timing is printed on standard output.
@@ -696,8 +644,7 @@ abstract class Monitor {
     */
 
   def recordResult(): Unit = {
-    // ### Prediction Extension ###
-    if (!Options.PREDICTION_RUNNING_STATE) writelnResult(lineNr)
+    writelnResult(lineNr)
   }
 
   /**
@@ -912,8 +859,6 @@ abstract class Formula(val monitor: Monitor) {
   def addTouchedByLastEvent(name: String, value: Any, bdd: BDD): Unit = {
     if (varsInRelations.contains(name)) {
       touchedByLastEvent += ((name, value, bdd))
-
-      // ### Prediction Extension ###
       debug(s"recording binding $name -> $value (assignment: ${bdd.satOne()}) for subsequent relation updating")
 
     }

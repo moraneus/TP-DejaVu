@@ -1,1 +1,0 @@
-prop P5 : exists x . (P q(x) & !P r(x))

@@ -1,0 +1,6 @@
+
+on instance(vDetected: int, vGroundTruth: int, steering: int, speed: int)
+    correctDetection: bool := vDetected == vGroundTruth
+    deltaSteering: int :=  |steering - @steering[steering]|
+    deltaSpeed: int := speed - @speed[speed]
+output test(correctDetection, deltaSteering, deltaSpeed)

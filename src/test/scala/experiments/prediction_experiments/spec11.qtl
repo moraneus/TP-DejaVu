@@ -1,1 +1,0 @@
-prop P11 : !forall x . (P q(x) -> P r(x))

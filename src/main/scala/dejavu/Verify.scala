@@ -133,27 +133,24 @@ object Verify {
     * latter mode is useful when e.g. working in an IDE such as IntelliJ where no script exists.
     *
     * @param arguments following the pattern:
-    *                  <code>(--specfile <filename>) [--logfile <filename>] [--bits numOfBits]
-    *                  [--mode (debug | profile)] [--prediction num] [--prediction_type (smart | brute)]
-    *                  [--result <filename>] [--clear (0 | 1)] [--execution (0 | 1)]</code>
+    *                  <code>(--specfile <filename>) [--prefile <filename>] [--logfile <filename>] [--bits numOfBits]
+    *                  [--mode (debug | profile)] [--result <filename>] [--clear (0 | 1)]
+   *                   [--execution (0 | 1)]</code>
     */
 
   def main(arguments: Array[String]): Unit = {
     val usage =
       """Usage:
         |
-        |      (--specfile <filename>) [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)]
-        |      [--prediction num] [--prediction_type (smart | brute)] [--expected_verdict (0 | 1)] [--result <filename>]
-        |      [--clear (0 | 1)] [--execution (0 | 1)]
+        |      (--specfile <filename>) [--prefile <filename>] [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)]
+        |      [--result <filename>] [--clear (0 | 1)] [--execution (0 | 1)]
         |
         |Options:
         |   --specfile          the path to a file containing the specification document. This is a mandatory field.
+        |   --prefile           the path to a file containing the pre specification document.
         |   --logfile           the path to a file containing the log in CSV format to be analyzed.
         |   --bits              number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
         |   --mode              specifies output modes. by default no one is active.
-        |   --prediction        indicates whether prediction is required, along with the size of the prediction parameters.
-        |   --prediction_type   specifies prediction approach. By default smart approach is activated.
-        |   --expected_verdict  specifies the expected prediction verdict (1=True, 0=False). By default the tool will predict all possibilities if not expected verdict has given.
         |   --result            the path to a result filename. If not specify the default is the running DejaVu folder. For development mode.
         |   --execution         indicating whether to work in production or development mode. this execution mode affects where the output files are created.
         |   --clear             indicating whether to clear generated files and folder. For development mode.
@@ -162,16 +159,14 @@ object Verify {
 
     val args = arguments.toList
 
-    if (2 <= arguments.length && arguments.length <= 20 && arguments.length % 2 == 0) {
+    if (2 <= arguments.length && arguments.length <= 16 && arguments.length % 2 == 0) {
       val argMap = Map.newBuilder[String, Any]
       arguments.sliding(2, 2).toList.collect {
         case Array("--specfile", specfile: String) => argMap.+=("specfile" -> specfile)
+        case Array("--prefile", prefile: String) => argMap.+=("prefile" -> prefile)
         case Array("--logfile", logfile: String) => argMap.+=("logfile" -> logfile)
         case Array("--bits", numOfBits: String) => argMap.+=("bits" -> numOfBits)
         case Array("--mode", mode: String) => argMap.+=("mode" -> mode)
-        case Array("--prediction", predictionLength: String) => argMap.+=("prediction" -> predictionLength)
-        case Array("--prediction_type", predictionType: String) => argMap.+=("prediction_type" -> predictionType)
-        case Array("--expected_verdict", expectedVerdict: String) => argMap.+=("expected_verdict" -> expectedVerdict)
         case Array("--resultfile", resultfile: String) => argMap.+=("resultfile" -> resultfile)
         case Array("--execution", execution: String) => argMap.+=("execution" -> execution)
         case Array("--clear", mode: String) => argMap.+=("clear" -> mode)
@@ -190,6 +185,21 @@ object Verify {
       if (!dir.exists) {
         println(s"*** given specfile is not a valid file ($specFilePath)")
         return
+      }
+
+      // Validate the pre spec file argument
+      val preFile = argMap.result().get("prefile")
+      val preFilePath = preFile match {
+        case Some(value) => value.toString
+        case None => null
+      }
+
+      if (preFilePath != null) {
+        dir = new File(preFilePath)
+        if (!dir.exists) {
+          println(s"*** given prefile is not a valid file ($preFilePath)")
+          return
+        }
       }
 
       // Validate the trace file argument
@@ -234,39 +244,6 @@ object Verify {
         case None => println("bits argument not activated")
       }
 
-      // Validate the prediction arguments
-      val prediction = argMap.result().get("prediction")
-      prediction match {
-        case Some(value) =>
-          if (!value.toString.matches("""\d+""")) {
-            println(s"*** prediction argument must be an integer, and not ${value.toString}")
-            return
-        }
-        case None => println("prediction argument not activated")
-      }
-
-      // Validate the expected verdict argument
-      val expected = argMap.result().get("expected_verdict")
-      expected match {
-        case Some(value) =>
-          if (!(value != "0" || value != "1")) {
-            println(s"*** expected verdict argument must be: 1 or 0, and not ${value.toString}")
-            return
-          }
-        case None => println(s"expected argument is not set")
-      }
-
-      // Validate the prediction type argument
-      val predictionType = argMap.result().get("prediction_type")
-      predictionType match {
-        case Some(value) =>
-          val predictionTypeValue = value.toString.toLowerCase()
-          if (!(predictionTypeValue != "smart" || predictionTypeValue != "brute")) {
-            println(s"*** prediction type argument must be: smart or brute, and not ${value.toString}")
-            return
-          }
-        case None => println("prediction type argument not activated")
-      }
 
       // Validate the output mode argument
       val mode = argMap.result().get("mode")
@@ -305,13 +282,21 @@ object Verify {
       }
 
       var generatedMonitorsPath: String = null
-
+      var prePropertySynthesisCode: String = ""
       time("total") {
+        if (preFilePath != null) {
+          time("pre spec synthesis") {
+            val preParser = PreParser
+            val prePropertySynthesisRes = preParser.parse(preFilePath)
+            println(prePropertySynthesisRes._1)
+            prePropertySynthesisCode = prePropertySynthesisRes._2
+          }
+        }
         time("monitor synthesis") {
           val p = new Parser
           val spec = p.parseFile(specFilePath)
           println(spec)
-          spec.translate(EXECUTION)
+          spec.translate(EXECUTION, prePropertySynthesisCode)
           generatedMonitorsPath = spec.generatedMonitorsPath
         }
 
@@ -325,7 +310,7 @@ object Verify {
 
 
         // Execute the evaluation step.
-        if (args.length > 2 && logFilePath != null)
+        if (args.length > 2 && logFilePath != null) // TODO: Check if this should be specFilePath
           compileAndExecute(evaluationArguments.mkString(" "), generatedMonitorsPath)
       }
     } else {

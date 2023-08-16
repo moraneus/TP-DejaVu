@@ -1,2 +1,0 @@
-
-prop p : Forall x . Forall y. Forall z . ( t(x, y, z) -> @ q(x, 6, 7) )
