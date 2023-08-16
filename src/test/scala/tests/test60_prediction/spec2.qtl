@@ -1,2 +1,0 @@
-
-prop p: forall f . exists d . write(f,d)  -> P open(f)

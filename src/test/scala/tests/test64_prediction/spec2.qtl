@@ -1,2 +1,0 @@
-
-prop p : exists x . ( a(x) & ( P b(x) & P c(x) ) )

@@ -1,7 +1,0 @@
-
-prop Better :
- forall cmd .
-    success(cmd) ->
-      !fail(cmd) S dispatch(cmd)
-
-
