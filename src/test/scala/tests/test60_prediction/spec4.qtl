@@ -1,2 +1,0 @@
-
-prop p: forall f . ( close(f)  -> @ ( ! close(f) S open(f) ) )

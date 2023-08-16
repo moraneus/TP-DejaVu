@@ -1,2 +1,0 @@
-
-prop p : forall x . forall y . a(5) | r(x) | t(y) | b(5)

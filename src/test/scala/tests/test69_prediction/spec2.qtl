@@ -1,2 +1,0 @@
-
-prop p : exists x . ( P q(x) & !P r(x) )

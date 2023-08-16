@@ -1,6 +1,0 @@
-open,f1
-write,f1,1
-close,f1
-open,f2
-write,f2,2
-close,f2
