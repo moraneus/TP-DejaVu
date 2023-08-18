@@ -1,11 +1,15 @@
 package dejavu
 
 import java.io.{BufferedReader, FileReader}
+import java.text.ParseException
+import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import scala.util.parsing.combinator._
 
+import scala.util.parsing.combinator._
+
 /**
- * PProperty represents the base trait for property definitions.
+ * Base trait for property definitions.
  */
 sealed trait PProperty
 
@@ -16,95 +20,125 @@ sealed trait PProperty
 case class Initiate(variables: List[(String, String, Option[String])]) extends PProperty
 
 /**
- * Represents an event operation block which defines an event's behavior.
+ * Represents an event operation block defining event behavior.
  * @param name Event's name.
- * @param params Event's parameters as a list of (name, type) pairs.
- * @param assignments List of assignments during the event.
+ * @param params Event's parameters.
+ * @param assignments Assignments during the event.
  */
 case class EventOperation(
-             name: String,
-             params: List[(String, String)],
-             assignments: List[Assignment]) extends PProperty
+                           name: String,
+                           params: List[(String, String)],
+                           assignments: List[Assignment]) extends PProperty
 
 /**
- * Represents an output block, which defines the event's output format.
+ * Represents an output block, defining the event's output format.
  * @param name Output's name.
  * @param params Output's parameters.
  */
 case class Output(name: String, params: List[String]) extends PProperty
 
 /**
- * Represents an assignment statement within an event block.
- * @param variable The variable being assigned.
- * @param variableType The variable type.
- * @param expression The expression used for assignment.
+ * Represents an assignment.
+ * @param variable Variable being assigned.
+ * @param variableType Variable type.
+ * @param expression Assignment expression.
  */
 case class Assignment(variable: String, variableType: String, expression: String) extends PProperty
 
 /**
- * Main parser for the property DSL.
+ * Parser for the property DSL.
  */
 class PrePropertyParser extends JavaTokenParsers {
 
+  /**
+   * Unwanted patterns in the DSL.
+   */
+  private def allUnwantedPatterns: Parser[String] =
+    ("@@" ^^ { _ => failure("Pattern '@@' is not allowed.").toString }) |
+      ("^^^" ^^ { _ => failure("Pattern '^^^' is not allowed.").toString }) |
+      ("[]" ^^ { _ => failure("Pattern '[]' is not allowed.").toString }) |
+      ("@" ~> ident <~ "[" ^^ { _ => failure("Pattern '@ident[' is not allowed.").toString }) |
+      ("@" ~> ident ^^ { _ => failure("Pattern '@ident' without square brackets is not allowed.").toString }) |
+      ("@" ~> ident <~ "]" ^^ { _ => failure("Pattern '@ident]' is not allowed.").toString })
+
+
+  /**
+   * Parse the DSL ensuring unwanted patterns are absent.
+   */
+  def guardedParsedProperty: Parser[PreProperty] =
+    not(allUnwantedPatterns) ~> parsedProperty
+
   override val whiteSpace: Regex = "[ \t\r\f\n]+".r
 
-  // Data types supported by the DSL
+
+  /**
+   * Parse until end of line - useful for capturing assignments.
+   */
+  def restOfLine: Parser[String] = """.*""".r
+
+  // Supported data types.
   private def varType: Parser[String] = "int" | "double" | "float" | "str" | "bool"
 
-  // Parse a variable and its type
+  // Match a variable and its associated type.
   def variable: Parser[(String, String)] = ident ~ (":" ~> varType) ^^ {
     case id ~ t => (id, t)
   }
 
-  // Parse the Initiate block which initializes variables with optional default values
-  private def initiate: Parser[Initiate] = ("initiate" | "Initiate" | "INITIATE") ~> rep(variableWithDefaultValue) ^^ Initiate
+  // Match the "initiate" block used for initializing variables.
+  private def initiate: Parser[Initiate] =
+    ("initiate" | "Initiate" | "INITIATE") ~> rep(variableWithDefaultValue) ^^ Initiate
 
-  // Parse variables with their type and optional default value
+  // Match a variable with its type and optional default value.
   private def variableWithDefaultValue: Parser[(String, String, Option[String])] =
     ident ~ (":" ~> varType) ~ opt(":=" ~> restOfLine) ^^ {
       case id ~ t ~ maybeValue => (id, t, maybeValue)
     }
 
-  // Parse assignment statements within events
-  def assignment: Parser[Assignment] = ident ~ (":" ~> varType) ~ (":=" ~> restOfLine) ^^ {
-    case variable ~ varType ~ expression => Assignment(variable, varType, expression)
-  }
+  // Match an assignment statement.
+  def assignment: Parser[Assignment] =
+    ident ~ (":" ~> varType) ~ (":=" ~> restOfLine) ^^ {
+      case variable ~ varType ~ expression => Assignment(variable, varType, expression)
+    }
 
-
-  // Parse the main event operation block
-  def eventOperation: Parser[EventOperation] =
+  // Match the main event operation block.
+  private def eventOperation: Parser[EventOperation] =
     ("on" | "On" | "ON") ~> ident ~ ("(" ~> repsep(variable, ",") <~ ")") ~ rep(assignment) ^^ {
       case name ~ params ~ assignments => EventOperation(name, params, assignments)
     }
 
-  // Parse the output block to define the format of event outputs
+  // Match either the special identifier or the standard identifier.
+  private def parameter: Parser[String] =
+    "@" ~> ident ~ ("[" ~> """[^]]+""".r <~ "]") ^^ {
+      case name ~ typeStr => s"@$name[$typeStr]"
+    } | ident
+
+  // Match the "output" block.
   def output: Parser[Output] =
-    ("output" | "Output" | "OUTPUT") ~> ident ~ ("(" ~> repsep(ident, ",") <~ ")") ^^ {
+    ("output" | "Output" | "OUTPUT") ~> ident ~ ("(" ~> repsep(parameter, ",") <~ ")") ^^ {
       case name ~ params => Output(name, params)
     }
 
-  // The main parser function which parses the entire DSL input
-  def parsedProperty: Parser[PreProperty] = opt(initiate) ~ rep(eventOperation | output) ^^ {
-    case maybeInit ~ blocks =>
-      val events = blocks.collect { case e: EventOperation => e }
-      val outs = blocks.collect { case o: Output => o }
-      PreProperty(maybeInit.getOrElse(Initiate(Nil)), events, outs)
-  }
-
-  // Parse until end of line - useful for capturing assignments
-  def restOfLine: Parser[String] = """.*""".r
+  // Main parser function.
+  def parsedProperty: Parser[PreProperty] =
+    opt(initiate) ~ rep(eventOperation | output) ^^ {
+      case maybeInit ~ blocks =>
+        val events = blocks.collect { case e: EventOperation => e }
+        val outs = blocks.collect { case o: Output => o }
+        PreProperty(maybeInit.getOrElse(Initiate(Nil)), events, outs)
+    }
 }
 
 /**
  * Represents the entire parsed property.
- * @param initiate The Initiate block.
- * @param operations List of event operation blocks.
- * @param outputs List of output blocks.
+ * @param initiate Initiate block.
+ * @param operations Event operation blocks.
+ * @param outputs Output blocks.
  */
 case class PreProperty(
-                   initiate: Initiate,
-                   operations: List[EventOperation],
-                   outputs: List[Output]) extends PProperty
+                        initiate: Initiate,
+                        operations: List[EventOperation],
+                        outputs: List[Output]) extends PProperty
+
 
 /**
  * The CodeGenerator object provides functionality to transform the parsed DSL into actual Scala code.
@@ -113,7 +147,7 @@ object CodeGenerator {
 
   /** Transforms a DSL type into a native Scala type. */
   private def toScalaType(dslType: String): String = dslType match {
-    case "int"         => "Integer"
+    case "int"         => "Int"
     case "double"      => "Double"
     case "float"       => "Float"
     case "str"         => "String"
@@ -122,7 +156,7 @@ object CodeGenerator {
   }
 
   private def defaultValue(scalaType: String): String = scalaType match {
-    case "Integer" | "Double" | "Float" => "0"
+    case "Int" | "Double" | "Float" => "0"
     case "String" => "\"\""
     case "Boolean" => "false"
     case _ => throw new IllegalArgumentException(s"Unsupported Scala type: $scalaType")
@@ -133,17 +167,12 @@ object CodeGenerator {
     inPattern.replaceAllIn(expr, m => s"in(List(${m.group(1)}))")
   }
 
-  private def translateAbsExpression(expr: String): String = {
-    val inPattern: Regex = """\|\s*(.*?)\s*\|""".r
-    inPattern.replaceAllIn(expr, m => s"(${m.group(1)}).abs")
-  }
-
   private def translatePrevExpression(expr: String): String = {
-    val inPattern: Regex = """@(\w+)\[(\w+|\d+\.?\d*|"[\w\s]+"|true|false)\]""".r
-    val transformed = inPattern.replaceAllIn(expr, m => {
+    val prevPattern: Regex = """@(\w+)\[(-?\w+|-?\d+\.?\d*|"[\w\s]+"|true|false)\]""".r
+    val transformed = prevPattern.replaceAllIn(expr, m => {
       val varName = m.group(1)
       val defaultValue = m.group(2)
-      s"Operators.ite(prev_$varName == null, $defaultValue, prev_$varName)"
+      s"Operators.ite(this.prev_$varName.isEmpty, $defaultValue, this.prev_$varName)"
     })
     transformed
   }
@@ -154,18 +183,208 @@ object CodeGenerator {
     // Helper methods and implicit conversions for the generated code
     sb.append(
       """
-        |object PreMonitor {
-        | implicit class ExtendedAny[T](val self: T) {
-        |   def in(lst: List[T]): Boolean = lst.contains(self)
-        |   def notin(lst: List[T]): Boolean = !lst.contains(self)
-        | }
+        |object PreMonitor extends PreMonitorTrait {
+        |  /**
+        |   * Extension methods for various types.
+        |   * This provides utilities for better readability and concise code writing.
+        |   */
+        |
+        |  /**
+        |   * Extension methods for all types.
+        |   *
+        |   * @param self an element of type T.
+        |   * @tparam T the type of `self`.
+        |   */
+        |  implicit class ExtendedAny[T](val self: T) {
+        |
+        |    /**
+        |     * Checks if the element is present in a list.
+        |     *
+        |     * @param lst the list to check against.
+        |     * @return true if `self` is present in `lst`, false otherwise.
+        |     */
+        |    def in(lst: List[T]): Boolean = lst.contains(self)
+        |
+        |    /**
+        |     * Checks if the element is not present in a list.
+        |     *
+        |     * @param lst the list to check against.
+        |     * @return true if `self` is not present in `lst`, false otherwise.
+        |     */
+        |    def notin(lst: List[T]): Boolean = !lst.contains(self)
+        |  }
+        |
+        |  /**
+        |   * Extension methods for Boolean type.
+        |   *
+        |   * @param a the source Boolean value.
+        |   */
+        |  implicit class extendedBoolean(a: Boolean) {
+        |
+        |    /**
+        |     * Logical implication.
+        |     *
+        |     * @param b target Boolean value.
+        |     * @return true if either `a` is false or `b` is true, otherwise false.
+        |     */
+        |    def ->(b: => Boolean): Boolean = !a || b
+        |
+        |    /**
+        |     * Logical biconditional (equivalence).
+        |     *
+        |     * @param b target Boolean value.
+        |     * @return true if `a` and `b` are both true or both false, otherwise false.
+        |     */
+        |    def <->(b: => Boolean): Boolean = a == b
+        |  }
+        |
+        |  /**
+        |   * Power operation for Double.
+        |   *
+        |   * @param a base value.
+        |   */
+        |  implicit class extendedDouble(a: Double) {
+        |
+        |    /**
+        |     * Raises `a` to the power of `b`.
+        |     *
+        |     * @param b the exponent.
+        |     * @return result of a raised to the power b.
+        |     */
+        |    def ^^(b: Double): Double = scala.math.pow(a, b)
+        |  }
+        |
+        |  /**
+        |   * Power operation for Int.
+        |   *
+        |   * @param a base value.
+        |   */
+        |  implicit class extendedInt(a: Int) {
+        |
+        |    /**
+        |     * Raises `a` to the power of `b`.
+        |     *
+        |     * @param b the exponent.
+        |     * @return result of a raised to the power b as an Int.
+        |     */
+        |    def ^^(b: Int): Int = scala.math.pow(a.toDouble, b.toDouble).toInt
+        |  }
+        |
+        |  /**
+        |   * Power operation for Float.
+        |   *
+        |   * @param a base value.
+        |   */
+        |  implicit class extendedFloat(a: Float) {
+        |
+        |    /**
+        |     * Raises `a` to the power of `b`.
+        |     *
+        |     * @param b the exponent.
+        |     * @return result of a raised to the power b as a Float.
+        |     */
+        |    def ^^(b: Float): Float = scala.math.pow(a.toDouble, b.toDouble).toFloat
+        |  }
+        |
+        |  /**
+        |   * A type class defining absolute operation on a type.
+        |   *
+        |   * @tparam A the type for which the absolute operation is defined.
+        |   */
+        |  trait AbsOps[A] {
+        |
+        |    /**
+        |     * Computes the absolute value of `value`.
+        |     *
+        |     * @param value the input value.
+        |     * @return absolute value of `value`.
+        |     */
+        |    def abs(value: A): A
+        |  }
+        |
+        |  // Below are instances for the AbsOps type class for supported types: Int, Float, and Double.
+        |
+        |  implicit object IntAbsOps extends AbsOps[Int] {
+        |    def abs(value: Int): Int = math.abs(value)
+        |  }
+        |
+        |  implicit object FloatAbsOps extends AbsOps[Float] {
+        |    def abs(value: Float): Float = math.abs(value)
+        |  }
+        |
+        |  implicit object DoubleAbsOps extends AbsOps[Double] {
+        |    def abs(value: Double): Double = math.abs(value)
+        |  }
+        |
+        |  /**
+        |   * Generic utility to compute the absolute value for supported types.
+        |   *
+        |   * @param value the input value.
+        |   * @param ops implicit evidence of the AbsOps type class instance for type A.
+        |   * @tparam A type of the value.
+        |   * @return absolute value of `value`.
+        |   */
+        |  def abs[A](value: A)(implicit ops: AbsOps[A]): A = ops.abs(value)
         |
         |
-        | object Operators {
-        |   def ite[T](condition: Boolean, ifTrue: T, ifFalse: T): T = if (condition) ifTrue else ifFalse
-        |   def xor(left: Boolean, right: Boolean): Boolean = left ^ right
-        | }
+        |  /**
+        |   * A type class defining checksum operation on a type.
+        |   *
+        |   * @tparam A the type for which the checksum operation is defined.
+        |   */
+        |  trait ChecksumOps[A] {
+        |    def sha256(value: A): String
+        |  }
+        |
+        |  // Generic instance for any type that can be converted to a string.
+        |  implicit def genericChecksumOps[A]: ChecksumOps[A] = new ChecksumOps[A] {
+        |    def sha256(value: A): String = {
+        |      val strRepresentation = value.toString
+        |      val digest = MessageDigest.getInstance("SHA-256")
+        |      val hash = digest.digest(strRepresentation.getBytes("UTF-8"))
+        |      hash.map("%02x".format(_)).mkString
+        |    }
+        |  }
+        |
+        |  /**
+        |   * Generic utility to compute the checksum for any supported type.
+        |   *
+        |   * @param value the input value.
+        |   * @param ops   implicit evidence of the ChecksumOps type class instance for type A.
+        |   * @tparam A type of the value.
+        |   * @return SHA-256 checksum of `value`.
+        |   */
+        |  def sha256[A](value: A)(implicit ops: ChecksumOps[A]): String = ops.sha256(value)
+        |
+        |  /**
+        |   * Provides utility methods for common operations.
+        |   */
+        |  object Operators {
+        |
+        |    /**
+        |     * If-Then-Else operation.
+        |     *
+        |     * @param condition a Boolean condition to check.
+        |     * @param ifTrue result to return if `condition` is true.
+        |     * @param ifFalse result to return if `condition` is false.
+        |     * @tparam T type of the results.
+        |     * @return `ifTrue` if `condition` is true, `ifFalse` otherwise.
+        |     */
+        |    def ite[T](condition: Boolean, ifTrue: T, ifFalse: T): T = if (condition) ifTrue else ifFalse
+        |
+        |    /**
+        |     * If-Then-Else operation supporting optional value for the `ifTrue` result.
+        |     *
+        |     * @param condition a Boolean condition to check.
+        |     * @param ifTrue    result to return if `condition` is true.
+        |     * @param ifFalse   result to return (wrapped in Option) if `condition` is false.
+        |     * @tparam T type of the results.
+        |     * @return `ifTrue` value if `condition` is true and `ifTrue` is Some(value), `ifFalse` otherwise.
+        |     */
+        |    def ite[T](condition: Boolean, ifTrue: T, ifFalse: Option[T]): T = if (condition) ifTrue else ifFalse.get
+        |  }
         |""".stripMargin)
+
 
     // Code generation logic
     property match {
@@ -174,10 +393,15 @@ object CodeGenerator {
         // Extract parameters from events
         val eventParams = events.flatMap(_.params).distinct.toMap
 
+//        // Collect declared variable names from the 'init' block into a list
+//        val declaredVariableInitiateNames = init.variables.map {
+//          case (name, _, _) => name
+//        }.toList
+
         // Collect declared variable names from the 'init' block into a list
-        val declaredVariableNames = init.variables.map {
-          case (name, _, _) => name
-        }.toList
+        val declaredVariableInitiateNamesAndTypes = init.variables.map {
+          case (varName, varType, _) => varName -> varType
+        }.toMap
 
         // Initialize declared variables
         init.variables.foreach {
@@ -185,12 +409,13 @@ object CodeGenerator {
             val scalaType = toScalaType(dataType)
             sb.append(s"\tprivate var $name: $scalaType = ${maybeValue.getOrElse(defaultValue(scalaType))}\n")
         }
+        println(sb.toString())
 
         // Write initialization for these parameters first
         eventParams.foreach {
           case (name, dataType) =>
-            // Check if name is not in declaredVariableNames (initiate block)
-            if (!declaredVariableNames.contains(name)) {
+            // Check if name is not in declaredVariableNamesAndTypes (initiate block)
+            if (!declaredVariableInitiateNamesAndTypes.contains(name)) {
               val scalaType = toScalaType(dataType)
               sb.append(s"\tprivate var $name: $scalaType = ${defaultValue(scalaType)}\n")
             }
@@ -198,11 +423,20 @@ object CodeGenerator {
 
         val declaredVariables = init.variables.map(_._1).toSet
         val assignedVariables = events.flatMap(_.assignments.map(_.variable)).toSet.diff(declaredVariables)
-        val prevVariables = events.flatMap(e =>
+        val prevVariablesFromEvents = events.flatMap(e =>
           e.assignments.flatMap(a =>
             """@(\w+)""".r.findAllMatchIn(a.expression).map(_.group(1))
           )
         ).toSet
+
+        val prevVariablesFromOutputs = outputs.flatMap { e =>
+          e.params.flatMap(param =>
+            """@(\w+)""".r.findAllMatchIn(param).map(_.group(1))
+          )
+        }.toSet
+
+        // Merging results
+        val prevVariables = (prevVariablesFromEvents ++ prevVariablesFromOutputs).toSet
 
         val assignedVariableTypes = events.flatMap(_.assignments).map(a => a.variable -> a.variableType).toMap
 
@@ -215,7 +449,7 @@ object CodeGenerator {
         // Initialize "prev_" variables
         prevVariables.foreach { name =>
           val scalaType = toScalaType(assignedVariableTypes.getOrElse(name, "int"))
-          sb.append(s"\tprivate var prev_$name: $scalaType = null \n")
+          sb.append(s"\tprivate var prev_$name: Option[$scalaType] = None \n")
         }
 
         sb.append("\n")
@@ -239,14 +473,12 @@ object CodeGenerator {
           sb.append(s"\tprivate def on_$name($formattedParams): Unit = {\n")
           assignments.foreach {
             case Assignment(variable, _, expression) =>
+
               // Replace 'ite' with 'Operators.ite'
               var updatedExpression = expression.replace("ite(", "Operators.ite(")
 
               // Handle in/notIn operator
               updatedExpression = translateInExpression(updatedExpression)
-
-              // Handle |...| expression
-              updatedExpression = translateAbsExpression(updatedExpression)
 
               // Handle '@' expressions
               updatedExpression = translatePrevExpression(updatedExpression)
@@ -259,7 +491,21 @@ object CodeGenerator {
           eventNameToOutputMap.get(name).foreach {
             case Some(Output(outputName, params)) =>
               sb.append(s"\tprivate def ${name}_output(): Any = {\n")
-              sb.append(s"""\t\t("$outputName", ${params.mkString(", ")})\n""")
+              if (params.isEmpty) {
+                sb.append(s"""\t\t("$outputName")\n""")
+              } else {
+                val parsed_params = ListBuffer[String]()
+                params.foreach { param =>
+
+                  if (param.startsWith("@")) {
+                    // Handle '@' expressions
+                    parsed_params += translatePrevExpression(param)
+                  } else {
+                    parsed_params += s"$param.toString"
+                  }
+                }
+                sb.append(s"""\t\tList("$outputName", List(${parsed_params.mkString(", ")}))\n""")
+              }
               sb.append("\t}\n\n")
           }
         }
@@ -267,7 +513,7 @@ object CodeGenerator {
 
 
         // Start the generation of the evaluate function
-        sb.append("\tdef evaluate(event_name: String, params: Any*): Any = {\n")
+        sb.append("\tdef evaluate(event_name: String, params: Any*): Option[Any] = {\n")
         sb.append("\t\tvar event : Any = null\n\n") // Added this line
 
         sb.append("\t\tevent_name match {\n")
@@ -281,7 +527,11 @@ object CodeGenerator {
 
             eventParams.zipWithIndex.foreach {
               case ((paramName, typeStr), index) =>
-                sb.append(s"""\t\t\t\tthis.$paramName = params($index).asInstanceOf[${toScalaType(typeStr)}]\n""")
+                sb.append(s"""\t\t\t\tTry(params($index).toString.trim.to${toScalaType(typeStr)}) match {\n""")
+                sb.append(s"""\t\t\t\t\tcase Success(value) => this.$paramName = value\n""")
+                sb.append(s"""\t\t\t\t\tcase Failure(e) => println(s"Failed to convert to ${toScalaType(typeStr)}: """)
+                sb.append("""$e")""")
+                sb.append(s"""\n}\n""")
             }
 
             val paramNamesSeq = eventParams.map(_._1).mkString(", ")
@@ -290,15 +540,15 @@ object CodeGenerator {
             sb.append("\t\t\t}\n")
         }
 
-        sb.append("\t\t\tcase _ => event = (event_name, params)\n")
+        sb.append("\t\t\tcase _ => event = List(event_name, params.toList)\n")
         sb.append("\t\t\t}\n")
 
         // Add logic to update the previous variables
         prevVariables.foreach { name =>
-          sb.append(s"\t\tprev_$name = $name\n")
+          sb.append(s"\t\tprev_$name = Some($name)\n")
         }
 
-        sb.append("\t\tevent\n") // Return the event at the end
+        sb.append("\t\tSome(event)\n") // Return the event at the end
         sb.append("\t}\n")
 
         sb.toString
@@ -441,7 +691,9 @@ object PPropertyValidation {
  * The app parses a sample DSL input and prints the generated Scala code.
  */
 object PreParser {
+  //object PreParser extends App {
   private val parser = new PrePropertyParser
+  //  parse("""/Users/moraneus/Documents/Studies/phd/Dejavu-With-Pre-Proccess-Evaluation/Code/PPEE-DejaVu/src/test/scala/tests/pre_proccess/test1/spec2.pqtl""")
 
   private def readerFromFile(filename: String): String = {
     val reader = new BufferedReader(new FileReader(filename))
@@ -458,6 +710,7 @@ object PreParser {
   }
 
   def parse(filename: String): (String, String) = {
+    //  def parse(filename: String): Unit = {
     val preInputProperty = readerFromFile(filename)
 
     // Do some validations
@@ -468,15 +721,16 @@ object PreParser {
 
     var generatedCode: String = ""
 
-    parser.parseAll(parser.parsedProperty, preInputProperty) match {
+    parser.parseAll(parser.guardedParsedProperty, preInputProperty) match {
       case parser.Success(parsed, _) =>
         println("Pre-Property Parsing succeeded.")
         generatedCode = CodeGenerator.generate(parsed)
-//        println(generatedCode)
-      case parser.Failure(msg, next) => println(s"Failure: $msg at ${next.pos}")
-      case parser.Error(msg, next) => println(s"Error: $msg at ${next.pos}")
+      case parser.Failure(msg, next) => throw new ParseException(s"Failure: $msg at line " +
+        s"${next.pos.line}, column ${next.pos.column}", next.pos.line)
+      case parser.Error(msg, next) => throw new ParseException(s"Error: $msg at line " +
+        s"${next.pos.line}, column ${next.pos.column}", next.pos.line)
     }
-
+    print(generatedCode)
     (preInputProperty, generatedCode)
   }
 }

@@ -9,11 +9,13 @@ import org.apache.commons.csv.{CSVFormat, CSVRecord}
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
-import scala.util.matching.Regex
+import scala.util.{Try, Success, Failure}
+import java.security.MessageDigest
 
 object Options {
   var DEBUG: Boolean = false
   var PROFILE: Boolean = false
+  var PRE_PREDICTION: Boolean = true
   var PRINT: Boolean = false
   var BITS: Int = 20
   var PRINT_LINENUMBER_EACH: Int = 1000
@@ -169,6 +171,18 @@ class State {
     result
   }
 }
+
+
+/**
+ * Trait defining the behavior for pre-monitoring functionalities.
+ *
+ * PreMonitorTrait encapsulates the method(s) required to monitor
+ * specific events and evaluate them based on various parameters.
+ */
+trait PreMonitorTrait {
+  def evaluate(event_name: String, params: Any*): Option[Any]
+}
+
 
 /**
   * A variable is represented by an object of this class.
@@ -463,7 +477,7 @@ class TraceStatistics(events: Set[String]) {
   * by the user.
   */
 
-abstract class Monitor {
+abstract class Monitor(preMonitor: PreMonitorTrait) {
   val state: State = new State
   var formulae: List[Formula] = Nil
   var lineNr: Int = 0
@@ -597,7 +611,21 @@ abstract class Monitor {
         for (i <- 1 until eventSize) {
           args += record.get(i)
         }
-        submit(name, args.toList)
+
+        if (Options.PRE_PREDICTION && preMonitor != null) {
+          val modified_event: Option[Any] = preMonitor.evaluate(name, args: _*)
+          if (modified_event.isDefined) {
+            modified_event.get match {
+              case first :: second :: _ =>
+                submit(first.toString, second.asInstanceOf[List[String]])
+              case _ => println("Unexpected event structure output from the pre processing")
+            }
+          } else {
+            submit(name, args.toList)
+          }
+        } else {
+          submit(name, args.toList)
+        }
       }
       println(s"Processed $lineNr events")
       in.close()

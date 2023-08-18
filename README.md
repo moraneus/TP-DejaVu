@@ -6,17 +6,17 @@
 ██║██║     ██║  ██║ ╚████╔╝       ██████╔╝███████╗╚█████╔╝██║  ██║ ╚████╔╝ ╚██████╔╝
 ╚═╝╚═╝     ╚═╝  ╚═╝  ╚═══╝        ╚═════╝ ╚══════╝ ╚════╝ ╚═╝  ╚═╝  ╚═══╝   ╚═════╝ 
         
-First-order past time LTL with recursive rules, time and prediction!
-Version 3.0, Februar - 2023
+First-order past time LTL with recursive rules, time and pre-evaluation!
+Version 4.0, August - 2023
 ```
 
   
 ## Overview
 
 DejaVu is a program written in Scala for monitoring event streams (traces) against temporal logic formulas. 
-The formulas are written in a first-order past time linear temporal logic, with the addition of macros and recursive rules. The logic also supports reasoning about time.
+The main formulas are written in a first-order past time linear temporal logic, with the addition of macros and recursive rules. The logic also supports reasoning about time.
 DejaVu contributors are [Klaus Havelund](http://www.havelund.com), [Doron Peled](http://u.cs.biu.ac.il/~doronp) and [Dogan Ulus](https://www.linkedin.com/in/doganulus).
-iPRV DejaVu is an extension of DejaVu that supports prediction of the next k events.
+PPEE-DejaVu is an extension of DejaVu that supports pre-evaluation.
 
 An example of a property in its most basic form is the following:
 
@@ -53,50 +53,48 @@ DejaVu is implemented in Scala. In this version of iPRV-DejaVu we used Scala 2.1
 
 The script is applied as follows:
 
-    dejavu (--specfile=<filename>) (--logfile=<filename>) [--bits=numOfBits] [--mode=(debug | profile)]
-          [--prediction=num] [--prediction_type=(smart | brute)] [--expected_verdict=(0 | 1)] [--clear=(0 | 1)]
+    dejavu (--specfile=<filename>) [--prefile=<filename>] (--logfile=<filename>) [--bits=numOfBits] 
+           [--mode=(debug | profile)] [--clear=(0 | 1)]
 
     Options:
-        -s, --specfile          the path to a file containing the specification document. This is a mandatory field.
+        -s, --specfile          the path to a file containing the specification document. This is a mandatory field
+        -p, --prefile           the path to a file containing the pre specification document.
         -l, --logfile           the path to a file containing the log in CSV format to be analyzed.
         -b, --bits              number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
         -m, --mode              specifies output modes. by default no one is active.
-        -p, --prediction        indicates whether prediction is required, along with the size of the prediction parameters.
-        -t, --prediction_type   specifies prediction approach. by default smart approach is activated.
-        -e, --expected_verdict  specifies the expected prediction verdict (1=True, 0=False). By default the tool will predict all possibilities if not expected verdict has given.
         -c, --clear             indicating whether to clear generated files and folder. value of '1' is for cleaning.
 
 #### Some Execution Examples
 
-* Execute `iPRV-DejaVu`, allocating `10` bits to each variable.
+* Execute `PPEE-DejaVu`, allocating `10` bits to each variable.
   ```bash
   ./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=10
    ```
-* Execute `iPRV-DejaVu`, allocating `7` bits to each variable, and ensure the clearing of generated files and folders.
+* Execute `PPEE-DejaVu`, allocating `7` bits to each variable, and ensure the clearing of generated files and folders.
   ```bash
   ./dejavu -s=/path/to/specfile --logfile=/path/to/logfile -b=7 --clear=1
   ```
 
-* Execute `iPRV-DejaVu` in `debug` mode, where certain parameters like `bits` assume default values.
+* Execute `PPEE-DejaVu` in `debug` mode, where certain parameters like `bits` assume default values.
   ```bash
   ./dejavu --specfile=/path/to/specfile -l=/path/to/logfile --mode=debug
   ```
 
-* Initiate the `iPRV-DejaVu` process, allocating `5` bits to each variable. Set the prediction parameter, `k`, to `3` 
-  and employ a `brute-force` approach for the prediction type. The anticipated outcome is `false`, 
-  indicating that the execution will cease immediately upon encountering a false prediction.
+* Initiate the `PPEE-DejaVu` process, allocating `5` bits to each variable, and set the pre-evaluation process.
   ```bash
-  ./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=5 --prediction=3 --prediction_type=brute -expected_verdict=0
+  ./dejavu --specfile=/path/to/specfile --prefile=/path/to/specfile --logfile=/path/to/logfile --bits=5
   ```
-* Initiate the `iPRV-DejaVu` process, allocating `5` bits to each variable. Set the prediction parameter, `k`, to `3`
-  and employ a `smart` approach for the prediction type. The anticipated outcome is `true`,
-  indicating that the execution will cease immediately upon encountering a true prediction.
+* Initiate the `PPEE-DejaVu` process, allocating `5` bits to each variable, and set the pre-evaluation process. 
   ```bash
-  ./dejavu -s=/path/to/specfile -l=/path/to/logfile -b=5 -p=3 -t=smart -e=1
+  ./dejavu -s=/path/to/specfile -p=/path/to/specfile -l=/path/to/logfile -b=5
   ```
 
-The `--specfile=<filename>` is the temporal specification that the trace must satisfy, 
+The `--specfile=<filename>` is the **main** temporal specification that the trace must satisfy, 
 which is referred to as the **Specification Document File**. See the explanation of the specification language below.
+
+The `--prefile=<filename>` is the **pre** specification that makes some pre-evaluation on the incoming events. 
+Each calculated event, eventually produce a new event for the main property, based on the results of this pre-evaluation step.
+See the explanation of the pre specification language below.
 
 **The log file** (``--logfile=<filename>``) should be in comma separated value format (CSV): http://edoceo.com/utilitas/csv-file-format. For example, a file of
 the form:
@@ -123,7 +121,7 @@ the range 1000 ... 1099) is:
     bid,chair,650,1067
     sell,chair,1099 
 
-Note that this last time value is not refered to explicitly in events in specifications.
+Note that this last time value is not referred to explicitly in events in specifications.
 That is, the events with time in the above CSV format still corresponds to the following
 events in specification format:
 
@@ -150,11 +148,6 @@ debugging purposes. The result is a debugging output that displays the progress 
 evaluation for each event and the progress of the prediction, if activated. The output includes 
 BDD graphs that can be visualized with GraphViz (http://www.graphviz.org).
 
-**Prediction Parameter** (`--prediction=n`):
-This flag determines whether to predict optional events of size 'n'. 
-Additional supporting flags include `--prediction_type`, which outlines the prediction methodology, 
-and `--expected_verdict`, which sets a target verdict for the evaluation process.
-
 **Cleanup of Results and Created Files** (`--clear=1`): 
 This flag indicates whether the files and folders generated during the process should 
 be deleted. A value of `1` signifies deletion of the files, while the default value, `0`, 
@@ -166,7 +159,7 @@ include `TraceMonitor.scala`, `ast.dot`, and `dejavu-results`.
 
 **Wellformedness errors** 
 
-Error messages will be emitted if the specification document is not wellformed. A wellformedness
+Error messages will be emitted if the main specification document is not wellformed. A wellformedness
 violation terminates the program, and can be one of the following:
 
 * *Syntax error*: the document does not follow the grammar.
@@ -228,35 +221,8 @@ If not enough bits have been allocated for a variable to hold the number of valu
 
 One can/should experiment with BDD sizes.
 
-**Prediction Outcomes**
-The tool will actively present new predictions in the console, each accompanied by a 
-succinct summary to facilitate understanding.
-
-    ######### SUMMARY OF PREDICTION #########
-
-        b(1)=1 -> g(2)=1 -> v(8)=0 -> DONE
-        Processed 3 events
-        
-        3 errors detected!
-        
-        ==================
-        Event Counts:
-        ------------------
-        g : 12
-        t : 13
-        v : 2
-        b : 7
-        ==================
-
-    - Garbage collector was not activated
-
-In the above example the DejaVu's prediction result indicates that there are k=3 events, as denoted by "Processed 3 events." 
-Among these, the first two events satisfy the specification criteria 
-(both equal to 1, which signifies True), whereas the third event violate the specification 
-(equal to 0, representing False). 
-The remaining output information presents a comprehensive evaluation, 
-including statistics and the latest predicted events.
-
+**Pre-EvaluationOutcomes**
+The tool will actively present the new generated event in the console.
 **Timing results**
 The system will print the following timings:
 

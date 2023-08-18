@@ -307,7 +307,8 @@ case class Spec(properties: List[Property]) {
     writeln(
       s"""/* The specialized Monitor for the provided properties. */
          |
-         |class PropertyMonitor extends Monitor {
+         |class PropertyMonitor(preMonitor: PreMonitorTrait) extends Monitor(preMonitor) {
+         |
          |  def eventsInSpec: Set[String] = Set(${eventsInSpec})
          |
          |  formulae ++= List($constructors)
@@ -387,7 +388,7 @@ case class Spec(properties: List[Property]) {
          |        case None => println("No mode was selected")
          |      }
          |
-         |      val m = new PropertyMonitor
+         |      val m = new PropertyMonitor(PreMonitor)
          |
          |      try {
          |        openResultFile(Options.RESULT_FILE)
