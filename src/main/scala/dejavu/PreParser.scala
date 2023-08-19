@@ -6,8 +6,6 @@ import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import scala.util.parsing.combinator._
 
-import scala.util.parsing.combinator._
-
 /**
  * Base trait for property definitions.
  */
@@ -56,10 +54,7 @@ class PrePropertyParser extends JavaTokenParsers {
   private def allUnwantedPatterns: Parser[String] =
     ("@@" ^^ { _ => failure("Pattern '@@' is not allowed.").toString }) |
       ("^^^" ^^ { _ => failure("Pattern '^^^' is not allowed.").toString }) |
-      ("[]" ^^ { _ => failure("Pattern '[]' is not allowed.").toString }) |
-      ("@" ~> ident <~ "[" ^^ { _ => failure("Pattern '@ident[' is not allowed.").toString }) |
-      ("@" ~> ident ^^ { _ => failure("Pattern '@ident' without square brackets is not allowed.").toString }) |
-      ("@" ~> ident <~ "]" ^^ { _ => failure("Pattern '@ident]' is not allowed.").toString })
+      ("[]" ^^ { _ => failure("Pattern '[]' is not allowed.").toString })
 
 
   /**
@@ -74,13 +69,13 @@ class PrePropertyParser extends JavaTokenParsers {
   /**
    * Parse until end of line - useful for capturing assignments.
    */
-  def restOfLine: Parser[String] = """.*""".r
+  private def restOfLine: Parser[String] = """.*""".r
 
   // Supported data types.
-  private def varType: Parser[String] = "int" | "double" | "float" | "str" | "bool"
+  private def varType: Parser[String] = "int" | "double" | "float" | "string" | "str" | "bool"
 
   // Match a variable and its associated type.
-  def variable: Parser[(String, String)] = ident ~ (":" ~> varType) ^^ {
+  private def variable: Parser[(String, String)] = ident ~ (":" ~> varType) ^^ {
     case id ~ t => (id, t)
   }
 
@@ -95,7 +90,7 @@ class PrePropertyParser extends JavaTokenParsers {
     }
 
   // Match an assignment statement.
-  def assignment: Parser[Assignment] =
+  private def assignment: Parser[Assignment] =
     ident ~ (":" ~> varType) ~ (":=" ~> restOfLine) ^^ {
       case variable ~ varType ~ expression => Assignment(variable, varType, expression)
     }
@@ -108,18 +103,16 @@ class PrePropertyParser extends JavaTokenParsers {
 
   // Match either the special identifier or the standard identifier.
   private def parameter: Parser[String] =
-    "@" ~> ident ~ ("[" ~> """[^]]+""".r <~ "]") ^^ {
-      case name ~ typeStr => s"@$name[$typeStr]"
-    } | ident
+    "@" ~> ident | ident
 
   // Match the "output" block.
-  def output: Parser[Output] =
+  private def output: Parser[Output] =
     ("output" | "Output" | "OUTPUT") ~> ident ~ ("(" ~> repsep(parameter, ",") <~ ")") ^^ {
       case name ~ params => Output(name, params)
     }
 
   // Main parser function.
-  def parsedProperty: Parser[PreProperty] =
+  private def parsedProperty: Parser[PreProperty] =
     opt(initiate) ~ rep(eventOperation | output) ^^ {
       case maybeInit ~ blocks =>
         val events = blocks.collect { case e: EventOperation => e }
@@ -145,36 +138,35 @@ case class PreProperty(
  */
 object CodeGenerator {
 
-  /** Transforms a DSL type into a native Scala type. */
-  private def toScalaType(dslType: String): String = dslType match {
-    case "int"         => "Int"
-    case "double"      => "Double"
-    case "float"       => "Float"
-    case "str"         => "String"
-    case "bool"        => "Boolean"
-    case other         => throw new IllegalArgumentException(s"Unsupported type: $other")
+
+  // Convert custom types to Scala types
+  private def toScalaType(typeStr: String): String = typeStr.toLowerCase match {
+    case "int"               => "Int"
+    case "double"            => "Double"
+    case "bool"              => "Boolean"
+    case "str" | "string"    => "String"
+    case _                   => throw new IllegalArgumentException(s"Unsupported type: $typeStr")
   }
 
+  // Provide a default value for a given Scala type
   private def defaultValue(scalaType: String): String = scalaType match {
-    case "Int" | "Double" | "Float" => "0"
-    case "String" => "\"\""
-    case "Boolean" => "false"
-    case _ => throw new IllegalArgumentException(s"Unsupported Scala type: $scalaType")
+    case "Int"         => "0"
+    case "Double"      => "0.0"
+    case "Boolean"     => "false"
+    case "String"      => """"""""
+    case _             => throw new IllegalArgumentException(s"Unsupported type: $scalaType")
   }
 
+  // Replace the 'in' expression
   private def translateInExpression(expr: String): String = {
     val inPattern: Regex = """(?i)in\(\[(.*?)\]\)""".r
     inPattern.replaceAllIn(expr, m => s"in(List(${m.group(1)}))")
   }
 
+  // Replace the '@' symbol while avoiding '@@'
   private def translatePrevExpression(expr: String): String = {
-    val prevPattern: Regex = """@(\w+)\[(-?\w+|-?\d+\.?\d*|"[\w\s]+"|true|false)\]""".r
-    val transformed = prevPattern.replaceAllIn(expr, m => {
-      val varName = m.group(1)
-      val defaultValue = m.group(2)
-      s"Operators.ite(this.prev_$varName.isEmpty, $defaultValue, this.prev_$varName)"
-    })
-    transformed
+    val pattern: Regex = """(?<!@)@""".r
+    pattern.replaceAllIn(expr, "prev_")
   }
 
   def generate(property: PreProperty): String = {
@@ -371,190 +363,180 @@ object CodeGenerator {
         |     * @return `ifTrue` if `condition` is true, `ifFalse` otherwise.
         |     */
         |    def ite[T](condition: Boolean, ifTrue: T, ifFalse: T): T = if (condition) ifTrue else ifFalse
-        |
-        |    /**
-        |     * If-Then-Else operation supporting optional value for the `ifTrue` result.
-        |     *
-        |     * @param condition a Boolean condition to check.
-        |     * @param ifTrue    result to return if `condition` is true.
-        |     * @param ifFalse   result to return (wrapped in Option) if `condition` is false.
-        |     * @tparam T type of the results.
-        |     * @return `ifTrue` value if `condition` is true and `ifTrue` is Some(value), `ifFalse` otherwise.
-        |     */
-        |    def ite[T](condition: Boolean, ifTrue: T, ifFalse: Option[T]): T = if (condition) ifTrue else ifFalse.get
         |  }
         |""".stripMargin)
 
 
-    // Code generation logic
     property match {
       case PreProperty(init, events, outputs) =>
 
-        // Extract parameters from events
-        val eventParams = events.flatMap(_.params).distinct.toMap
-
-//        // Collect declared variable names from the 'init' block into a list
-//        val declaredVariableInitiateNames = init.variables.map {
-//          case (name, _, _) => name
-//        }.toList
-
-        // Collect declared variable names from the 'init' block into a list
-        val declaredVariableInitiateNamesAndTypes = init.variables.map {
-          case (varName, varType, _) => varName -> varType
-        }.toMap
-
-        // Initialize declared variables
-        init.variables.foreach {
-          case (name, dataType, maybeValue) =>
-            val scalaType = toScalaType(dataType)
-            sb.append(s"\tprivate var $name: $scalaType = ${maybeValue.getOrElse(defaultValue(scalaType))}\n")
-        }
-        println(sb.toString())
-
-        // Write initialization for these parameters first
-        eventParams.foreach {
-          case (name, dataType) =>
-            // Check if name is not in declaredVariableNamesAndTypes (initiate block)
-            if (!declaredVariableInitiateNamesAndTypes.contains(name)) {
-              val scalaType = toScalaType(dataType)
-              sb.append(s"\tprivate var $name: $scalaType = ${defaultValue(scalaType)}\n")
-            }
-        }
-
-        val declaredVariables = init.variables.map(_._1).toSet
-        val assignedVariables = events.flatMap(_.assignments.map(_.variable)).toSet.diff(declaredVariables)
-        val prevVariablesFromEvents = events.flatMap(e =>
-          e.assignments.flatMap(a =>
-            """@(\w+)""".r.findAllMatchIn(a.expression).map(_.group(1))
-          )
-        ).toSet
-
-        val prevVariablesFromOutputs = outputs.flatMap { e =>
-          e.params.flatMap(param =>
-            """@(\w+)""".r.findAllMatchIn(param).map(_.group(1))
-          )
-        }.toSet
-
-        // Merging results
-        val prevVariables = (prevVariablesFromEvents ++ prevVariablesFromOutputs).toSet
-
-        val assignedVariableTypes = events.flatMap(_.assignments).map(a => a.variable -> a.variableType).toMap
-
-        // Initialize assigned variables that were not declared
-        assignedVariables.foreach { name =>
-          val scalaType = toScalaType(assignedVariableTypes.getOrElse(name, "int"))
-          sb.append(s"\tprivate var $name: $scalaType = ${defaultValue(scalaType)}\n")
-        }
-
-        // Initialize "prev_" variables
-        prevVariables.foreach { name =>
-          val scalaType = toScalaType(assignedVariableTypes.getOrElse(name, "int"))
-          sb.append(s"\tprivate var prev_$name: Option[$scalaType] = None \n")
-        }
-
-        sb.append("\n")
-
-        // Validate if the numbers of event is matched to the number of outputs
+        // Validate the number of events matches the number of outputs
         if (events.length != outputs.length) {
           throw new IllegalStateException("Number of events does not match number of outputs.")
         }
 
-        // Create a map of event names to their corresponding output names and parameters
-        val eventNameToOutputMap = events.zip(outputs).map {
-          case (event, output) => event.name -> Some(output)
-        }.toMap
+        // Extract and initialize event parameters
+        val eventParams = events.flatMap(_.params).distinct.toMap
+        initVariables(init, eventParams, sb)
 
-        // Handle event definitions
-        events.foreach { event =>
-          val EventOperation(name, params, assignments) = event
+        // Extract used variable names and types
+        val declaredVariables = init.variables.map(_._1).toSet
+        val assignedVariables = extractAssignedVariables(events, declaredVariables)
+        val prevVariablesFromEvents = extractPrevVariablesFromEvents(events)
+        validateInitiateVariables(prevVariablesFromEvents, declaredVariables)
 
-          // Generate the event functions as you did
-          val formattedParams = params.map { case (paramName, typeStr) => s"$paramName: ${toScalaType(typeStr)}" }.mkString(", ")
-          sb.append(s"\tprivate def on_$name($formattedParams): Unit = {\n")
-          assignments.foreach {
-            case Assignment(variable, _, expression) =>
+        val assignedVariableTypes = events.flatMap(_.assignments).map(a => a.variable -> a.variableType).toMap
 
-              // Replace 'ite' with 'Operators.ite'
-              var updatedExpression = expression.replace("ite(", "Operators.ite(")
+        // Initialize any undeclared assigned variables
+        initAssignedVariables(assignedVariables, assignedVariableTypes, sb)
 
-              // Handle in/notIn operator
-              updatedExpression = translateInExpression(updatedExpression)
+        sb.append(s"\n\n")
 
-              // Handle '@' expressions
-              updatedExpression = translatePrevExpression(updatedExpression)
+        generateEventAndOutputFunctions(events, outputs, sb, eventParams)
+        generateEvaluateFunction(events, sb, declaredVariables)
 
-              sb.append(s"\t\tthis.$variable = $updatedExpression\n")
-          }
-          sb.append("\t}\n\n")
-
-          // Now, for each event, try to find its output and generate the corresponding output function
-          eventNameToOutputMap.get(name).foreach {
-            case Some(Output(outputName, params)) =>
-              sb.append(s"\tprivate def ${name}_output(): Any = {\n")
-              if (params.isEmpty) {
-                sb.append(s"""\t\t("$outputName")\n""")
-              } else {
-                val parsed_params = ListBuffer[String]()
-                params.foreach { param =>
-
-                  if (param.startsWith("@")) {
-                    // Handle '@' expressions
-                    parsed_params += translatePrevExpression(param)
-                  } else {
-                    parsed_params += s"$param.toString"
-                  }
-                }
-                sb.append(s"""\t\tList("$outputName", List(${parsed_params.mkString(", ")}))\n""")
-              }
-              sb.append("\t}\n\n")
-          }
-        }
-
-
-
-        // Start the generation of the evaluate function
-        sb.append("\tdef evaluate(event_name: String, params: Any*): Option[Any] = {\n")
-        sb.append("\t\tvar event : Any = null\n\n") // Added this line
-
-        sb.append("\t\tevent_name match {\n")
-
-        events.foreach {
-          case EventOperation(name, eventParams, _) =>
-            sb.append(s"""\t\t\tcase "$name" => {\n""")
-            if (eventParams.nonEmpty) {
-              sb.append(s"""\t\t\t\tif (params.length != ${eventParams.size}) throw new IllegalArgumentException("Incorrect number of parameters for event $name")\n""")
-            }
-
-            eventParams.zipWithIndex.foreach {
-              case ((paramName, typeStr), index) =>
-                sb.append(s"""\t\t\t\tTry(params($index).toString.trim.to${toScalaType(typeStr)}) match {\n""")
-                sb.append(s"""\t\t\t\t\tcase Success(value) => this.$paramName = value\n""")
-                sb.append(s"""\t\t\t\t\tcase Failure(e) => println(s"Failed to convert to ${toScalaType(typeStr)}: """)
-                sb.append("""$e")""")
-                sb.append(s"""\n}\n""")
-            }
-
-            val paramNamesSeq = eventParams.map(_._1).mkString(", ")
-            sb.append(s"\t\t\t\ton_$name($paramNamesSeq)\n")
-            sb.append(s"\t\t\t\tevent = ${name}_output()\n") // This line was changed to remove the extra event name prefix
-            sb.append("\t\t\t}\n")
-        }
-
-        sb.append("\t\t\tcase _ => event = List(event_name, params.toList)\n")
-        sb.append("\t\t\t}\n")
-
-        // Add logic to update the previous variables
-        prevVariables.foreach { name =>
-          sb.append(s"\t\tprev_$name = Some($name)\n")
-        }
-
-        sb.append("\t\tSome(event)\n") // Return the event at the end
-        sb.append("\t}\n")
-
+        sb.append("}\n")
         sb.toString
     }
+  }
 
-    sb.append("}\n")
+  private def initVariables(init: Initiate, eventParams: Map[String, String], sb: StringBuilder): Unit = {
+    init.variables.foreach {
+      case (name, dataType, maybeValue) =>
+        val scalaType = toScalaType(dataType)
+        sb.append(s"\tprivate var $name: $scalaType = ${maybeValue.getOrElse(defaultValue(scalaType))}\n")
+        sb.append(s"\tprivate var prev_$name: $scalaType = ${maybeValue.getOrElse(defaultValue(scalaType))}\n")
+    }
+
+    eventParams.foreach {
+      case (name, dataType) =>
+        if (!init.variables.map(_._1).contains(name)) {
+          val scalaType = toScalaType(dataType)
+          sb.append(s"\tprivate var $name: $scalaType = ${defaultValue(scalaType)}\n")
+        }
+    }
+  }
+
+  private def extractAssignedVariables(events: List[EventOperation], declaredVariables: Set[String]): Set[String] = {
+    events.flatMap(_.assignments.map(_.variable)).toSet.diff(declaredVariables)
+  }
+
+  private def extractPrevVariablesFromEvents(events: List[EventOperation]): Set[String] = {
+    events.flatMap(e =>
+      e.assignments.flatMap(a =>
+        """@(\w+)""".r.findAllMatchIn(a.expression).map(_.group(1))
+      )
+    ).toSet
+  }
+
+  private def validateInitiateVariables(prevVariablesFromEvents: Set[String], declaredVariables: Set[String]): Unit = {
+    prevVariablesFromEvents.foreach { variable =>
+      if (!declaredVariables.contains(variable)) {
+        throw new IllegalStateException(s"@$variable was not initialized in the initiate block.")
+      }
+    }
+  }
+
+  private def initAssignedVariables(assignedVariables: Set[String], assignedVariableTypes: Map[String, String], sb: StringBuilder): Unit = {
+    assignedVariables.foreach { name =>
+      val scalaType = toScalaType(assignedVariableTypes.getOrElse(name, "int"))
+      sb.append(s"\tprivate var $name: $scalaType = ${defaultValue(scalaType)}\n")
+    }
+  }
+
+  private def generateEventAndOutputFunctions(events: List[EventOperation], outputs: List[Output], sb: StringBuilder, eventParams: Map[String, String]): Unit = {
+    val eventNameToOutputMap = events.zip(outputs).map {
+      case (event, output) => event.name -> Some(output)
+    }.toMap
+
+    // Handle event definitions
+    events.foreach { event =>
+      val EventOperation(name, params, assignments) = event
+
+      // Generate the event functions as you did
+      val formattedParams = params.map { case (paramName, typeStr) => s"$paramName: ${toScalaType(typeStr)}" }.mkString(", ")
+      sb.append(s"\tprivate def on_$name($formattedParams): Unit = {\n")
+      assignments.foreach {
+        case Assignment(variable, _, expression) =>
+
+          // Replace 'ite' with 'Operators.ite'
+          var updatedExpression = expression.replace("ite(", "Operators.ite(")
+
+          // Handle in/notIn operator
+          updatedExpression = translateInExpression(updatedExpression)
+
+          // Handle '@' expressions
+          updatedExpression = translatePrevExpression(updatedExpression)
+
+          sb.append(s"\t\tthis.$variable = $updatedExpression\n")
+      }
+
+      sb.append("\t}\n\n")
+
+      // Now, for each event, try to find its output and generate the corresponding output function
+      eventNameToOutputMap.get(name).foreach {
+        case Some(Output(outputName, params)) =>
+          sb.append(s"\tprivate def ${name}_output(): Any = {\n")
+          if (params.isEmpty) {
+            sb.append(s"""\t\t("$outputName")\n""")
+          } else {
+            val parsed_params = ListBuffer[String]()
+            params.foreach { param =>
+
+              if (param.startsWith("@")) {
+                // Handle '@' expressions
+                parsed_params += translatePrevExpression(param)
+              } else {
+                parsed_params += s"$param.toString"
+              }
+            }
+            sb.append(s"""\t\tList("$outputName", List(${parsed_params.mkString(", ")}))\n""")
+          }
+          sb.append("\t}\n\n")
+      }
+    }
+  }
+
+  private def generateEvaluateFunction(events: List[EventOperation], sb: StringBuilder, declaredVariables: Set[String]): Unit = {
+    // Start the generation of the evaluate function
+    sb.append("\tdef evaluate(event_name: String, params: Any*): Option[Any] = {\n")
+    sb.append("\t\tvar event : Any = null\n\n") // Added this line
+
+    sb.append("\t\tevent_name match {\n")
+
+    events.foreach {
+      case EventOperation(name, eventParams, _) =>
+        sb.append(s"""\t\t\tcase "$name" => {\n""")
+        if (eventParams.nonEmpty) {
+          sb.append(s"""\t\t\t\tif (params.length != ${eventParams.size}) throw new IllegalArgumentException("Incorrect number of parameters for event $name")\n""")
+        }
+
+        eventParams.zipWithIndex.foreach {
+          case ((paramName, typeStr), index) =>
+            sb.append(s"""\t\t\t\tTry(params($index).toString.trim.to${toScalaType(typeStr)}) match {\n""")
+            sb.append(s"""\t\t\t\t\tcase Success(value) => this.$paramName = value\n""")
+            sb.append(s"""\t\t\t\t\tcase Failure(e) => println(s"Failed to convert to ${toScalaType(typeStr)}: """)
+            sb.append("""$e")""")
+            sb.append(s"""\n}\n""")
+        }
+
+        val paramNamesSeq = eventParams.map(_._1).mkString(", ")
+        sb.append(s"\t\t\t\ton_$name($paramNamesSeq)\n")
+        sb.append(s"\t\t\t\tevent = ${name}_output()\n") // This line was changed to remove the extra event name prefix
+        sb.append("\t\t\t}\n")
+    }
+
+    sb.append("\t\t\tcase _ => event = List(event_name, params.toList)\n")
+    sb.append("\t\t\t}\n")
+
+    // Add logic to update the previous variables
+    declaredVariables.foreach { name =>
+      sb.append(s"\t\tprev_$name = $name\n")
+    }
+
+    sb.append("\t\tSome(event)\n") // Return the event at the end
+    sb.append("\t}\n")
+
     sb.toString
   }
 }
@@ -628,6 +610,7 @@ object PPropertyValidation {
 
       // Skip empty lines or the line starts with "initiate"
       if (line.trim.isEmpty | line.trim.toLowerCase.startsWith("initiate")) { }
+      else if (parts.length == 1 | line == "") { }
 
       else if (parts.length == 2 | line == "") {
         val typeAndName = parts(0).split(":").map(_.trim)
@@ -667,7 +650,7 @@ object PPropertyValidation {
                   s"'$value' for variable '${typeAndName(0)}'.")
             }
 
-          case "str" =>
+          case "str" | "string" =>
             if (!value.startsWith("\"") || !value.endsWith("\"")) {
               throw new IllegalArgumentException(s"Expected a string value but found " +
                 s"'$value' for variable '${typeAndName(0)}'. Strings should be enclosed in double quotes.")
