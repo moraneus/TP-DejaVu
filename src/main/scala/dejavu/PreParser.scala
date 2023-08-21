@@ -4,21 +4,22 @@ import java.io.{BufferedReader, FileReader}
 import java.text.ParseException
 import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
-import scala.util.parsing.combinator._
+import scala.util.parsing.combinator.JavaTokenParsers
+
 
 /**
- * Base trait for property definitions.
+ * Represents the base trait for property definitions.
  */
 sealed trait PProperty
 
 /**
- * Represents the Initiate block which defines initial variable types.
+ * Represents the Initiate block, defining initial variable types.
  * @param variables List of (name, type) pairs and their optional default values.
  */
 case class Initiate(variables: List[(String, String, Option[String])]) extends PProperty
 
 /**
- * Represents an event operation block defining event behavior.
+ * Represents an event operation block, defining event behavior.
  * @param name Event's name.
  * @param params Event's parameters.
  * @param assignments Assignments during the event.
@@ -26,14 +27,12 @@ case class Initiate(variables: List[(String, String, Option[String])]) extends P
 case class EventOperation(
                            name: String,
                            params: List[(String, String)],
-                           assignments: List[Assignment]) extends PProperty
+                           assignments: List[Assignment]
+                         ) extends PProperty
 
-/**
- * Represents an output block, defining the event's output format.
- * @param name Output's name.
- * @param params Output's parameters.
- */
-case class Output(name: String, params: List[String]) extends PProperty
+sealed trait Output extends PProperty
+case class FunctionOutput(name: String, params: List[String]) extends Output
+case class ITEOutput(iteFunction: ITEFunction) extends Output
 
 /**
  * Represents an assignment.
@@ -43,78 +42,161 @@ case class Output(name: String, params: List[String]) extends PProperty
  */
 case class Assignment(variable: String, variableType: String, expression: String) extends PProperty
 
+case class ITEFunction(boolExpr: BooleanExpression, function1: FunctionCall, function2: FunctionCall)
+
+sealed trait BooleanExpression
+case object _TrueExpr extends BooleanExpression
+case object _FalseExpr extends BooleanExpression
+case class _BooleanVar(name: String) extends BooleanExpression
+case class _Not(expr: BooleanExpression) extends BooleanExpression
+case class _And(left: BooleanExpression, right: BooleanExpression) extends BooleanExpression
+case class _Or(left: BooleanExpression, right: BooleanExpression) extends BooleanExpression
+case class _Xor(left: BooleanExpression, right: BooleanExpression) extends BooleanExpression
+case class _Implication(left: BooleanExpression, right: BooleanExpression) extends BooleanExpression
+case class _Biconditional(left: BooleanExpression, right: BooleanExpression) extends BooleanExpression
+trait NumericExpression
+case class _Value(value: Double) extends NumericExpression
+case class _NumericVar(name: String) extends NumericExpression
+case class _SpecialVar(name: String) extends NumericExpression
+case class NumComparison(left: NumericExpression, op: String, right: NumericExpression) extends BooleanExpression
+case class FunctionCall(name: String, params: List[String])
+
 /**
- * Parser for the property DSL.
+ * Represents a parser for the property DSL language.
  */
 class PrePropertyParser extends JavaTokenParsers {
+  override val whiteSpace: Regex = "[ \t\r\f\n]+".r
 
-  /**
-   * Unwanted patterns in the DSL.
-   */
-  private def allUnwantedPatterns: Parser[String] =
-    ("@@" ^^ { _ => failure("Pattern '@@' is not allowed.").toString }) |
-      ("^^^" ^^ { _ => failure("Pattern '^^^' is not allowed.").toString }) |
-      ("[]" ^^ { _ => failure("Pattern '[]' is not allowed.").toString })
-
-
-  /**
-   * Parse the DSL ensuring unwanted patterns are absent.
-   */
+  /** Parse the DSL ensuring unwanted patterns are absent. */
   def guardedParsedProperty: Parser[PreProperty] =
     not(allUnwantedPatterns) ~> parsedProperty
 
-  override val whiteSpace: Regex = "[ \t\r\f\n]+".r
+  /** Parses unwanted patterns in the DSL. */
+  private def allUnwantedPatterns: Parser[String] =
+    ("@@" | "^^^" | "[]") ^^ (_ => failure("Pattern not allowed.").toString)
 
+  /** Parses variable's type. */
+  private def varType: Parser[String] =
+    "int" | "double" | "float" | "string" | "str" | "bool"
 
-  /**
-   * Parse until end of line - useful for capturing assignments.
+  /** Parses a variable and its type. */
+  private def variable: Parser[(String, String)] =
+    ident ~ (":" ~> varType) ^^ { case id ~ t => (id, t) }
+
+  /** Boolean expressions are fundamental constructs in many computational contexts,
+   * especially in conditional statements and propositional logic. Here we provide
+   * parsers for various boolean operators and expressions.
    */
-  private def restOfLine: Parser[String] = """.*""".r
 
-  // Supported data types.
-  private def varType: Parser[String] = "int" | "double" | "float" | "string" | "str" | "bool"
+  /** Main parser for all boolean expressions, starting with the highest precedence, OR. */
+  private def booleanExpression: Parser[BooleanExpression] = orExpr
 
-  // Match a variable and its associated type.
-  private def variable: Parser[(String, String)] = ident ~ (":" ~> varType) ^^ {
-    case id ~ t => (id, t)
+  /** Parses OR boolean expressions. */
+  private def orExpr: Parser[BooleanExpression] =
+    andExpr * ("||" ^^^ { (a: BooleanExpression, b: BooleanExpression) => _Or(a, b) })
+
+  /** Parses AND boolean expressions. */
+  private def andExpr: Parser[BooleanExpression] =
+    xorExpr * ("&&" ^^^ { (a: BooleanExpression, b: BooleanExpression) => _And(a, b) })
+
+  /** Parses XOR (exclusive OR) boolean expressions. */
+  private def xorExpr: Parser[BooleanExpression] =
+    implicationExpr * ("^" ^^^ { (a: BooleanExpression, b: BooleanExpression) => _Xor(a, b) })
+
+  /** Parses implication (->) boolean expressions. */
+  private def implicationExpr: Parser[BooleanExpression] =
+    biconditionalExpr * ("->" ^^^ { (a: BooleanExpression, b: BooleanExpression) => _Implication(a, b) })
+
+  /** Parses biconditional (<->) boolean expressions. */
+  private def biconditionalExpr: Parser[BooleanExpression] =
+    notExpr * ("<->" ^^^ { (a: BooleanExpression, b: BooleanExpression) => _Biconditional(a, b) })
+
+  /** Parses NOT (!) boolean expressions. */
+  private def notExpr: Parser[BooleanExpression] =
+    "!" ~> simpleExpr ^^ _Not | simpleExpr
+
+  /** Parses numeric comparison expressions like `5 < 10`, `3.14 == 3.14` or `speed <= @speed`.
+   * Supported operators are: <, >, <=, >=, ==, !=
+   * Supports Int, Float, and Double.
+   */
+  private def numComparison: Parser[NumComparison] = {
+    // Number parsers
+    val integer: Parser[NumericExpression] = """\d+""".r ^^ { num => _Value(num.toDouble) }
+    val float: Parser[NumericExpression] = """\d+(\.\d+)?[fF]""".r ^^ { str => _Value(str.replace("f", "").replace("F", "").toDouble) }
+    val double: Parser[NumericExpression] = """\d+(\.\d+)?(?!f|F)""".r ^^ { str => _Value(str.toDouble) }
+    val regularVar: Parser[NumericExpression] = ident ^^ _NumericVar
+    val specialVar: Parser[NumericExpression] = "@" ~> ident ^^ _SpecialVar
+    val numberOrVar = float | double | integer | specialVar | regularVar // order matters
+
+    val op = ("<" | ">" | "<=" | ">=" | "==" | "!=")
+
+    numberOrVar ~ op ~ numberOrVar ^^ {
+      case left ~ operator ~ right => NumComparison(left, operator, right)
+    }
   }
 
-  // Match the "initiate" block used for initializing variables.
+  /** Parses the simplest boolean expressions like variables, true, false,
+   * as well as numeric comparisons.
+   */
+  private def simpleExpr: Parser[BooleanExpression] =
+    numComparison |
+      ident ^^ _BooleanVar |
+      "true" ^^^ _TrueExpr |
+      "false" ^^^ _FalseExpr |
+      "(" ~> booleanExpression <~ ")"
+
+
+  /** Parses the "initiate" block. */
   private def initiate: Parser[Initiate] =
     ("initiate" | "Initiate" | "INITIATE") ~> rep(variableWithDefaultValue) ^^ Initiate
 
-  // Match a variable with its type and optional default value.
+  /** Parses a variable with its type and optional default value. */
   private def variableWithDefaultValue: Parser[(String, String, Option[String])] =
     ident ~ (":" ~> varType) ~ opt(":=" ~> restOfLine) ^^ {
       case id ~ t ~ maybeValue => (id, t, maybeValue)
     }
 
-  // Match an assignment statement.
+  /** Parses until end of line. */
+  private def restOfLine: Parser[String] = """.*""".r
+
+  /** Parses an assignment statement. */
   private def assignment: Parser[Assignment] =
     ident ~ (":" ~> varType) ~ (":=" ~> restOfLine) ^^ {
       case variable ~ varType ~ expression => Assignment(variable, varType, expression)
     }
 
-  // Match the main event operation block.
+  /** Parses the main event operation block. */
   private def eventOperation: Parser[EventOperation] =
     ("on" | "On" | "ON") ~> ident ~ ("(" ~> repsep(variable, ",") <~ ")") ~ rep(assignment) ^^ {
       case name ~ params ~ assignments => EventOperation(name, params, assignments)
     }
 
-  // Match either the special identifier or the standard identifier.
-  private def parameter: Parser[String] =
-    "@" ~ ident ^^ { case atSign ~ id => atSign + id } | ident
+  /** Parses function call parameters. */
+  private def parameter: Parser[String] = "@" ~ ident ^^ { case atSign ~ id => atSign + id } | ident | decimalNumber | "false" | "true"
 
-  // Match the "output" block.
-  private def output: Parser[Output] =
-    ("output" | "Output" | "OUTPUT") ~> ident ~ ("(" ~> repsep(parameter, ",") <~ ")") ^^ {
-      case name ~ params =>
-        println(s"$name, $params")
-        Output(name, params)
+  /** Parses the ITE function. */
+  private def iteFunction: Parser[ITEFunction] =
+    ("ite" ~> "(" ~> booleanExpression ~ ("," ~> functionCall) ~ ("," ~> functionCall) <~ ")") ^^ {
+      case boolExpr ~ function1 ~ function2 =>
+        ITEFunction(boolExpr, function1, function2)
     }
 
-  // Main parser function.
-  private def parsedProperty: Parser[PreProperty] =
+
+  /** Parses function calls. */
+  private def functionCall: Parser[FunctionCall] =
+    ident ~ ("(" ~> repsep(parameter, ",") <~ ")") ^^ {
+      case name ~ params => FunctionCall(name, params)
+    }
+
+  /** Parses the "output" block. */
+  private def output: Parser[Output] =
+    ("output" | "Output" | "OUTPUT") ~> (iteFunction | functionCall) ^^ {
+      case function: FunctionCall => FunctionOutput(function.name, function.params)
+      case ite: ITEFunction => ITEOutput(ite)
+    }
+
+  /** Main parser function. */
+  def parsedProperty: Parser[PreProperty] =
     opt(initiate) ~ rep(eventOperation | output) ^^ {
       case maybeInit ~ blocks =>
         val events = blocks.collect { case e: EventOperation => e }
@@ -130,9 +212,11 @@ class PrePropertyParser extends JavaTokenParsers {
  * @param outputs Output blocks.
  */
 case class PreProperty(
-                        initiate: Initiate,
-                        operations: List[EventOperation],
-                        outputs: List[Output]) extends PProperty
+        initiate: Initiate,
+        operations: List[EventOperation],
+        outputs: List[Output]
+      )
+
 
 
 /**
@@ -141,34 +225,90 @@ case class PreProperty(
 object CodeGenerator {
 
 
-  // Convert custom types to Scala types
+  /**
+   * Converts custom type strings to their respective Scala types.
+   *
+   * @param typeStr A string representing a custom type.
+   * @return The equivalent Scala type as a string.
+   * @throws IllegalArgumentException If the provided type string is unsupported.
+   */
   private def toScalaType(typeStr: String): String = typeStr.toLowerCase match {
     case "int"               => "Int"
     case "double"            => "Double"
+    case "float"             => "Float"
     case "bool"              => "Boolean"
     case "str" | "string"    => "String"
     case _                   => throw new IllegalArgumentException(s"Unsupported type: $typeStr")
   }
 
-  // Provide a default value for a given Scala type
+
+  /**
+   * Provides default values for a given Scala type.
+   *
+   * @param scalaType A string representing a Scala type.
+   * @return The default value for the given type as a string.
+   * @throws IllegalArgumentException If the provided Scala type is unsupported.
+   */
   private def defaultValue(scalaType: String): String = scalaType match {
     case "Int"         => "0"
     case "Double"      => "0.0"
+    case "Float"       => "0f"
     case "Boolean"     => "false"
     case "String"      => """"""""
     case _             => throw new IllegalArgumentException(s"Unsupported type: $scalaType")
   }
 
-  // Replace the 'in' expression
+  /**
+   * Transforms custom 'in' / 'notin' expressions to Scala's List based 'in' / 'notin' expression.
+   *
+   * @param expr A string expression that may contain custom 'in' syntax.
+   * @return A string with custom 'in' syntax replaced with Scala's List based syntax.
+   */
   private def translateInExpression(expr: String): String = {
     val inPattern: Regex = """(?i)in\(\[(.*?)\]\)""".r
     inPattern.replaceAllIn(expr, m => s"in(List(${m.group(1)}))")
   }
 
-  // Replace the '@' symbol while avoiding '@@'
+  /**
+   * Replaces the '@' symbol in a given string, but avoids replacing '@@'.
+   *
+   * @param expr A string expression that may contain the '@' symbol.
+   * @return A string with the '@' symbol replaced by 'prev_', but '@@' remains unchanged.
+   */
   private def translatePrevExpression(expr: String): String = {
     val pattern: Regex = """(?<!@)@""".r
     pattern.replaceAllIn(expr, "prev_")
+  }
+
+  /**
+   * Converts a Boolean expression to its string representation.
+   *
+   * @param expr The Boolean expression to convert.
+   * @return The string representation of the given Boolean expression.
+   */
+  private def expressionToString(expr: BooleanExpression): String = {
+
+    expr match {
+      case _BooleanVar(name) => name
+      case NumComparison(left, op, right) =>
+        s"(${numericExpressionToString(left)} $op ${numericExpressionToString(right)})"
+      case _Not(innerExpr) => s"!(${expressionToString(innerExpr)})"
+      case _And(left, right) => s"(${expressionToString(left)} && ${expressionToString(right)})"
+      case _Or(left, right) => s"(${expressionToString(left)} || ${expressionToString(right)})"
+      case _Xor(left, right) => s"(${expressionToString(left)} ^ ${expressionToString(right)})"
+      case _Implication(left, right) => s"(${expressionToString(left)} -> ${expressionToString(right)})"
+      case _Biconditional(left, right) => s"(${expressionToString(left)} <-> ${expressionToString(right)})"
+      case _TrueExpr => "true"
+      case _FalseExpr => "false"
+    }
+  }
+
+  private def numericExpressionToString(expr: NumericExpression): String = {
+    expr match {
+      case _Value(value) => value.toString
+      case _NumericVar(name) => name
+      case _SpecialVar(name) => "prev_" + name
+    }
   }
 
   def generate(property: PreProperty): String = {
@@ -402,6 +542,15 @@ object CodeGenerator {
     }
   }
 
+  /**
+   * Initializes variables based on the given `Initiate` object. Variables will be initialized
+   * to their given values, or to a default value for their type if no value is provided.
+   * Initialized variables are added to the provided StringBuilder.
+   *
+   * @param init        The `Initiate` object containing variable information.
+   * @param eventParams A map of event names to their parameter strings.
+   * @param sb          The StringBuilder to which the initialized variables will be appended.
+   */
   private def initVariables(init: Initiate, eventParams: Map[String, String], sb: StringBuilder): Unit = {
     init.variables.foreach {
       case (name, dataType, maybeValue) =>
@@ -419,10 +568,23 @@ object CodeGenerator {
     }
   }
 
+  /**
+   * Extracts names of variables that are assigned values within the provided list of events.
+   *
+   * @param events             A list of `EventOperation` objects.
+   * @param declaredVariables  A set of variable names that have been declared.
+   * @return A set of variable names that are assigned within the events but not declared.
+   */
   private def extractAssignedVariables(events: List[EventOperation], declaredVariables: Set[String]): Set[String] = {
     events.flatMap(_.assignments.map(_.variable)).toSet.diff(declaredVariables)
   }
 
+  /**
+   * Extracts variable names that are referenced with a preceding '@' within assignments in the provided list of events.
+   *
+   * @param events A list of `EventOperation` objects.
+   * @return A set of extracted variable names.
+   */
   private def extractPrevVariablesFromEvents(events: List[EventOperation]): Set[String] = {
     events.flatMap(e =>
       e.assignments.flatMap(a =>
@@ -431,6 +593,13 @@ object CodeGenerator {
     ).toSet
   }
 
+  /**
+   * Validates that all variables referenced with a preceding '@' in events have been declared.
+   *
+   * @param prevVariablesFromEvents A set of variables names that have been referenced with '@' in events.
+   * @param declaredVariables      A set of variable names that have been declared.
+   * @throws IllegalStateException If any of the '@' referenced variables have not been declared.
+   */
   private def validateInitiateVariables(prevVariablesFromEvents: Set[String], declaredVariables: Set[String]): Unit = {
     prevVariablesFromEvents.foreach { variable =>
       if (!declaredVariables.contains(variable)) {
@@ -439,6 +608,14 @@ object CodeGenerator {
     }
   }
 
+  /**
+   * Initializes the assigned variables that have been identified but not explicitly declared.
+   * The initialized variables are added to the provided StringBuilder.
+   *
+   * @param assignedVariables      A set of variable names that have been assigned but not declared.
+   * @param assignedVariableTypes  A map of variable names to their data types.
+   * @param sb                     The StringBuilder to which the initialized variables will be appended.
+   */
   private def initAssignedVariables(assignedVariables: Set[String], assignedVariableTypes: Map[String, String], sb: StringBuilder): Unit = {
     assignedVariables.foreach { name =>
       val scalaType = toScalaType(assignedVariableTypes.getOrElse(name, "int"))
@@ -446,7 +623,19 @@ object CodeGenerator {
     }
   }
 
+
+  /**
+   * Generates Scala code for event and output functions based on provided events and outputs.
+   * The generated code is appended to the given StringBuilder instance.
+   *
+   * @param events       A list of `EventOperation` objects representing events.
+   * @param outputs      A list of `Output` objects representing outputs.
+   * @param sb           The StringBuilder to which the generated code will be appended.
+   * @param eventParams  A map of event names to their parameter strings.
+   */
   private def generateEventAndOutputFunctions(events: List[EventOperation], outputs: List[Output], sb: StringBuilder, eventParams: Map[String, String]): Unit = {
+
+    // Create a mapping between event names and their corresponding outputs.
     val eventNameToOutputMap = events.zip(outputs).map {
       case (event, output) => event.name -> Some(output)
     }.toMap
@@ -455,49 +644,84 @@ object CodeGenerator {
     events.foreach { event =>
       val EventOperation(name, params, assignments) = event
 
-      // Generate the event functions as you did
+      // Generate function definition signature for each event.
       val formattedParams = params.map { case (paramName, typeStr) => s"$paramName: ${toScalaType(typeStr)}" }.mkString(", ")
       sb.append(s"\tprivate def on_$name($formattedParams): Unit = {\n")
+
+      // Process assignments inside each event.
       assignments.foreach {
         case Assignment(variable, _, expression) =>
-
-          // Replace 'ite' with 'Operators.ite'
+          // Handle special expressions and operators in the provided code.
           var updatedExpression = expression.replace("ite(", "Operators.ite(")
-
-          // Handle in/notIn operator
           updatedExpression = translateInExpression(updatedExpression)
-
-          // Handle '@' expressions
           updatedExpression = translatePrevExpression(updatedExpression)
 
           sb.append(s"\t\tthis.$variable = $updatedExpression\n")
       }
-
       sb.append("\t}\n\n")
 
-      // Now, for each event, try to find its output and generate the corresponding output function
-      eventNameToOutputMap.get(name).foreach {
-        case Some(Output(outputName, params)) =>
-          sb.append(s"\tprivate def ${name}_output(): Any = {\n")
-          if (params.isEmpty) {
-            sb.append(s"""\t\t("$outputName")\n""")
-          } else {
-            val parsed_params = ListBuffer[String]()
-            params.foreach { param =>
+      // Generate output functions for each event.
+      sb.append(s"\tprivate def ${name}_output(): Any = {\n")
 
-              if (param.trim.startsWith("@")) {
-                // Handle '@' expressions
-                parsed_params += s"this.${translatePrevExpression(param)}"
-              } else {
-                parsed_params += s"this.$param.toString"
-              }
-            }
-            sb.append(s"""\t\tList("$outputName", List(${parsed_params.mkString(", ")}))\n""")
-          }
-          sb.append("\t}\n\n")
+      // For each event, try to find its output and generate the corresponding output function.
+      eventNameToOutputMap.get(name).foreach {
+        case Some(output: FunctionOutput) => {
+          sb.append(s"\t\t")
+          outputHelper(sb, output.name, output.params)
+          sb.append(s"""\n""")
+        }
+        case Some(output: ITEOutput) => {
+          val testExpr = _And(_BooleanVar("a"), _BooleanVar("b"))
+          println(expressionToString(testExpr)) // Should print (a && b)
+          val iteCondition = expressionToString(output.iteFunction.boolExpr)
+          val ifTrue = output.iteFunction.function1
+          val ifFalse = output.iteFunction.function2
+          sb.append(s"""\t\tOperators.ite($iteCondition, """)
+          outputHelper(sb, ifTrue.name, ifTrue.params)
+          sb.append(s""", """)
+          outputHelper(sb, ifFalse.name, ifFalse.params)
+          sb.append(s""")\n""")
+        }
       }
+      sb.append("\t}\n\n")
     }
   }
+
+
+  /**
+   * A utility function to generate the appropriate output string format based on
+   * the given output name and its parameters. The output is appended to the provided StringBuilder.
+   *
+   * @param sb          The StringBuilder to which the formatted output will be appended.
+   * @param outputName  The name of the output.
+   * @param params      A list of parameters associated with the output. These parameters
+   *                    can be in different formats and might include special '@' expressions.
+   */
+  private def outputHelper(sb: StringBuilder, outputName: String, params: List[String]): Unit = {
+
+    // If the output has no parameters, simply append the output name.
+    if (params.isEmpty) {
+      sb.append(s"""("$outputName")\n""")
+    } else {
+      // Use a ListBuffer to accumulate the parsed parameters.
+      val parsed_params = ListBuffer[String]()
+
+      params.foreach { param =>
+        // If the parameter starts with '@', it's considered special and is translated accordingly.
+        if (param.trim.startsWith("@")) {
+          // Handle '@' expressions
+          parsed_params += s"${translatePrevExpression(param)}"
+        } else {
+          // Otherwise, just append the parameter's string representation.
+          parsed_params += s"$param.toString"
+        }
+      }
+
+      // Once all parameters are processed, append them in a formatted manner.
+      sb.append(s"""List("$outputName", List(${parsed_params.mkString(", ")}))""")
+    }
+  }
+
 
   private def generateEvaluateFunction(events: List[EventOperation], sb: StringBuilder, declaredVariables: Set[String]): Unit = {
     // Start the generation of the evaluate function
@@ -519,7 +743,7 @@ object CodeGenerator {
             sb.append(s"""\t\t\t\t\tcase Success(value) => this.$paramName = value\n""")
             sb.append(s"""\t\t\t\t\tcase Failure(e) => println(s"Failed to convert to ${toScalaType(typeStr)}: """)
             sb.append("""$e")""")
-            sb.append(s"""\n}\n""")
+            sb.append(s"""\n\t\t\t\t}\n""")
         }
 
         val paramNamesSeq = eventParams.map(_._1).mkString(", ")
