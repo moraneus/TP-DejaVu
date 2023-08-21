@@ -103,12 +103,14 @@ class PrePropertyParser extends JavaTokenParsers {
 
   // Match either the special identifier or the standard identifier.
   private def parameter: Parser[String] =
-    "@" ~> ident | ident
+    "@" ~ ident ^^ { case atSign ~ id => atSign + id } | ident
 
   // Match the "output" block.
   private def output: Parser[Output] =
     ("output" | "Output" | "OUTPUT") ~> ident ~ ("(" ~> repsep(parameter, ",") <~ ")") ^^ {
-      case name ~ params => Output(name, params)
+      case name ~ params =>
+        println(s"$name, $params")
+        Output(name, params)
     }
 
   // Main parser function.
@@ -283,7 +285,7 @@ object CodeGenerator {
         |   *
         |   * @tparam A the type for which the absolute operation is defined.
         |   */
-        |  trait AbsOps[A] {
+        |  trait AbsOps[T] {
         |
         |    /**
         |     * Computes the absolute value of `value`.
@@ -291,7 +293,7 @@ object CodeGenerator {
         |     * @param value the input value.
         |     * @return absolute value of `value`.
         |     */
-        |    def abs(value: A): A
+        |    def abs(value: T): T
         |  }
         |
         |  // Below are instances for the AbsOps type class for supported types: Int, Float, and Double.
@@ -316,7 +318,7 @@ object CodeGenerator {
         |   * @tparam A type of the value.
         |   * @return absolute value of `value`.
         |   */
-        |  def abs[A](value: A)(implicit ops: AbsOps[A]): A = ops.abs(value)
+        |  def abs[T](value: T)(implicit ops: AbsOps[T]): T = ops.abs(value)
         |
         |
         |  /**
@@ -324,13 +326,13 @@ object CodeGenerator {
         |   *
         |   * @tparam A the type for which the checksum operation is defined.
         |   */
-        |  trait ChecksumOps[A] {
-        |    def sha256(value: A): String
+        |  trait ChecksumOps[T] {
+        |    def sha256(value: T): String
         |  }
         |
         |  // Generic instance for any type that can be converted to a string.
-        |  implicit def genericChecksumOps[A]: ChecksumOps[A] = new ChecksumOps[A] {
-        |    def sha256(value: A): String = {
+        |  implicit def genericChecksumOps[T]: ChecksumOps[T] = new ChecksumOps[T] {
+        |    def sha256(value: T): String = {
         |      val strRepresentation = value.toString
         |      val digest = MessageDigest.getInstance("SHA-256")
         |      val hash = digest.digest(strRepresentation.getBytes("UTF-8"))
@@ -346,7 +348,7 @@ object CodeGenerator {
         |   * @tparam A type of the value.
         |   * @return SHA-256 checksum of `value`.
         |   */
-        |  def sha256[A](value: A)(implicit ops: ChecksumOps[A]): String = ops.sha256(value)
+        |  def sha256[T](value: T)(implicit ops: ChecksumOps[T]): String = ops.sha256(value)
         |
         |  /**
         |   * Provides utility methods for common operations.
@@ -483,11 +485,11 @@ object CodeGenerator {
             val parsed_params = ListBuffer[String]()
             params.foreach { param =>
 
-              if (param.startsWith("@")) {
+              if (param.trim.startsWith("@")) {
                 // Handle '@' expressions
-                parsed_params += translatePrevExpression(param)
+                parsed_params += s"this.${translatePrevExpression(param)}"
               } else {
-                parsed_params += s"$param.toString"
+                parsed_params += s"this.$param.toString"
               }
             }
             sb.append(s"""\t\tList("$outputName", List(${parsed_params.mkString(", ")}))\n""")
