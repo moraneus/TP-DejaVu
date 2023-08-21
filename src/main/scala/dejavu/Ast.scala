@@ -388,7 +388,7 @@ case class Spec(properties: List[Property]) {
          |        case None => println("No mode was selected")
          |      }
          |
-         |      val m = new PropertyMonitor(PreMonitor)
+         |      val m = new PropertyMonitor(${if(prePropertySynthesisCode.isEmpty) null else "PreMonitor"})
          |
          |      try {
          |        openResultFile(Options.RESULT_FILE)
