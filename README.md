@@ -147,7 +147,7 @@ The grammar rules are outlined as follows:
                          | abs '(' (<int> | <float> | <double>) ')'
     <initiate>        ::= initiate <newline> <varDefinition> = <const> <newline> ... <varDefinition> = <const> <newline>
     <on>              ::= on <eventName> '(' <varDefinition>, ... , <varDefinition> ')' <newline> <varDefinition> <assignmentop> <expr> <newline> ... <varDefinition> <assignmentop> <expr> <newline>
-    <output>          ::= <eventName> '(' <param> ',' ... ',' <param> ')'
+    <output>          ::= <eventName> '(' <param> ',' ... ',' <param> ')' | 'skip()'
     <varDefinition>   ::= <var> : <varType>
 
     <expr> ::= 'true'
