@@ -1,11 +1,11 @@
 ```     
-██╗██████╗ ██████╗ ██╗   ██╗      ██████╗ ███████╗     ██╗ █████╗ ██╗   ██╗██╗   ██╗
-╚═╝██╔══██╗██╔══██╗██║   ██║      ██╔══██╗██╔════╝     ██║██╔══██╗██║   ██║██║   ██║
-██║██████╔╝██████╔╝██║   ██║█████╗██║  ██║█████╗       ██║███████║██║   ██║██║   ██║
-██║██╔═══╝ ██╔══██╗╚██╗ ██╔╝╚════╝██║  ██║██╔══╝  ██   ██║██╔══██║╚██╗ ██╔╝██║   ██║
-██║██║     ██║  ██║ ╚████╔╝       ██████╔╝███████╗╚█████╔╝██║  ██║ ╚████╔╝ ╚██████╔╝
-╚═╝╚═╝     ╚═╝  ╚═╝  ╚═══╝        ╚═════╝ ╚══════╝ ╚════╝ ╚═╝  ╚═╝  ╚═══╝   ╚═════╝ 
-        
+████████╗██████╗       ██████╗ ███████╗     ██╗ █████╗ ██╗   ██╗██╗   ██╗
+╚══██╔══╝██╔══██╗      ██╔══██╗██╔════╝     ██║██╔══██╗██║   ██║██║   ██║
+   ██║   ██████╔╝█████╗██║  ██║█████╗       ██║███████║██║   ██║██║   ██║
+   ██║   ██╔═══╝ ╚════╝██║  ██║██╔══╝  ██   ██║██╔══██║╚██╗ ██╔╝██║   ██║
+   ██║   ██║           ██████╔╝███████╗╚█████╔╝██║  ██║ ╚████╔╝ ╚██████╔╝
+   ╚═╝   ╚═╝           ╚═════╝ ╚══════╝ ╚════╝ ╚═╝  ╚═╝  ╚═══╝   ╚═════╝ 
+                                                                                                                                                         
 First-order past time LTL with recursive rules, time and pre-evaluation!
 Version 4.0, August - 2023
 ```
@@ -13,20 +13,11 @@ Version 4.0, August - 2023
   
 ## Overview
 
-DejaVu is a program written in Scala for monitoring event streams (traces) against temporal logic formulas. 
-The main formulas are written in a first-order past time linear temporal logic, with the addition of macros and recursive rules. The logic also supports reasoning about time.
+[DejaVu](https://github.com/havelund/dejavu) is a program written in Scala for monitoring event streams (traces) against temporal logic formulas. 
+The main formulas are written in a first-order past-time linear temporal logic, with the addition of macros and recursive rules. The logic also supports reasoning about time.
 DejaVu contributors are [Klaus Havelund](http://www.havelund.com), [Doron Peled](http://u.cs.biu.ac.il/~doronp) and [Dogan Ulus](https://www.linkedin.com/in/doganulus).
-PPEE-DejaVu is an extension of DejaVu that supports pre-evaluation.
-
-An example of a property in its most basic form is the following:
-
-    prop closeOnlyOpenFiles : forall f . close(f) -> exists m . @ [open(f,m),close(f))
-
-The property has the name `closeOnlyOpenFiles` and states that for any file `f`, if a `close(f)` event is observed, then there exists a mode `m` (e.g 'read' or 'write') such that in the previous step (`@`), some time in the past was observed an `open(f,m)` event, and since then no `close(f)` event has been observed. 
-
-The implementation uses BDDs (Binary Decision Diagrams) for representing assignments to quantified variables (such as `f` and `m` above).
-
-In this version of DejaVu we add the ability to predict the next `k` steps in 2 modes of prediction.
+TP-DejaVu is an extension of DejaVu that supports pre-evaluation.
+More details about DejaVu and how it operates can be found [here](https://github.com/havelund/dejavu).
 
 ## Installing DejaVu:
 
@@ -37,7 +28,7 @@ The directly ``out`` contains files and directories useful for installing and ru
 * papers                          : a directory containing papers published about DejaVu
 * examples                        : an example directory containing properties and logs
 
-DejaVu is implemented in Scala. In this version of iPRV-DejaVu we used Scala 2.11.12.
+DejaVu is implemented in Scala. In this version of TP-DejaVu we used Scala 2.11.12.
 
 1. Install the Scala programming language if not already installed (https://www.scala-lang.org/download)
 2. Place the files ``dejavu`` and ``dejavu.jar`` mentioned above in some directory **DIR** (standing for the total path to this directory).
@@ -49,7 +40,7 @@ DejaVu is implemented in Scala. In this version of iPRV-DejaVu we used Scala 2.1
 
         alias dejavu=DIR/dejavu
         
-## Running DejaVu
+## Running TP-DejaVu
 
 The script is applied as follows:
 
@@ -66,29 +57,29 @@ The script is applied as follows:
 
 #### Some Execution Examples
 
-* Execute `PPEE-DejaVu`, allocating `10` bits to each variable.
+* Execute `TP-DejaVu`, allocating `10` bits to each variable.
   ```bash
   ./dejavu --specfile=/path/to/specfile --logfile=/path/to/logfile --bits=10
    ```
-* Execute `PPEE-DejaVu`, allocating `7` bits to each variable, and ensure the clearing of generated files and folders.
+* Execute `TP-DejaVu`, allocating `7` bits to each variable, and ensure the clearing of generated files and folders.
   ```bash
   ./dejavu -s=/path/to/specfile --logfile=/path/to/logfile -b=7 --clear=1
   ```
 
-* Execute `PPEE-DejaVu` in `debug` mode, where certain parameters like `bits` assume default values.
+* Execute `TP-DejaVu` in `debug` mode, where certain parameters like `bits` assume default values.
   ```bash
   ./dejavu --specfile=/path/to/specfile -l=/path/to/logfile --mode=debug
   ```
 
-* Initiate the `PPEE-DejaVu` process, allocating `5` bits to each variable, and set the pre-evaluation process.
+* Initiate the `TP-DejaVu` process, allocating `5` bits to each variable, and set the pre-evaluation process.
   ```bash
   ./dejavu --specfile=/path/to/specfile --prefile=/path/to/specfile --logfile=/path/to/logfile --bits=5
   ```
-* Initiate the `PPEE-DejaVu` process, allocating `5` bits to each variable, and set the pre-evaluation process. 
+* Initiate the `TP-DejaVu` process, allocating `5` bits to each variable, and set the pre-evaluation process. 
   ```bash
-  ./dejavu -s=/path/to/specfile -p=/path/to/specfile -l=/path/to/logfile -b=5
+  ./dejavu -s=/path/to/specfile -p=/path/to/prefile -l=/path/to/logfile -b=5
   ```
-
+  
 The `--specfile=<filename>` is the **main** temporal specification that the trace must satisfy, 
 which is referred to as the **Specification Document File**. See the explanation of the specification language below.
 
@@ -111,28 +102,6 @@ with **no leading spaces** would mean the four events:
     bid(chair,650)
     sell(chair)
 
-**The log file and time**
-
-In case the log file contains time stamps, the log file **name**! must contain the text `.timed.`. E.g: `log42.timed.csv`. Time stamps (natural numbers) must appear as the last argument to all events. E.g. a timed version of the above trace (with time values in
-the range 1000 ... 1099) is:
-
-    list,chair,500,1010
-    bid,chair,700,1025
-    bid,chair,650,1067
-    sell,chair,1099 
-
-Note that this last time value is not referred to explicitly in events in specifications.
-That is, the events with time in the above CSV format still corresponds to the following
-events in specification format:
-
-    list(chair,500)
-    bid(chair,700)
-    bid(chair,650)
-    sell(chair)
-
-In case the log file is not timed (as described just above), time is considered as always being 0.
-One can still check timed properties against such a log, but of course it makes little sense.
-
 **The bits per variable** (``--bits=numOfBits``):
 Indicates how many bits are assigned to each variable in the BDDs. 
 This parameter is optional with the default value being 20. If the number is too low an error message will be issued 
@@ -154,377 +123,119 @@ be deleted. A value of `1` signifies deletion of the files, while the default va
 implies that the files will be preserved in the `output` folder. The generated files typically 
 include `TraceMonitor.scala`, `ast.dot`, and `dejavu-results`.
 
+## The TP-DejaVu Pre Specification Logic
 
-## Results from DejaVu
+### The DejaVu Pre-Evaluation Grammar
 
-**Wellformedness errors** 
+The grammar rules are outlined as follows:
 
-Error messages will be emitted if the main specification document is not wellformed. A wellformedness
-violation terminates the program, and can be one of the following:
-
-* *Syntax error*: the document does not follow the grammar.
-* *Free variable*: a used variable has not been introduced as a predicate parameter or a quantified variable.
-* *Hiding*: a quantified expression hides a name introduced at an outer level.
-* *Unused variable*: a name introduced as a predicate parameter or quantifier is not used.
-* *Inconsistent*: a predicate is called with inconsistent number of arguments compared to definition or other calls.
-* *Duplicates*: duplicate definition of a predicate or property name.
-* *Undefined event*: events have been defined but an event is used and not amongst the defined ones.
-* *Variable duplication*: a variable is introduced more than once in an event, macro, or rule parameter list.
-* *Unprotected recursive rule definition*: A rule is called in the body of a rule definition wthout being underneath a previous-time operator: `@`.
-
-A warning does not terminate the program, and can be one of:
-
-* *Unused macro*: a predicate macro is defined but not used.
-* *Unused event*: an event is defined but not used.
+    <doc> ::= <form>
     
-**Property violations** 
-The tool will indicate a violation of a property by printing
-what event number it concerns and what event. For example:
-
-    *** Property incr violated on event number 3:
-
-    #########################################################
-    #### bid(chair,650)
-    #########################################################  
+    <form>            ::= [<initiate>] <newline> <on> <newline> <output>
+    <newline> ::= \n
     
-indicates that event number 3 violates the property `incr`, and that event is a line in the CSV file having the format:
+    <param>           ::= <var> | <const>
+    <varType>         ::= <str> | <int> | <double> | <float> | <bool>
+    <eventName>       ::= <const>
+    <arithmeticop>    ::= '+' | '-' | '/' | '%' | '*' | '^^'
+    <assignmentop>    ::= '=' | '+=' | '-=' | '*=' | '/=' | '%='
+    <binop>           ::= '->' | '||' | '&&' | '<->' | '^'
+    <unop>            ::= '!' | '@'
+    <relop>           ::= '<' | '<=' | '==' | '>' | '>=' | '!='
+    <functions>       ::= (in | notin) '(' <param> ',' ... ',' <param> ')' 
+                         | lte '(' <condition>, <param>, <param> ')' 
+                         | abs '(' (<int> | <float> | <double>) ')'
+    <initiate>        ::= initiate <newline> <varDefinition> = <const> <newline> ... <varDefinition> = <const> <newline>
+    <on>              ::= on <eventName> '(' <varDefinition>, ... , <varDefinition> ')' <newline> <varDefinition> <assignmentop> <expr> <newline> ... <varDefinition> <assignmentop> <expr> <newline>
+    <output>          ::= <eventName> '(' <param> ',' ... ',' <param> ')'
+    <varDefinition>   ::= <var> : <varType>
 
-    bid,chair,650   
+    <expr> ::= 'true'
+    | 'false'
+    | <param>
+    | <expr> <arithmeticop> <expr>
+    | <expr> <assignmentop> <expr>
+    | <expr> <relop> <expr>
+    | <expr> <binop> <expr>
+    | <unop> <expr>
+    | <functions>
 
-**Trace statistics**
-A trace statistics is printed, which indicates how many events were processed in total and how they were distributed over the different event types:
-  
-    Processed 1100006 events
+### Operator Meanings by Type
 
-    ==================
-    Event Counts:
-    ------------------
-    logout : 20001
-    open   : 520001
-    login  : 500000
-    close  : 40002
-    access : 20002
-    ==================
+- **Arithmetic Operators (`<arithmeticop>`)**:
+  These operate on numeric types like `<int>`, `<float>`, and `<double>`. Examples include addition (`+`) and multiplication (`*`).
 
-Warnings will also be here be issued if: 
+- **Assignment Operators (`<assignmentop>`)**:
+  These typically modify the value of a variable. For instance, `+=` adds the right value to the left variable and updates the left variable with the result.
 
-* if there are events in the specification that do not occur in the trace, or dually
-* if there are events in the trace that do not occur in the specification
+- **Binary Operators (`<binop>`)**:
+  Binary operations act on two operands. The implication (`->`) and logical "and" (`&&`) are examples.
 
-Both can potentially be signs of a flawed specification, but might not need to be.
+- **Unary Operators (`<unop>`)**:
+  These operate on a single operand. Examples include the negation (`!`) which flips the truth value of a boolean expression.
 
-**Not enough bits per variable**
-If not enough bits have been allocated for a variable to hold the number of values generated for that variable, an assertion violation like the following is printed:
+- **Relational Operators (`<relop>`)**:
+  These compare two values. For instance, `<` checks if the left value is less than the right.
 
-    *** java.lang.AssertionError: assertion failed: 
-        10 bits is not enough to represent variable i.
+- **Functions (`<functions>`)**:
+  These are more complex operations. For instance, the `in` function checks for membership in a list, while `abs` returns the absolute value of a number.
 
-One can/should experiment with BDD sizes.
+### Operators meaning supported by the Pre-Evaluation DejaVu
 
-**Pre-EvaluationOutcomes**
-The tool will actively present the new generated event in the console.
-**Timing results**
-The system will print the following timings:
+The different operators `op` and their behaviors on the types `X`, `Y`, and `Z` they act upon are as follows:
 
-* the time spent on parsing spec and synthesizing the monitor (a Scala program)
-* the time spent on compiling the synthesized monitor
-* the time spent on verifying trace with compiled monitor
+    X + Y              : Addition of X and Y
+    X - Y              : Subtraction of X from Y
+    X * Y              : Multiplication of X and Y
+    X / Y              : Division of X by Y
+    X % Y              : Modulus (remainder) of X divided by Y
 
-**Generated files**
-The system will generate the following files (none of which need any attention from the user, but may be informative): 
-
-* TraceMonitor.scala : containing the synthesized monitor (a self-sufficient Scala program).
-* ast.dot : file showing the structure of the formula (used for generating BDD    updating code). This can be viewed with GraphViz (http://www.graphviz.org). These two files help illustrate how the algorithm works.
-* dejavu-results : contains numbers of events that violated property if any violations occurred. Mostly used for unit testing purposes.
-
-## The DejaVu Specification Logic
-
-### Grammar
-
-The grammar for the DejaVu temporal logic is as follows.
-
-    <doc> ::= <def> ... <def>
-    <def> ::= <eventdef> | <macrodef> | <propertydef>
-
-    <eventdef> ::= 'pred' <event>,...,<event>
-    <event>    ::= <id> [ '(' <id> ',' ... ',' <id> ')' ]
-
-    <macrodef> ::= 'pred' <id> [ '(' <id> ',' ... ',' <id> ')' ] '=' <form>
-
-    <propertydef> ::= 'prop' <id> ':' <form> ['where' <ruledef> ',' ... ',' <ruledef>]
-
-    <ruledef> ::= <id> ['(' <id> ',' ... ',' <id> ')'] ':=' <form>
-
-    <form> ::= 
-         'true' 
-       | 'false' 
-       | <id> [ '(' <param> ',' ... ',' <param> `)' ]
-       | <form> <binop> <form> 
-       | '[' <form> ',' <form> ')'
-       | <unop> <form>
-       | <id> <oper> (<id> | <const>)
-       | '(' <form> ')'
-       | <quantifier> <id> '.' <form>
-
-    <param>  ::= <id> | <const>
-    <const>  ::= <string> | <integer>
-    <binop>  ::= '->' | '|' | '&' | 'S' [<time>] | Z <timeLE>
-    <unop>   ::= '!' |  '@' | 'P' [<time>] | 'H' [<time>] 
-    <oper>   ::= '<' | '<=' | '=' | '>' | '>='    
-    <quantifier> ::= 'exists' | 'forall' | 'Exists' | 'Forall'
-    <time>   ::= <timeLE> | <timeGT>
-    <timeLE> ::= '[<=' <number> ']'
-    <timeGT> ::= '[>' <number> ']'    
-
-### Event, Macro, and Property Definitions
-
-A specification document ``<doc>``consists of a sequence of definitions. A definition ``<def>``
-can either be an event definition, a macro definition, or a property to be checked.
-
-An event definition introduces those events that the property will refer to. If no events are defined then the events are inferred to be those referred to in the property. It may help to reduce errors in properties to declare the events up front.
-
-A predicate macro definition ``<macrodef>`` introduces a named shorthand for a formula, possibly
-parameterized with variable names (those introduced with quantifiers). For example the following
-macro definition defines a shorthand representing that a file is open:
-
-    pred isOpen(f) = !close(f) S open(f)
-
-Macros can be called in properties. Macros can call other macros, but cannot be recursive. The order of the declaration is of no importance. They can furthermore be introduced after as well as before the properties referring to them.
-
-A property definition ``<propdef>`` introduces a named property, which is a first-order past time temporal formula. 
-
-### Formulas
-
-The different formulas ``<form>`` have the following intuitive meaning:
-
-    true, false     : Boolean truth and falsehood 
-    id(v1,...,vn)   : event or call of predicate macro, where vi can be a constant or variable
-    p -> q          : p implies q
-    p | q           : p or q
-    p & q           : p and q
-    p S q           : p since q (q was true in the past, and since then, including that point in time, p has been true) 
-    p S[<=d] q      : p since q but where q occurred within d time units
-    p S[>d] q       : p since q but where q occurred earlier than d time units
-    p Z[<=d] q      : p since q but where q did not occur at the current time
-    [p,q)           : interval notation equivalent to: !q S p. This form may be easier to read.
-    ! p             : not p
-    @ p             : in previous state p is true
-    P p             : in some previous state p is true
-    P[<=d] p        : in some previous state within d time units p is true
-    P[>d] p         : in some previous state earlier than d time units p is true
-    H p             : in all previous states p is true
-    H[<=d] p        : in all previous states within d time units p is true
-    H[>d] p         : in all previous states earlier than d time units p is true
-    x op k          : x is related to variable or constant k via op. E.g.: x < 10, x <= y, x = y, x >= 10, x > z   
-    // -- quantification over seen values in the past, see (*) below:
-    exists x . p(x) : there exists an x such that seen(x) and p(x) 
-    forall x . p(x) : for all x, if seen(x) then p(x)
-    // -- quantification over the infinite domain of all values:
-    Exists x . p(x) : there exists an x such that p(x) 
-    Forall x . p(x) : for all x p(x)    
-
-    (*) seen(x) holds if x has been observed in the past
-
-### Rules
-
-A new extension of DejaVu is the notion of _rules_, which are part of a property definition. As an example, consider the following property about threads being spawned in an operating system. We want to 
-ensure that when a thread `y` reports some data `d` 
-back to another thread `x`, then thread `y` has been spawned by thread `x` either directly, or transitively 
-via a sequence of spawn events. The events are
-`spawn(x,y)` (thread `x` spawns thread `y`)
-and `report(y,x,d)` (thread `y` reports data `d`
-back to thread `x`). For this we need to compute a transitive closure of spawning relationships, here expressed with the rule `spawning(x,y)`. This property can be stated as follows using the rule `spawned(x,y)` (thread `x` spawned `y`, either directly or indirectly through other spawns):
-
-    prop spawning :
-      Forall x . Forall y . Forall d . report(y,x,d) -> spawned(x,y) 
-      where 
-        spawned(x,y) := 
-            @ spawned(x,y) 
-          | spawn(x,y) 
-          | Exists z . (@spawned(x,z) & spawn(z,y))
-
-The property states that if there is a `report(y,x,d)` event (thread `y` reporting data `d` back to thread `x`), then `spawned(x,y)` must hold, defined as follows: either `spawned(x,y)` held in the previous state, or there is a `spawn(x,y)` in the current state, or, the interesting case: `spawned(x,z)` held in the previous state for some `z`, and  `spawn(z,y)` holds in the current state. This last disjunct forms the transitive closure.
-
-### Time
-
-Timing properties can be expressed using natural numbers as constraints. Examples formulas concerning commands being
-dispatched `dis(m)` and succeeding `suc(m)` are:
-
-    Forall m . suc(m) -> true S[<=3] dis(m) // succeeding command must have been dispatched within 3 time units 
-    Forall m . suc(m) -> true S[>3] dis(m) // dispatch earlier than 3 time units
-    Forall m . dis(m) -> ! (true Z[<=3] dis(m)) // if command dispatched, not dispatched before! within 3
-    Forall m . suc(m) -> P[<=3] dis(m) // succeeding command must have been dispatched within 3 time units 
-    Forall m . suc(m) -> P[>3] dis(m) // dispatch earlier than 3 time units
-    Forall m . suc(m) -> H[<=3] !dis(m) // for a succeeding command no dispatch within 3 time units before
-    Forall m . suc(m) -> H[>3] !dis(m) // no dispatch earlier than 3 time units
-
-## Further Examples Of DejaVu Properties
-
-### Auctions
-
-We illustrate the logic with properties that an auction has to satisfy. The following
-observable events occur during an auction:
-
-* `list(i,r)` : item `i` is listed for auction with the minimal reserve sales price `r`.
-* `bid(i,a)`  : the bidding of `a` dollars on item `i`. 
-* `sell(i)`   : the selling of item `i` to highest bidder. 
-
-An auction system has to satisfy the four properties shown in below
-expressed over these three kinds of events, using a predicate macro ``inAuction(x)`` to
-express when an item ``x`` is in active auction (when it has been listed and not yet sold):
-
-    pred inAuction(x) = exists r . @ [list(x,r),sell(x))
-
-    prop incr : 
-      Forall i . Forall a1 . Forall a2 . @ P bid(i,a1) & bid(i,a2) -> a1 < a2
-
-    prop sell : 
-      Forall i . Forall r . P list(i,r) & sell(i) ->  exists a . P bid(i,a) & a >= r
-  
-    prop open : 
-      Forall i . Forall a . (bid(i,a) | sell(i)) -> inAuction(i)
+    X == Y             : Equality check between X and Y
+    X != Y             : Inequality check between X and Y
+    X > Y              : Greater than check of X compared to Y
+    X < Y              : Less than check of X compared to Y
+    X >= Y             : Greater than or equal to check of X compared to Y
+    X <= Y             : Less than or equal to check of X compared to Y
     
-    prop once : 
-      Forall i . Forall r . list(i,r) -> ! exists s . @ P list(i,s)
-    
-Property `incr` states that bidding must be increasing.
+    Z = X              : Simple assignment of X to Z
+    Z += X             : Add X to Z and assign the result to Z
+    Z -= X             : Subtract X from Z and assign the result to Z
+    Z *= X             : Multiply Z by X and assign the result to Z
+    Z /= X             : Divide Z by X and assign the result to Z
+    Z %= X             : Take modulus of Z by X and assign the result to Z
 
-Property `sell` states that when an item is sold, there must exist a bidding
-on that item which is bigger than or equal to the reserve price.
+    X && Y             : Logical AND between X and Y
+    X || Y             : Logical OR between X and Y
+    !X                 : Logical NOT of X
+    X ^ Y              : Logical XOR between X and Y
 
-Property `open` states that bidding on and selling of an item are
-only allowed if the item has been listed and not yet sold.
+    X.in([a, b, c])    : Checks if X exists in the list [a, b, c]
+    X.notin([a, b, c]) : Checks if X does not exist in the list [a, b, c]
+    abs(X)             : Absolute value of X
 
-Finally, Property `once` states that an item can only be listed
-once.
+    X -> Y             : Logical implication. If X then Y
+    X <-> Y            : Logical biconditional. True only if X and Y have the same boolean value
+    X ^^ Y             : Raises X to the power of Y
 
-### Locks in a multithreaded system
+## Examples Of DejaVu Pre-Evaluation Properties
 
-We observe the following events:
+### Ex1
+//TODO: Gives an example....
 
-* `acq(t,l)`   : thread `t` acquires lock `l`. 
-* `rel(t,l)`   : thread `t` releases lock `l`. 
-* `read(t,x)`  : thread `t` reads variable `x`.
-* `write(t,x)` : thread `t` writes variable `x`.
-* `sleep(t)`   : thread `t` goes to sleep.
 
-#### Basic properties
+### Ex2
+//TODO: Gives an example....
 
-The first set of properties are stated as a conjucntion of three sub-properties:
 
-* A thread going to sleep should not hold any locks.
-* At most one thread can acquire a lock at a time.
-* A thread can only release a lock it has acquired.
+## Enhancing DejaVu for 2 Phases Evaluation
 
-This is formalized as follows:
-
-    prop locksBasic :
-      Forall t . Forall l .
-        (
-          (sleep(t) -> ![acq(t,l),rel(t,l))) &
-          (acq(t,l) -> ! exists s . @ [acq(s,l),rel(s,l))) &
-          (rel(t,l) -> @ [acq(t,l),rel(t,l)))
-        )
-
-#### No deadlocks
-
-Locks should not be acquired in a cyclic manner amongst threads (dining philosopher problem). That is, if a thread `t1` takes a lock `l1` and then a lock `l2` (without having released `l1`), then at no time should another thread `t2` take the locks in reverse order. Obeying this principle will prevent cyclic deadlocks.
-
-This is formalized as follows:
-
-    prop locksDeadlocks :
-      Forall t1 . Forall t2 . Forall l1 . Forall l2 .
-        (@ [acq(t1,l1),rel(t1,l1)) & acq(t1,l2))
-        ->
-        (! @ P (@ [acq(t2,l2),rel(t2,l2)) & acq(t2,l1)))
-
-#### No dataraces
-
-If two threads access (read or write) the same shared variable, and one of the threads write to the variable, there must exist a lock, which both threads hold whenever they access the variable.
-
-This is formalized as follows:
-
-    prop locksDataraces :
-      Forall t1 . Forall t2 . Forall x .
-        (
-          (P (read(t1,x) | write(t1,x)))
-          &
-          (P write(t2,x))
-        )
-        ->
-        Exists l .
-          (
-            H ((read(t1,x) | write(t1,x)) -> [acq(t1,l),rel(t1,l)))
-            &
-            H ((read(t2,x) | write(t2,x)) -> [acq(t2,l),rel(t2,l)))
-          )
-
-### Calling Earth
-
-This property concerns a radio on board a spacecraft, which communicates over different channels (quantified over in the formula), which each can be turned on and off with a `toggle(x)` - they are all initially off. Telemetry can only be sent to ground over a channel `x`, with the `telem(x)` event, when radio channel `x` is toggled on. The property cannot be expressed in pure past time LTL, that is, without the use of rules.
-
-The property is formalized as follows:
-
-    prop telemetry1: 
-      Forall x . closed(x) -> !telem(x) 
-      where closed(x) := toggle(x) <-> @!closed(x) 
-
-The same property can alternatively be expressed using two rules, more closely reflecting how we would model this using a state machine with two states for each channel `x`: `closed(x)` and `open(x)`: 
-
-    prop telemetry2: 
-      Forall x . closed(x) -> !telem(x) 
-        where
-        closed(x) := 
-            (!@true & !toggle(x)) 
-          | (@closed(x) & !toggle(x)) 
-          | (@open(x) & toggle(x)),
-        open(x) := 
-            (@open(x) & !toggle(x)) 
-          | (@closed(x) & toggle(x))
-
-The rule `closed(x)` is defined as a disjunction between three alternatives. The first alternative states that this predicate is true if we are in the initial state (the only state where `@true` is false), and there is no `toggle(x)` event. The next alternative states that `closed(x)` was true in the previous state and there is no `toggle(x)` event now. The third alternative states that we in the previous state were in the `open(x)` state and we observe a `toggle(x)` event. Similarly for the `open(x)` rule.
-
-## Enhancing DejaVu for Advanced Prediction
-
-We have extended DejaVu to include the capability of predict the next `k` steps using two distinct 
-prediction modes. The fundamental functionality of DejaVu remains intact, with no alterations or 
-enhancements. To facilitate prediction requests, we had to adapt the way DejaVu acquires and processes 
-its command-line arguments, as outlined [above](#running-dejavu).
-
-Our proposed RV prediction method, termed as ``iPRV``, is predicated on computing an equivalence 
-relation on the observed data values. The equivalence classes are independently calculated for each 
-variable. Subsequently, we select a representative for the next event from each equivalence class, 
-thereby making the following event options a minimum requirement. 
-Moreover, for values that have not yet appeared in the trace and belong to the same equivalence class, 
-a single representative suffices (after using that representative in the current event, 
-a fresh representative is needed for the unseen values, and so on).
-
-### Prediction Modes
-
-We provide two unique prediction modes:
-
-* ``brute`` - This mode employs a simple brute force strategy, exploring all possible options 
-without any optimizations for speed or efficiency. It is primarily included for testing, 
-experimentation, and comparative purposes, enabling users to contrast it with our 
-``iPRV`` (Isomorphic Predictive RV) prediction method.
-
-* ``iPRV`` - This mode forms the crux of our research. The intelligent prediction method capitalizes 
-on the fact that some values are equivalent within a specific time frame, thereby diminishing the 
-number of potential predictions. In certain scenarios, such as after evaluating a lengthy trace 
-file comprising various events, the reduction is so significant that the ``iPRV`` approach 
-facilitates successful prediction, while the ``brute`` method fails due to excessive memory usage 
-or for reaching to a time limitation.
-
-### Limitations of iPRV-DejaVu
-* **Single Event Prediction**: The prediction process is limited to generating only one event per time point.
-* **Operator Constraints**: No tests have been conducted for specifications containing operators, such as x < 10, x <= y, or those referring to time units. The prediction procedure currently overlooks these operators.
-* **Specification Support**: The tool is designed to support one specification per monitor.
-
+We have extended DejaVu to include the capability of 2 phase evaluation..... 
 
 
 ## Modifying the DejaVu Runtime Verification Tool
 
-This part provides a detailed guide on how to modify the DejaVu Runtime Verification (RV) tool. The primary functions of DejaVu are found in three main source files: [Verify.scala](https://github.com/moraneus/iPRV-DejaVu/blob/master/src/main/scala/dejavu/Verify.scala), [Monitor.scala](https://github.com/moraneus/iPRV-DejaVu/blob/master/src/main/scala/dejavu/Monitor.scala), and [Ast.scala](https://github.com/moraneus/iPRV-DejaVu/blob/master/src/main/scala/dejavu/Ast.scala).
+This part provides a brief guide on how to modify the DejaVu Runtime Verification (RV) tool. 
+The primary functions of DejaVu are found in three main source files: [Verify.scala](https://github.com/moraneus/TP-DejaVu/blob/master/src/main/scala/dejavu/Verify.scala), [Monitor.scala](https://github.com/moraneus/TP-DejaVu/blob/master/src/main/scala/dejavu/Monitor.scala), and [Ast.scala](https://github.com/moraneus/TP-DejaVu/blob/master/src/main/scala/dejavu/Ast.scala).
 
 1. The `Verify.scala` file manages the creation process of the `TraceMonitor.scala` file. 
 It generates this monitor based on the user-provided specifications. Additionally, 
@@ -544,7 +255,7 @@ This often involves altering the existing code templates or adding new ones as p
 
 ### Build a New DejaVu.jar Artifact in IntelliJ
 
-After making modifications to the DejaVu Runtime Verification (RV) tool, you may want to create a new `dejavu.jar` artifact. Here are the steps to do this using IntelliJ:
+After making modifications to the DejaVu Runtime Verification (RV) tool, you may want to create a new `dejavu.jar` artifact. Here are the steps to take this using IntelliJ:
 
 #### Pre-requisites
 
@@ -571,22 +282,13 @@ The `dejavu.jar` file will be created in the output directory you specified in t
 DejaVu is based on an older version of Scala (2.11.12). If you're using a newer version of Scala, you might encounter compatibility issues. Therefore, it's crucial to ensure you have Scala 2.11.x installed and selected as the SDK in IntelliJ before you proceed with the artifact creation.
 
 
-## Experiments for publications
-
-- Experiments for FMSD journal paper 2018 "_First-Order Temporal Logic Monitoring with BDDs_": [experiments](https://github.com/havelund/dejavu/tree/master/src/test/scala/tests_fmsd) 
-
-- Experiments for ATVA 2020 paper "_First-Order Timed Runtime Verification using BDDs_": [experiments](https://github.com/havelund/dejavu/tree/master/src/test/scala/tests_atva2020)  
-
-- Experiments for STTT journal 2020 paper "_An Extension of LTL with Rules and its Application to Runtime Verification_":
-  * [Wolper's property](https://github.com/havelund/dejavu/tree/master/src/test/scala/tests/test39_formalise_wolper)
-  * [Wolper's property as state machine](https://github.com/havelund/dejavu/tree/master/src/test/scala/tests/test41_formalise_statemachine)
-  * [task spawning](https://github.com/havelund/dejavu/tree/master/src/test/scala/tests/test42_formalise_taskspawning)
-
 ## Contributors - For Original DejaVu
 * [Klaus Havelund](http://www.havelund.com), Jet Propulsion Laboratory/NASA, USA
 * [Doron Peled](http://u.cs.biu.ac.il/~doronp), Bar Ilan University, Israel
 * [Dogan Ulus](https://www.linkedin.com/in/doganulus), Boston University, USA
 
-## Contributors - For iPRV DejaVu
+## Contributors - For TP-DejaVu
 * [Doron Peled](http://u.cs.biu.ac.il/~doronp), Bar Ilan University, Israel
 * [Moran Omer](https://github.com/moraneus), Bar Ilan University, Israel
+* Panagiotis Katsaros
+* Tasos Temperekidis
