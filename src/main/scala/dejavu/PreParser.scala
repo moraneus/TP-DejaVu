@@ -7,6 +7,31 @@ import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
 
 
+
+
+
+object FetchingHelper {
+
+  /**
+   * Extracts the name (or value) from a TypedIdentifier.
+   *
+   * This function pattern matches against the various subtypes of TypedIdentifier
+   * and retrieves the contained name or value.
+   *
+   * @param ident A TypedIdentifier instance from which the name is to be extracted.
+   * @return The name or value contained within the given TypedIdentifier.
+   * @throws IllegalArgumentException if the provided TypedIdentifier does not match any known subtypes.
+   */
+  def fetchNameFromIdent(ident: TypedIdentifier): String = ident match {
+    case _IdentInt(name) => name
+    case _IdentFloat(name) => name
+    case _IdentDouble(name) => name
+    case _IdentStr(name) => name
+    case _IdentBool(name) => name
+    case _ => throw new IllegalArgumentException("Unknown identifier type")
+  }
+}
+
 /**
  * Represents the base trait for property definitions.
  */
@@ -16,7 +41,7 @@ sealed trait PProperty
  * Represents the Initiate block, defining initial variable types.
  * @param variables List of (name, type) pairs and their optional default values.
  */
-case class Initiate(variables: List[(String, String, Option[String])]) extends PProperty
+case class Initiate(vars: List[(TypedIdentifier, String, Option[String])])
 
 /**
  * Represents an event operation block, defining event behavior.
@@ -26,7 +51,7 @@ case class Initiate(variables: List[(String, String, Option[String])]) extends P
  */
 case class EventOperation(
                            name: String,
-                           params: List[(String, String)],
+                           params: List[(TypedIdentifier, String)],
                            assignments: List[Assignment]
                          ) extends PProperty
 
@@ -44,6 +69,12 @@ case class Assignment(variable: String, variableType: String, expression: String
 
 case class ITEFunction(boolExpr: BooleanExpression, function1: FunctionCall, function2: FunctionCall)
 
+sealed trait TypedIdentifier
+case class _IdentInt(name: String) extends TypedIdentifier
+case class _IdentDouble(name: String) extends TypedIdentifier
+case class _IdentFloat(name: String) extends TypedIdentifier
+case class _IdentStr(name: String) extends TypedIdentifier
+case class _IdentBool(name: String) extends TypedIdentifier
 sealed trait BooleanExpression
 case object _TrueExpr extends BooleanExpression
 case object _FalseExpr extends BooleanExpression
@@ -67,21 +98,19 @@ case class FunctionCall(name: String, params: List[String])
 class PrePropertyParser extends JavaTokenParsers {
   override val whiteSpace: Regex = "[ \t\r\f\n]+".r
 
-  /** Parse the DSL ensuring unwanted patterns are absent. */
-  def guardedParsedProperty: Parser[PreProperty] =
-    not(allUnwantedPatterns) ~> parsedProperty
-
-  /** Parses unwanted patterns in the DSL. */
-  private def allUnwantedPatterns: Parser[String] =
-    ("@@" | "^^^" | "[]") ^^ (_ => failure("Pattern not allowed.").toString)
-
   /** Parses variable's type. */
   private def varType: Parser[String] =
     "int" | "double" | "float" | "string" | "str" | "bool"
 
   /** Parses a variable and its type. */
-  private def variable: Parser[(String, String)] =
-    ident ~ (":" ~> varType) ^^ { case id ~ t => (id, t) }
+  private def variable: Parser[(TypedIdentifier, String)] =
+    ident ~ (":" ~> varType) ^^ {
+      case id ~ "int" => (_IdentInt(id), "int")
+      case id ~ "float" => (_IdentFloat(id), "float")
+      case id ~ "double" => (_IdentDouble(id), "double")
+      case id ~ "str" => (_IdentStr(id), "str")
+      case id ~ "bool" => (_IdentBool(id), "bool")
+    }
 
   /** Boolean expressions are fundamental constructs in many computational contexts,
    * especially in conditional statements and propositional logic. Here we provide
@@ -148,13 +177,34 @@ class PrePropertyParser extends JavaTokenParsers {
 
   /** Parses the "initiate" block. */
   private def initiate: Parser[Initiate] =
-    ("initiate" | "Initiate" | "INITIATE") ~> rep(variableWithDefaultValue) ^^ Initiate
-
-  /** Parses a variable with its type and optional default value. */
-  private def variableWithDefaultValue: Parser[(String, String, Option[String])] =
-    ident ~ (":" ~> varType) ~ opt(":=" ~> restOfLine) ^^ {
-      case id ~ t ~ maybeValue => (id, t, maybeValue)
+    ("initiate" | "Initiate" | "INITIATE") ~> rep(initiateBlockVariable) ^^ {
+      vars =>
+        val uniqueIds = vars.map(variable => FetchingHelper.fetchNameFromIdent(variable._1)).toSet
+        if (uniqueIds.size != vars.size) {
+          throw new ParseException("Duplicate variable identifier detected in Initiate Block", -1)
+        }
+        Initiate(vars)
     }
+
+  private def initiateBlockVariable: Parser[(TypedIdentifier, String, Option[String])] =
+    ident ~ (":" ~> varType) ~ opt(":=" ~> restOfLine) ^^ {
+      case id ~ "int" ~ Some(value) if value.matches("""-?\d+""") => (_IdentInt(id), "int", Some(value))
+      case id ~ "int" ~ None => (_IdentInt(id), "int", None)
+
+      case id ~ "double" ~ Some(value) if value.matches("""-?\d+(\.\d*)?""") => (_IdentDouble(id), "double", Some(value))
+      case id ~ "double" ~ None => (_IdentDouble(id), "double", None)
+
+      case id ~ "float" ~ Some(value) if value.matches("""-?\d+(\.\d*)?(f)?""") => (_IdentFloat(id), "float", Some(value))
+      case id ~ "float" ~ None => (_IdentFloat(id), "float", None)
+
+      case id ~ "str" ~ maybeValue => (_IdentStr(id), "str", maybeValue)
+
+      case id ~ "bool" ~ Some(value) if value == "true" || value == "false" => (_IdentBool(id), "bool", Some(value))
+      case id ~ "bool" ~ None => (_IdentBool(id), "bool", None)
+
+      case _ => throw new ParseException(s"Invalid default value for variable (Initiate Block)", -1)
+    }
+
 
   /** Parses until end of line. */
   private def restOfLine: Parser[String] = """.*""".r
@@ -522,7 +572,7 @@ object CodeGenerator {
         initVariables(init, eventParams, sb)
 
         // Extract used variable names and types
-        val declaredVariables = init.variables.map(_._1).toSet
+        val declaredVariables = init.vars.map(variable => FetchingHelper.fetchNameFromIdent(variable._1)).toSet
         val assignedVariables = extractAssignedVariables(events, declaredVariables)
         val prevVariablesFromEvents = extractPrevVariablesFromEvents(events)
         validateInitiateVariables(prevVariablesFromEvents, declaredVariables)
@@ -534,7 +584,7 @@ object CodeGenerator {
 
         sb.append(s"\n\n")
 
-        generateEventAndOutputFunctions(events, outputs, sb, eventParams)
+        generateEventAndOutputFunctions(events, outputs, sb)
         generateEvaluateFunction(events, sb, declaredVariables)
 
         sb.append("}\n")
@@ -551,19 +601,21 @@ object CodeGenerator {
    * @param eventParams A map of event names to their parameter strings.
    * @param sb          The StringBuilder to which the initialized variables will be appended.
    */
-  private def initVariables(init: Initiate, eventParams: Map[String, String], sb: StringBuilder): Unit = {
-    init.variables.foreach {
-      case (name, dataType, maybeValue) =>
+  private def initVariables(init: Initiate, eventParams: Map[TypedIdentifier, String], sb: StringBuilder): Unit = {
+    init.vars.foreach {
+      case (typedVar, dataType, maybeValue) =>
+        val varName = FetchingHelper.fetchNameFromIdent(typedVar)
         val scalaType = toScalaType(dataType)
-        sb.append(s"\tprivate var $name: $scalaType = ${maybeValue.getOrElse(defaultValue(scalaType))}\n")
-        sb.append(s"\tprivate var prev_$name: $scalaType = ${maybeValue.getOrElse(defaultValue(scalaType))}\n")
+        sb.append(s"\tprivate var ${varName}: $scalaType = ${maybeValue.getOrElse(defaultValue(scalaType))}\n")
+        sb.append(s"\tprivate var prev_$varName: $scalaType = ${maybeValue.getOrElse(defaultValue(scalaType))}\n")
     }
 
     eventParams.foreach {
-      case (name, dataType) =>
-        if (!init.variables.map(_._1).contains(name)) {
+      case (typedVar, dataType) =>
+        val varName = FetchingHelper.fetchNameFromIdent(typedVar)
+        if (!init.vars.map(_._1).contains(varName)) {
           val scalaType = toScalaType(dataType)
-          sb.append(s"\tprivate var $name: $scalaType = ${defaultValue(scalaType)}\n")
+          sb.append(s"\tprivate var $varName: $scalaType = ${defaultValue(scalaType)}\n")
         }
     }
   }
@@ -633,7 +685,7 @@ object CodeGenerator {
    * @param sb           The StringBuilder to which the generated code will be appended.
    * @param eventParams  A map of event names to their parameter strings.
    */
-  private def generateEventAndOutputFunctions(events: List[EventOperation], outputs: List[Output], sb: StringBuilder, eventParams: Map[String, String]): Unit = {
+  private def generateEventAndOutputFunctions(events: List[EventOperation], outputs: List[Output], sb: StringBuilder): Unit = {
 
     // Create a mapping between event names and their corresponding outputs.
     val eventNameToOutputMap = events.zip(outputs).map {
@@ -645,7 +697,7 @@ object CodeGenerator {
       val EventOperation(name, params, assignments) = event
 
       // Generate function definition signature for each event.
-      val formattedParams = params.map { case (paramName, typeStr) => s"$paramName: ${toScalaType(typeStr)}" }.mkString(", ")
+      val formattedParams = params.map { case (paramName, typeStr) => s"${FetchingHelper.fetchNameFromIdent(paramName)}: ${toScalaType(typeStr)}" }.mkString(", ")
       sb.append(s"\tprivate def on_$name($formattedParams): Unit = {\n")
 
       // Process assignments inside each event.
@@ -740,13 +792,13 @@ object CodeGenerator {
         eventParams.zipWithIndex.foreach {
           case ((paramName, typeStr), index) =>
             sb.append(s"""\t\t\t\tTry(params($index).toString.trim.to${toScalaType(typeStr)}) match {\n""")
-            sb.append(s"""\t\t\t\t\tcase Success(value) => this.$paramName = value\n""")
+            sb.append(s"""\t\t\t\t\tcase Success(value) => this.${FetchingHelper.fetchNameFromIdent(paramName)} = value\n""")
             sb.append(s"""\t\t\t\t\tcase Failure(e) => println(s"Failed to convert to ${toScalaType(typeStr)}: """)
             sb.append("""$e")""")
             sb.append(s"""\n\t\t\t\t}\n""")
         }
 
-        val paramNamesSeq = eventParams.map(_._1).mkString(", ")
+        val paramNamesSeq = eventParams.map(variable => FetchingHelper.fetchNameFromIdent(variable._1)).toSet.mkString(", ")
         sb.append(s"\t\t\t\ton_$name($paramNamesSeq)\n")
         sb.append(s"\t\t\t\tevent = ${name}_output()\n") // This line was changed to remove the extra event name prefix
         sb.append("\t\t\t}\n")
@@ -812,85 +864,6 @@ object PPropertyValidation {
 
     println("Event block validation passed.")
   }
-
-  /**
-   * Validates the initialization block of the provided DSL input.
-   *
-   * The function verifies that variables are correctly initialized based on their specified type.
-   * It supports the following types: int, bool, double, float, string/str.
-   * The validation stops when encountering a line that starts with "on" (case insensitive).
-   *
-   * @param lines A list of strings, each representing a line from the input DSL.
-   * @throws IllegalArgumentException if any line has an incorrect format or an invalid initialization value.
-   */
-  def validateInitiateBlock(lines: List[String]): Unit = {
-    for (line <- lines) {
-
-      // If line starts with "on" (in any case), stop the validation
-      if (line.trim.toLowerCase.startsWith("on")) {
-        println("Initiate block validation passed.")
-        return
-      }
-
-      val parts = line.split(":=").map(_.trim)
-
-      // Skip empty lines or the line starts with "initiate"
-      if (line.trim.isEmpty | line.trim.toLowerCase.startsWith("initiate")) { }
-      else if (parts.length == 1 | line == "") { }
-
-      else if (parts.length == 2 | line == "") {
-        val typeAndName = parts(0).split(":").map(_.trim)
-        val value = parts(1)
-
-        typeAndName(1) match {
-          case "int" =>
-            try {
-              value.toInt
-            } catch {
-              case _: NumberFormatException =>
-                throw new IllegalArgumentException(s"Expected an integer value but found" +
-                  s" '$value' for variable '${typeAndName(0)}'.")
-            }
-
-          case "bool" =>
-            if (value != "true" && value != "false") {
-              throw new IllegalArgumentException(s"Expected a boolean value but found " +
-                s"'$value' for variable '${typeAndName(0)}'.")
-            }
-
-          case "double" =>
-            try {
-              value.toDouble
-            } catch {
-              case _: NumberFormatException =>
-                throw new IllegalArgumentException(s"Expected a double value but found " +
-                  s"'$value' for variable '${typeAndName(0)}'.")
-            }
-
-          case "float" =>
-            try {
-              value.toFloat
-            } catch {
-              case _: NumberFormatException =>
-                throw new IllegalArgumentException(s"Expected a float value but found " +
-                  s"'$value' for variable '${typeAndName(0)}'.")
-            }
-
-          case "str" | "string" =>
-            if (!value.startsWith("\"") || !value.endsWith("\"")) {
-              throw new IllegalArgumentException(s"Expected a string value but found " +
-                s"'$value' for variable '${typeAndName(0)}'. Strings should be enclosed in double quotes.")
-            }
-
-          case _ =>
-            throw new IllegalArgumentException(s"Unknown type '${typeAndName(1)}' for variable " +
-              s"'${typeAndName(0)}' (Supported type: int, double, float, double, str).")
-        }
-      } else {
-        throw new IllegalArgumentException(s"Invalid line format: $line")
-      }
-    }
-  }
 }
 
 
@@ -922,15 +895,14 @@ object PreParser {
     //  def parse(filename: String): Unit = {
     val preInputProperty = readerFromFile(filename)
 
-    // Do some validations
-    if (preInputProperty.isEmpty) throw new IllegalArgumentException(s"Pre-Property is empty...")
-    PPropertyValidation.validateInitiateBlock(preInputProperty.split("\n").toList)
-    PPropertyValidation.validateEventBlocks(preInputProperty.split("\n").toList)
+//    // Do some validations
+//    if (preInputProperty.isEmpty) throw new IllegalArgumentException(s"Pre-Property is empty...")
+//    PPropertyValidation.validateEventBlocks(preInputProperty.split("\n").toList)
 
 
     var generatedCode: String = ""
 
-    parser.parseAll(parser.guardedParsedProperty, preInputProperty) match {
+    parser.parseAll(parser.parsedProperty, preInputProperty) match {
       case parser.Success(parsed, _) =>
         println("Pre-Property Parsing succeeded.")
         generatedCode = CodeGenerator.generate(parsed)
