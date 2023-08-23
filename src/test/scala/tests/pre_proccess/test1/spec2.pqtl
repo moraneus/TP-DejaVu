@@ -1,0 +1,9 @@
+initiate
+    temp: float
+
+on StartMeasure(Car: str, temp: float)
+output test(Car)
+
+on EndMeasure(Car: str, temp: float)
+    Warming: bool := (temp - @temp > 5)
+output increase(Car, Warming)

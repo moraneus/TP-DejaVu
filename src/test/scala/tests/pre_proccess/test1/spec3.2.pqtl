@@ -1,0 +1,3 @@
+on report (carA: str, carB: str, distance: float)
+    SafeDistance: bool := distance < 10 && distance > 5
+output distance(carA, carB, SafeDistance)

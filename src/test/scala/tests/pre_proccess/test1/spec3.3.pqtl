@@ -1,0 +1,11 @@
+Initiate
+    Distance: double := -1
+
+on startMeasure (carA: str, carB: str)
+    Distance: double := -1
+output start (carA, carB)
+
+on location (carA: str, carB: str, xA: float, yA: float, xB: float, yB: float)
+    Distance: double := (((xA - xB) ^^ 2) + ((yA - yB) ^^ 2)) ^^ 0.5
+    HighlyDecreasingDistance: bool := (Distance - @Distance) < -5
+output distance(carA, carB, HighlyDecreasingDistance)
