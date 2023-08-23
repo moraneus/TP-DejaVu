@@ -1,0 +1,24 @@
+Initiate
+    LErr: int := 0
+    SysErr: int := 0
+
+on entry(ru: str)
+output entry(ru)
+
+on mk_prediction(ru: str, x: int, y: int, z: int)
+    LErr: int := 0
+    NewPred: bool := true
+output predicted(ru)
+
+on obstacle(ru: str, x: int, y: int, z: int)
+    LErr: int := ite(NewPred == true, abs(x − @x) + abs(y − @y) + abs(z − @z), 0)
+    SysErr: int := SysErr + LErr
+    error: bool := (LErr > Epo) || (SysErr > Emax)
+    NewPred: bool := false
+output valid(ru, error, LErr)
+
+on exit(ru: str, l_err: int)
+    SysErr: int := SysErr − l_err
+output exit(ru)
+
+

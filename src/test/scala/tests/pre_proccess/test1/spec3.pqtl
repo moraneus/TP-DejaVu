@@ -1,0 +1,4 @@
+
+on set(ac: str, temp: float)
+    InBound: bool := (temp >= 17 && temp <= 26)
+output set(ac, temp, InBound)

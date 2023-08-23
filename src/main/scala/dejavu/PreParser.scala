@@ -112,10 +112,6 @@ class PrePropertyParser extends JavaTokenParsers {
       case id ~ "bool" => (_IdentBool(id), "bool")
     }
 
-  /** Boolean expressions are fundamental constructs in many computational contexts,
-   * especially in conditional statements and propositional logic. Here we provide
-   * parsers for various boolean operators and expressions.
-   */
 
   /** Main parser for all boolean expressions, starting with the highest precedence, OR. */
   private def booleanExpression: Parser[BooleanExpression] = orExpr
@@ -197,14 +193,14 @@ class PrePropertyParser extends JavaTokenParsers {
       case id ~ "float" ~ Some(value) if value.matches("""-?\d+(\.\d*)?(f)?""") => (_IdentFloat(id), "float", Some(value))
       case id ~ "float" ~ None => (_IdentFloat(id), "float", None)
 
-      case id ~ "str" ~ maybeValue => (_IdentStr(id), "str", maybeValue)
+      case id ~ "str" ~ Some(value) if value.startsWith("\"") && value.endsWith("\"") => (_IdentStr(id), "str", Some(value))
+      case id ~ "str" ~ None => (_IdentStr(id), "str", None)
 
       case id ~ "bool" ~ Some(value) if value == "true" || value == "false" => (_IdentBool(id), "bool", Some(value))
       case id ~ "bool" ~ None => (_IdentBool(id), "bool", None)
 
-      case _ => throw new ParseException(s"Invalid default value for variable (Initiate Block)", -1)
+      case _ => throw new ParseException(s"Invalid value assigment for variable (Initiate Block)", -1)
     }
-
 
   /** Parses until end of line. */
   private def restOfLine: Parser[String] = """.*""".r
@@ -212,13 +208,16 @@ class PrePropertyParser extends JavaTokenParsers {
   /** Parses an assignment statement. */
   private def assignment: Parser[Assignment] =
     ident ~ (":" ~> varType) ~ (":=" ~> restOfLine) ^^ {
-      case variable ~ varType ~ expression => Assignment(variable, varType, expression)
+      case variable ~ varType ~ expr =>
+        Assignment(variable, varType, expr.toString)
     }
 
   /** Parses the main event operation block. */
+
   private def eventOperation: Parser[EventOperation] =
     ("on" | "On" | "ON") ~> ident ~ ("(" ~> repsep(variable, ",") <~ ")") ~ rep(assignment) ^^ {
-      case name ~ params ~ assignments => EventOperation(name, params, assignments)
+      case name ~ params ~ assignments =>
+        EventOperation(name, params, assignments)
     }
 
   /** Parses function call parameters. */
@@ -245,12 +244,19 @@ class PrePropertyParser extends JavaTokenParsers {
       case ite: ITEFunction => ITEOutput(ite)
     }
 
+  /** Parses a combined event operation block and ensures both eventOperation and output are present. */
+  private def combinedEvent: Parser[(EventOperation, Output)] =
+    eventOperation ~ output ^^ {
+      case operation ~ out => (operation, out)
+    } |
+      failure("Missing 'on' or 'output' line in event block.")
+
   /** Main parser function. */
   def parsedProperty: Parser[PreProperty] =
-    opt(initiate) ~ rep(eventOperation | output) ^^ {
+    opt(initiate) ~ rep(combinedEvent) ^^ {
       case maybeInit ~ blocks =>
-        val events = blocks.collect { case e: EventOperation => e }
-        val outs = blocks.collect { case o: Output => o }
+        val events = blocks.map(_._1)
+        val outs = blocks.map(_._2)
         PreProperty(maybeInit.getOrElse(Initiate(Nil)), events, outs)
     }
 }
@@ -562,20 +568,14 @@ object CodeGenerator {
     property match {
       case PreProperty(init, events, outputs) =>
 
-        // Validate the number of events matches the number of outputs
-        if (events.length != outputs.length) {
-          throw new IllegalStateException("Number of events does not match number of outputs.")
-        }
-
         // Extract and initialize event parameters
         val eventParams = events.flatMap(_.params).distinct.toMap
-        initVariables(init, eventParams, sb)
+        val prevEventParams = extractPrevVariablesFromEvents(events)
+        initVariables(init, eventParams, prevEventParams, sb)
 
         // Extract used variable names and types
         val declaredVariables = init.vars.map(variable => FetchingHelper.fetchNameFromIdent(variable._1)).toSet
         val assignedVariables = extractAssignedVariables(events, declaredVariables)
-        val prevVariablesFromEvents = extractPrevVariablesFromEvents(events)
-        validateInitiateVariables(prevVariablesFromEvents, declaredVariables)
 
         val assignedVariableTypes = events.flatMap(_.assignments).map(a => a.variable -> a.variableType).toMap
 
@@ -597,28 +597,49 @@ object CodeGenerator {
    * to their given values, or to a default value for their type if no value is provided.
    * Initialized variables are added to the provided StringBuilder.
    *
-   * @param init        The `Initiate` object containing variable information.
-   * @param eventParams A map of event names to their parameter strings.
-   * @param sb          The StringBuilder to which the initialized variables will be appended.
+   * @param init            The `Initiate` object containing variable information.
+   * @param eventParams     A map of event names to their parameter strings.
+   * @param prevEventParams A set of variable names from previous events.
+   * @param sb              The StringBuilder to which the initialized variables will be appended.
    */
-  private def initVariables(init: Initiate, eventParams: Map[TypedIdentifier, String], sb: StringBuilder): Unit = {
+  private def initVariables(init: Initiate, eventParams: Map[TypedIdentifier, String], prevEventParams: Set[String], sb: StringBuilder): Unit = {
+    // To keep track of initialized variables
+    val initializedVariables = scala.collection.mutable.Set[String]()
+
     init.vars.foreach {
       case (typedVar, dataType, maybeValue) =>
         val varName = FetchingHelper.fetchNameFromIdent(typedVar)
         val scalaType = toScalaType(dataType)
+
+        // Append to the StringBuilder
         sb.append(s"\tprivate var ${varName}: $scalaType = ${maybeValue.getOrElse(defaultValue(scalaType))}\n")
         sb.append(s"\tprivate var prev_$varName: $scalaType = ${maybeValue.getOrElse(defaultValue(scalaType))}\n")
+
+        // Add the varName to the set of initialized variables
+        initializedVariables += varName
     }
 
     eventParams.foreach {
       case (typedVar, dataType) =>
         val varName = FetchingHelper.fetchNameFromIdent(typedVar)
-        if (!init.vars.map(_._1).contains(varName)) {
+
+        // Only initialize if the variable hasn't been initialized already
+        if (!initializedVariables.contains(varName)) {
           val scalaType = toScalaType(dataType)
           sb.append(s"\tprivate var $varName: $scalaType = ${defaultValue(scalaType)}\n")
         }
     }
+
+    // Handling for prevEventParams
+    prevEventParams.foreach { prevVarName =>
+      if (!initializedVariables.contains(prevVarName) &&
+        eventParams.exists(pair => FetchingHelper.fetchNameFromIdent(pair._1) == prevVarName)) {
+        val scalaType = toScalaType(eventParams.find(pair => FetchingHelper.fetchNameFromIdent(pair._1) == prevVarName).get._2)
+        sb.append(s"\tprivate var prev_$prevVarName: $scalaType = ${defaultValue(scalaType)}\n")
+      }
+    }
   }
+
 
   /**
    * Extracts names of variables that are assigned values within the provided list of events.
@@ -646,19 +667,16 @@ object CodeGenerator {
   }
 
   /**
-   * Validates that all variables referenced with a preceding '@' in events have been declared.
+   * Returns a set of variables referenced with a preceding '@' in events that have not been declared.
    *
    * @param prevVariablesFromEvents A set of variables names that have been referenced with '@' in events.
    * @param declaredVariables      A set of variable names that have been declared.
-   * @throws IllegalStateException If any of the '@' referenced variables have not been declared.
+   * @return A set of variable names referenced with '@' in events but not declared.
    */
-  private def validateInitiateVariables(prevVariablesFromEvents: Set[String], declaredVariables: Set[String]): Unit = {
-    prevVariablesFromEvents.foreach { variable =>
-      if (!declaredVariables.contains(variable)) {
-        throw new IllegalStateException(s"@$variable was not initialized in the initiate block.")
-      }
-    }
+  private def uninitializedEventVariables(prevVariablesFromEvents: Set[String], declaredVariables: Set[String]): Set[String] = {
+    prevVariablesFromEvents.diff(declaredVariables)
   }
+
 
   /**
    * Initializes the assigned variables that have been identified but not explicitly declared.
@@ -798,7 +816,7 @@ object CodeGenerator {
             sb.append(s"""\n\t\t\t\t}\n""")
         }
 
-        val paramNamesSeq = eventParams.map(variable => FetchingHelper.fetchNameFromIdent(variable._1)).toSet.mkString(", ")
+        val paramNamesSeq = eventParams.map(variable => FetchingHelper.fetchNameFromIdent(variable._1)).mkString(", ")
         sb.append(s"\t\t\t\ton_$name($paramNamesSeq)\n")
         sb.append(s"\t\t\t\tevent = ${name}_output()\n") // This line was changed to remove the extra event name prefix
         sb.append("\t\t\t}\n")
@@ -818,55 +836,6 @@ object CodeGenerator {
     sb.toString
   }
 }
-
-
-object PPropertyValidation {
-
-  /**
-   * Validates event blocks to ensure that each 'on' is followed by an 'output'.
-   *
-   * The function scans through lines of the DSL input. It ensures that each block that starts
-   * with 'on' is followed by an 'output' line. If any 'on' block does not have a corresponding
-   * 'output', or if any 'output' does not have a preceding 'on', an exception is thrown.
-   * If validation passes, a success message is printed.
-   *
-   * @param inputLines List of strings, each representing a line from the input DSL.
-   * @throws IllegalArgumentException if any block does not adhere to the 'on' followed by 'output' pattern.
-   */
-  def validateEventBlocks(inputLines: List[String]): Unit = {
-    var insideBlock = false
-    var currentOnLine: Option[(Int, String)] = None
-    var line_number = 0
-
-    inputLines.foreach { line =>
-      line_number += 1
-
-      if (line.toLowerCase.startsWith("on ")) {
-        if (insideBlock) {
-          throw new IllegalArgumentException(s"Missing 'output' for the block starting at line " +
-            s"${currentOnLine.get._1}: '${currentOnLine.get._2}'")
-        }
-        insideBlock = true
-        currentOnLine = Some(line_number, line.trim)
-      } else if (line.toLowerCase.startsWith("output ")) {
-        if (!insideBlock) {
-          throw new IllegalArgumentException(s"Found 'output' at line $line_number without a preceding 'on'.")
-        }
-        insideBlock = false
-        currentOnLine = None
-      }
-    }
-
-    if (insideBlock) {
-      throw new IllegalArgumentException(s"Missing 'output' for the block starting at line " +
-        s"${currentOnLine.get._1}: '${currentOnLine.get._2}'")
-    }
-
-    println("Event block validation passed.")
-  }
-}
-
-
 
 /**
  * Main application to demonstrate the parser and code generator functionality.
@@ -894,11 +863,6 @@ object PreParser {
   def parse(filename: String): (String, String) = {
     //  def parse(filename: String): Unit = {
     val preInputProperty = readerFromFile(filename)
-
-//    // Do some validations
-//    if (preInputProperty.isEmpty) throw new IllegalArgumentException(s"Pre-Property is empty...")
-//    PPropertyValidation.validateEventBlocks(preInputProperty.split("\n").toList)
-
 
     var generatedCode: String = ""
 
