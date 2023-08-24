@@ -1,0 +1,1 @@
+prop p1: exists x . (fast(x, "true") & !(@(P(fast(x, "true")))))

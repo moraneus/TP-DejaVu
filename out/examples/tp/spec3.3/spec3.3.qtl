@@ -1,0 +1,1 @@
+prop p3_3: forall c1 . forall c2 . ( distance(c1, c2, "true") -> !stopMonitoring(c1, c2) S  startMonitoring(c1, c2) )

@@ -1,0 +1,2 @@
+prop p2: exists x .
+        ( increase(x, "true") & @ ( test(x) & P ( increase (x, "true") & @ ( P (increase(x, "true") ) ) ) ) )

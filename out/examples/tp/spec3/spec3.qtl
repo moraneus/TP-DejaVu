@@ -1,0 +1,1 @@
+prop p3: forall ac . ( ( exists temp .  set(ac, temp, "true") ) -> ( !turn_off(ac) S turn_on(ac) )  )
