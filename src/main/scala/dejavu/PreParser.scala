@@ -428,53 +428,102 @@ object CodeGenerator {
         |    def <->(b: => Boolean): Boolean = a == b
         |  }
         |
-        |  /**
-        |   * Power operation for Double.
-        |   *
-        |   * @param a base value.
-        |   */
-        |  implicit class extendedDouble(a: Double) {
-        |
-        |    /**
-        |     * Raises `a` to the power of `b`.
-        |     *
-        |     * @param b the exponent.
-        |     * @return result of a raised to the power b.
-        |     */
-        |    def ^^(b: Double): Double = scala.math.pow(a, b)
-        |  }
+        | /**
+        |  * Implicit class to provide power operation `^^` for `Double` base values.
+        |  *
+        |  * @param a the base of type Double.
+        |  */
+        | implicit class ExtendedDouble(val a: Double) extends AnyVal {
         |
         |  /**
-        |   * Power operation for Int.
-        |   *
-        |   * @param a base value.
-        |   */
-        |  implicit class extendedInt(a: Int) {
+        |    * Raises the base `a` to the power of an `Int` exponent `b`.
+        |    *
+        |    * @param b the exponent of type Int.
+        |    * @return the result as a Double.
+        |    */
+        |   def ^^(b: Int): Double = scala.math.pow(a, b.toDouble)
         |
-        |    /**
-        |     * Raises `a` to the power of `b`.
+        |   /**
+        |     * Raises the base `a` to the power of a `Float` exponent `b`.
         |     *
-        |     * @param b the exponent.
-        |     * @return result of a raised to the power b as an Int.
+        |     * @param b the exponent of type Float.
+        |     * @return the result as a Double.
         |     */
-        |    def ^^(b: Int): Int = scala.math.pow(a.toDouble, b.toDouble).toInt
-        |  }
+        |   def ^^(b: Float): Double = scala.math.pow(a, b.toDouble)
         |
-        |  /**
-        |   * Power operation for Float.
-        |   *
-        |   * @param a base value.
-        |   */
-        |  implicit class extendedFloat(a: Float) {
-        |
-        |    /**
-        |     * Raises `a` to the power of `b`.
+        |   /**
+        |     * Raises the base `a` to the power of a `Double` exponent `b`.
         |     *
-        |     * @param b the exponent.
-        |     * @return result of a raised to the power b as a Float.
+        |     * @param b the exponent of type Double.
+        |     * @return the result as a Double.
         |     */
-        |    def ^^(b: Float): Float = scala.math.pow(a.toDouble, b.toDouble).toFloat
-        |  }
+        |   def ^^(b: Double): Double = scala.math.pow(a, b)
+        | }
+        |
+        | /**
+        |   * Implicit class to provide power operation `^^` for `Int` base values.
+        |   *
+        |   * @param a the base of type Int.
+        |   */
+        | implicit class ExtendedInt(val a: Int) extends AnyVal {
+        |
+        |   /**
+        |     * Raises the base `a` to the power of an `Int` exponent `b`.
+        |     *
+        |     * @param b the exponent of type Int.
+        |     * @return the result as a Double.
+        |     */
+        |   def ^^(b: Int): Double = scala.math.pow(a.toDouble, b.toDouble)
+        |
+        |   /**
+        |     * Raises the base `a` to the power of a `Float` exponent `b`.
+        |     *
+        |     * @param b the exponent of type Float.
+        |     * @return the result as a Double.
+        |     */
+        |   def ^^(b: Float): Double = scala.math.pow(a.toDouble, b.toDouble)
+        |
+        |   /**
+        |     * Raises the base `a` to the power of a `Double` exponent `b`.
+        |     *
+        |     * @param b the exponent of type Double.
+        |     * @return the result as a Double.
+        |     */
+        |   def ^^(b: Double): Double = scala.math.pow(a.toDouble, b)
+        | }
+        |
+        | /**
+        |   * Implicit class to provide power operation `^^` for `Float` base values.
+        |   *
+        |   * @param a the base of type Float.
+        |   */
+        | implicit class ExtendedFloat(val a: Float) extends AnyVal {
+        |
+        |   /**
+        |     * Raises the base `a` to the power of an `Int` exponent `b`.
+        |     *
+        |     * @param b the exponent of type Int.
+        |     * @return the result as a Float.
+        |     */
+        |   def ^^(b: Int): Float = scala.math.pow(a.toDouble, b.toDouble).toFloat
+        |
+        |   /**
+        |     * Raises the base `a` to the power of a `Float` exponent `b`.
+        |     *
+        |     * @param b the exponent of type Float.
+        |     * @return the result as a Float.
+        |     */
+        |   def ^^(b: Float): Float = scala.math.pow(a.toDouble, b.toDouble).toFloat
+        |
+        |   /**
+        |     * Raises the base `a` to the power of a `Double` exponent `b`.
+        |     *
+        |     * @param b the exponent of type Double.
+        |     * @return the result as a Float.
+        |     */
+        |   def ^^(b: Double): Float = scala.math.pow(a.toDouble, b).toFloat
+        | }
+        |
         |
         |  /**
         |   * A type class defining absolute operation on a type.
@@ -516,35 +565,6 @@ object CodeGenerator {
         |   */
         |  def abs[T](value: T)(implicit ops: AbsOps[T]): T = ops.abs(value)
         |
-        |
-        |  /**
-        |   * A type class defining checksum operation on a type.
-        |   *
-        |   * @tparam A the type for which the checksum operation is defined.
-        |   */
-        |  trait ChecksumOps[T] {
-        |    def sha256(value: T): String
-        |  }
-        |
-        |  // Generic instance for any type that can be converted to a string.
-        |  implicit def genericChecksumOps[T]: ChecksumOps[T] = new ChecksumOps[T] {
-        |    def sha256(value: T): String = {
-        |      val strRepresentation = value.toString
-        |      val digest = MessageDigest.getInstance("SHA-256")
-        |      val hash = digest.digest(strRepresentation.getBytes("UTF-8"))
-        |      hash.map("%02x".format(_)).mkString
-        |    }
-        |  }
-        |
-        |  /**
-        |   * Generic utility to compute the checksum for any supported type.
-        |   *
-        |   * @param value the input value.
-        |   * @param ops   implicit evidence of the ChecksumOps type class instance for type A.
-        |   * @tparam A type of the value.
-        |   * @return SHA-256 checksum of `value`.
-        |   */
-        |  def sha256[T](value: T)(implicit ops: ChecksumOps[T]): String = ops.sha256(value)
         |
         |  /**
         |   * Provides utility methods for common operations.
