@@ -231,11 +231,11 @@ class PrePropertyParser extends JavaTokenParsers {
     }
 
 
-  /** Parses function calls. */
+  /** Parses function calls or a "skip" ident. */
   private def functionCall: Parser[FunctionCall] =
-    ident ~ ("(" ~> repsep(parameter, ",") <~ ")") ^^ {
+    (ident ~ ("(" ~> repsep(parameter, ",") <~ ")") ^^ {
       case name ~ params => FunctionCall(name, params)
-    }
+    }) | ("skip" ^^^ FunctionCall("skip", List()))
 
   /** Parses the "output" block. */
   private def output: Parser[Output] =
@@ -315,15 +315,43 @@ object CodeGenerator {
   }
 
   /**
-   * Transforms custom 'in' / 'notin' expressions to Scala's List based 'in' / 'notin' expression.
+   * Wrap the custom 'in' operator expr with parentheses.
    *
    * @param expr A string expression that may contain custom 'in' syntax.
-   * @return A string with custom 'in' syntax replaced with Scala's List based syntax.
+   * @return A string with custom 'in' expr wrapped with parentheses.
    */
-  private def translateInExpression(expr: String): String = {
-    val inPattern: Regex = """(?i)in\(\[(.*?)\]\)""".r
-    inPattern.replaceAllIn(expr, m => s"in(List(${m.group(1)}))")
-  }
+
+//  private def translateInExpression(input: String): String = {
+//    val pattern = """((?:[a-zA-Z_]\w*)|[-+]?\d*\.?\d+(?:[eE][+-]?\d+)?[fF]?)\s+in\s+\(""".r
+//    val output = new StringBuilder
+//    var lastIndex = 0
+//
+//    pattern.findAllMatchIn(input).foreach { m =>
+//      val startIdx = m.start
+//      output.append(input.substring(lastIndex, startIdx))
+//
+//      var openParenCount = 1
+//      var idx = m.end
+//      while (openParenCount > 0 && idx < input.length) {
+//        if (input(idx) == '(') openParenCount += 1
+//        if (input(idx) == ')') openParenCount -= 1
+//        idx += 1
+//      }
+//      output.append("(" + input.substring(startIdx, idx) + ")")
+//      lastIndex = idx
+//    }
+//
+//    output.append(input.substring(lastIndex))
+//    output.toString()
+//  }
+
+private def translateInExpression(input: String): String = {
+  val ident = """(?:[a-zA-Z_]\w*|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|"[^"]*")"""
+  val pattern = s"""($ident\\sin\\s\\[.*?\\])"""
+  val patternRegex = pattern.r
+  patternRegex.replaceAllIn(input, m => s"(${m.group(0).replace('[', '(').replace(']', ')')})")
+}
+
 
   /**
    * Replaces the '@' symbol in a given string, but avoids replacing '@@'.
@@ -376,32 +404,25 @@ object CodeGenerator {
         |object PreMonitor extends PreMonitorTrait {
         |  /**
         |   * Extension methods for various types.
-        |   * This provides utilities for better readability and concise code writing.
         |   */
         |
-        |  /**
-        |   * Extension methods for all types.
+        |
+        | /**
+        | * Provides an implicit class to enable the use of the `in` infix operator
+        | * for checking the presence of an element within a collection.
+        | *
+        | * @param left the element to be checked for presence within a collection.
+        | * @tparam T the type of the element.
+        | */
+        | implicit class InfixIn[T](val left: T) {
+        |
+        |   /**
+        |   * Checks if the `left` element is present in the given elements.
         |   *
-        |   * @param self an element of type T.
-        |   * @tparam T the type of `self`.
+        |   * @param right a sequence of elements to check against.
+        |   * @return true if `left` is present in the `right` sequence, false otherwise.
         |   */
-        |  implicit class ExtendedAny[T](val self: T) {
-        |
-        |    /**
-        |     * Checks if the element is present in a list.
-        |     *
-        |     * @param lst the list to check against.
-        |     * @return true if `self` is present in `lst`, false otherwise.
-        |     */
-        |    def in(lst: List[T]): Boolean = lst.contains(self)
-        |
-        |    /**
-        |     * Checks if the element is not present in a list.
-        |     *
-        |     * @param lst the list to check against.
-        |     * @return true if `self` is not present in `lst`, false otherwise.
-        |     */
-        |    def notin(lst: List[T]): Boolean = !lst.contains(self)
+        |   def in(right: T*): Boolean = right.contains(left)
         |  }
         |
         |  /**
@@ -590,13 +611,13 @@ object CodeGenerator {
 
         // Extract and initialize event parameters
         val eventParams = events.flatMap(_.params).distinct.toMap
-        val prevEventParams = extractPrevVariablesFromEvents(events)
-        initVariables(init, eventParams, prevEventParams, sb)
+        val totalPrevVarsInEvents = extractPrevVariablesFromEvents(events)
 
         // Extract used variable names and types
         val declaredVariables = init.vars.map(variable => FetchingHelper.fetchNameFromIdent(variable._1)).toSet
         val assignedVariables = extractAssignedVariables(events, declaredVariables)
 
+        val uninitiatePrevVarsInEvents = initVariables(init, eventParams, totalPrevVarsInEvents, sb)
         val assignedVariableTypes = events.flatMap(_.assignments).map(a => a.variable -> a.variableType).toMap
 
         // Initialize any undeclared assigned variables
@@ -605,7 +626,7 @@ object CodeGenerator {
         sb.append(s"\n\n")
 
         generateEventAndOutputFunctions(events, outputs, sb)
-        generateEvaluateFunction(events, sb, declaredVariables)
+        generateEvaluateFunction(events, sb, declaredVariables, uninitiatePrevVarsInEvents)
 
         sb.append("}\n")
         sb.toString
@@ -618,11 +639,16 @@ object CodeGenerator {
    * Initialized variables are added to the provided StringBuilder.
    *
    * @param init            The `Initiate` object containing variable information.
-   * @param eventParams     A map of event names to their parameter strings.
+   * @param eventParams     A map of event names to their types.
    * @param prevEventParams A set of variable names from previous events.
    * @param sb              The StringBuilder to which the initialized variables will be appended.
    */
-  private def initVariables(init: Initiate, eventParams: Map[TypedIdentifier, String], prevEventParams: Set[String], sb: StringBuilder): Unit = {
+  private def initVariables(
+               init: Initiate,
+               eventParams: Map[TypedIdentifier, String],
+               prevEventParams: Set[String],
+               sb: StringBuilder): Set[String] = {
+
     // To keep track of initialized variables
     val initializedVariables = scala.collection.mutable.Set[String]()
 
@@ -650,14 +676,22 @@ object CodeGenerator {
         }
     }
 
+    // Create a set to collect the calculated prevVarNames
+    val prevVarNamesSet = scala.collection.mutable.Set[String]()
+
     // Handling for prevEventParams
     prevEventParams.foreach { prevVarName =>
       if (!initializedVariables.contains(prevVarName) &&
         eventParams.exists(pair => FetchingHelper.fetchNameFromIdent(pair._1) == prevVarName)) {
         val scalaType = toScalaType(eventParams.find(pair => FetchingHelper.fetchNameFromIdent(pair._1) == prevVarName).get._2)
         sb.append(s"\tprivate var prev_$prevVarName: $scalaType = ${defaultValue(scalaType)}\n")
+
+        // Add the calculated name to the set
+        prevVarNamesSet += s"$prevVarName"
       }
     }
+    // Return the set of calculated prevVarNames
+    prevVarNamesSet.toSet
   }
 
 
@@ -685,18 +719,6 @@ object CodeGenerator {
       )
     ).toSet
   }
-
-  /**
-   * Returns a set of variables referenced with a preceding '@' in events that have not been declared.
-   *
-   * @param prevVariablesFromEvents A set of variables names that have been referenced with '@' in events.
-   * @param declaredVariables      A set of variable names that have been declared.
-   * @return A set of variable names referenced with '@' in events but not declared.
-   */
-  private def uninitializedEventVariables(prevVariablesFromEvents: Set[String], declaredVariables: Set[String]): Set[String] = {
-    prevVariablesFromEvents.diff(declaredVariables)
-  }
-
 
   /**
    * Initializes the assigned variables that have been identified but not explicitly declared.
@@ -813,7 +835,11 @@ object CodeGenerator {
   }
 
 
-  private def generateEvaluateFunction(events: List[EventOperation], sb: StringBuilder, declaredVariables: Set[String]): Unit = {
+  private def generateEvaluateFunction(
+                      events: List[EventOperation],
+                      sb: StringBuilder,
+                      declaredVariables: Set[String],
+                      uninitiatePrevVarsInEvents: Set[String]): Unit = {
     // Start the generation of the evaluate function
     sb.append("\tdef evaluate(event_name: String, params: Any*): Option[Any] = {\n")
     sb.append("\t\tvar event : Any = null\n\n") // Added this line
@@ -847,6 +873,9 @@ object CodeGenerator {
 
     // Add logic to update the previous variables
     declaredVariables.foreach { name =>
+      sb.append(s"\t\tprev_$name = $name\n")
+    }
+    uninitiatePrevVarsInEvents.foreach { name =>
       sb.append(s"\t\tprev_$name = $name\n")
     }
 
