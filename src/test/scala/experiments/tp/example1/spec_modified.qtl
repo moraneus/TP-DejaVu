@@ -1,0 +1,1 @@
+prop modified: forall x . ((p(x, "true") -> exists y . q(x, y)))

@@ -1,0 +1,1 @@
+prop origin: forall x . ((p(x) & x > 7) -> exists y . q(x, y))

@@ -613,21 +613,17 @@ abstract class Monitor(preMonitor: PreMonitorTrait) {
         }
 
         if (Options.PRE_PREDICTION && preMonitor != null) {
-          val modified_event: Option[Any] = preMonitor.evaluate(name, args: _*)
-          if (modified_event.isDefined) {
-            modified_event.get match {
-              case first :: second :: _ =>
-                val event_name = first.toString
-                val params = second.asInstanceOf[List[String]]
-                submit(event_name, params)
-              case event_name =>
-                if (event_name != "skip") {
-                  submit(event_name.toString, Nil)
-                }
-              case _ => println("Unexpected event structure output from the pre processing")
-            }
-          } else {
-            submit(name, args.toList)
+          val modifiedEvent = preMonitor.evaluate(name, args: _*)
+
+          modifiedEvent match {
+            case Some(first :: second :: _) =>
+              submit(first.toString, second.asInstanceOf[List[String]])
+            case Some(event_name: String) if event_name != "skip" =>
+              submit(event_name, Nil)
+            case Some(_) =>
+              println("Unexpected event structure output from the pre processing")
+            case None =>
+              submit(name, args.toList)
           }
         } else {
           submit(name, args.toList)

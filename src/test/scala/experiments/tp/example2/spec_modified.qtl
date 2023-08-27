@@ -1,0 +1,1 @@
+prop origin: forall x . forall y . ((p(x, "true") & @q(y)) -> P r(x, y))

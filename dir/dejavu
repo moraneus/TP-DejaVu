@@ -5,17 +5,14 @@
 #
 # To use, call (after making executable with: chmod +x dejavu) as follows:
 #
-#   dejavu (--specfile=<filename>) (--logfile=<filename>) [--bits=numOfBits] [--mode=(debug | profile)]
-#          [--prediction=num] [--prediction_type=(smart | brute)] [--expected_verdict=(0 | 1)] [--clear=(0 | 1)]
+#   dejavu (--specfile=<filename>) (--logfile=<filename>) [--bits=numOfBits] [--mode=(debug | profile)] [--clear=(0 | 1)]
 #
 #   Options:
 #     -s, --specfile          the path to a file containing the specification document. This is a mandatory field.
 #     -l, --logfile           the path to a file containing the log in CSV format to be analyzed.
+#     -p, --prefile           the path to a file containing the pre specification document.
 #     -b, --bits              number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
 #     -m, --mode              specifies output modes. by default no one is active.
-#     -p, --prediction        indicates whether prediction is required, along with the size of the prediction parameters.
-#     -t, --prediction_type   specifies prediction approach. by default smart approach is activated.
-#     -e, --expected_verdict  specifies the expected prediction verdict (1=True, 0=False). By default the tool will predict all possibilities if not expected verdict has given.
 #     -c, --clear             indicating whether to clear generated files and folder. value of '1' is for cleaning.
 
 
@@ -24,6 +21,10 @@ for i in "$@"; do
   case $i in
     -s=*|--specfile=*)
       SPECFILE="${i#*=}"
+      shift # past argument=value
+      ;;
+    -p=*|--prefile=*)
+      PREFILE="${i#*=}"
       shift # past argument=value
       ;;
     -l=*|--logfile=*)
@@ -36,18 +37,6 @@ for i in "$@"; do
       ;;
     -m=*|--mode=*)
       MODE="${i#*=}"
-      shift # past argument=value
-      ;;
-    -p=*|--prediction=*)
-      PREDICTION="${i#*=}"
-      shift # past argument=value
-      ;;
-    -t=*|--prediction_type=*)
-      PREDICTION_TYPE="${i#*=}"
-      shift # past argument=value
-      ;;
-    -e=*|--expected_verdict=*)
-      EXPECTED_VERDICT="${i#*=}"
       shift # past argument=value
       ;;
     -c=*|--clear=*)
@@ -85,17 +74,10 @@ if [ -n "${MODE}" ]; then
     PARAMS_AS_STRING+="--mode ${MODE} "
 fi
 
-if [ -n "${PREDICTION}" ]; then
-    PARAMS_AS_STRING+="--prediction ${PREDICTION} "
+if [ -n "${PREFILE}" ]; then
+    PARAMS_AS_STRING+="--prefile ${PREFILE} "
 fi
 
-if [ -n "${PREDICTION_TYPE}" ]; then
-    PARAMS_AS_STRING+="--prediction_type ${PREDICTION_TYPE} "
-fi
-
-if [ -n "${EXPECTED_VERDICT}" ]; then
-    PARAMS_AS_STRING+="--expected_verdict ${EXPECTED_VERDICT} "
-fi
 
 
 echo "#### Given Arguments: ${PARAMS_AS_STRING}"
@@ -107,7 +89,11 @@ echo "Working directory: ${DEJAVU}"
 echo "Output directory: ${OUTPUT}"
 
 # Parse specification and synthesize monitor:
-java -cp $DEJAVU/dejavu.jar dejavu.Verify --specfile $SPECFILE --execution 1 | grep -v "Elapsed total"
+if [ -n "${PREFILE}" ]; then
+  java -cp .:$DEJAVU/dejavu.jar dejavu.Verify --specfile $SPECFILE --prefile $PREFILE --execution 1 | grep -v "Elapsed total"
+else
+    java -cp .:$DEJAVU/dejavu.jar dejavu.Verify --specfile $SPECFILE --execution 1 | grep -v "Elapsed total"
+fi
 
 # Compile synthesized monitor:
 echo "Compiling synthesized monitor: ..."

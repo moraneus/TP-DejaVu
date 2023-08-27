@@ -1,0 +1,3 @@
+on p(x: int)
+    in_bound: bool := x > 7
+    output p(x, in_bound)
