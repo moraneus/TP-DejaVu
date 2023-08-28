@@ -3,8 +3,10 @@ initiate
 
 on p(x: int)
     x_is_less_than_y: bool := x < y
+    rrrr: int := ite(true, 1, 0) + 10
+    ccc: int := ite(ite(x < 10, false, true), abs((1 + 18 + 1) * -1), 0) + 10
     prev_q: bool := false
-output p(x, x_is_less_than_y)
+output ite(false, p(x, x_is_less_than_y), q(x))
 
 on q(y: int)
     prev_q: bool := true

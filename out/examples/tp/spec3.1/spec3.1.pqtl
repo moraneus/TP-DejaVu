@@ -1,6 +1,8 @@
 Initiate
     LErr: int := 0
     SysErr: int := 0
+    Epo: int := 20
+    Emax: int := 10
 
 on entry(ru: str)
 output entry(ru)

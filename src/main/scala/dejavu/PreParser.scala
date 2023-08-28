@@ -5,9 +5,7 @@ import java.text.ParseException
 import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
-
-
-
+import scala.util.control.Breaks._
 
 
 object FetchingHelper {
@@ -344,6 +342,88 @@ object CodeGenerator {
 //    output.append(input.substring(lastIndex))
 //    output.toString()
 //  }
+
+
+
+  /**
+   * Converts 'ite' expressions in the given input string into one-line if statements.
+   * It handles nested 'ite' expressions by converting them from the innermost to outermost.
+   *
+   * @param input The input string possibly containing 'ite' expressions.
+   * @return The modified string with 'ite' expressions converted to one-line if statements.
+   */
+  private def convertITEtoOnelineIfStatement(input: String): String = {
+    val pattern = """ite\(""".r
+
+    /**
+     * Extracts the 'ite' expression from the given starting index and converts it
+     * into a one-line if statement.
+     *
+     * @param startIndex The index in the input where the 'ite' expression starts.
+     * @return A tuple containing the converted expression and the index where the 'ite' expression ends.
+     */
+    def extractITEExpression(startIndex: Int): (String, Int) = {
+      val args = new scala.collection.mutable.ArrayBuffer[String]()
+      var depth = 0
+      var end = startIndex
+      var extractStart = startIndex + 4 // to skip "ite("
+
+      // Process the 'ite' expression and split it into its three components
+      breakable {
+        for (i <- startIndex + 4 until input.length) {
+          input(i) match {
+            case '(' => depth += 1
+            case ')' =>
+              depth -= 1
+              if (depth < 0) {
+                args += input.substring(extractStart, i).trim
+                end = i + 1
+                break()
+              }
+            case ',' if depth == 0 =>
+              args += input.substring(extractStart, i).trim
+              extractStart = i + 1
+            case _ =>
+          }
+        }
+      }
+
+      // If any of the args has an 'ite', convert it recursively.
+      val convertedArgs = args.map(arg => {
+        if (arg.contains("ite(")) convertITEtoOnelineIfStatement(arg) else arg
+      })
+
+      if (convertedArgs.length == 3) {
+        (s"(if (${convertedArgs(0)}) (${convertedArgs(1)}) else (${convertedArgs(2)}))", end)
+      } else {
+        (input.substring(startIndex, end), end)
+      }
+    }
+
+    var result = new StringBuilder()
+    var currentIndex = 0
+
+    // Process the entire input string to handle multiple 'ite' expressions and expressions embedded within others
+    while (currentIndex < input.length) {
+      pattern.findFirstMatchIn(input.substring(currentIndex)) match {
+        case Some(matched) =>
+          val iteStart = matched.start + currentIndex
+          result.append(input.substring(currentIndex, iteStart))
+
+          val (convertedIte, iteEnd) = extractITEExpression(iteStart)
+          result.append(convertedIte)
+
+          currentIndex = iteEnd
+
+        case None =>
+          result.append(input.substring(currentIndex))
+          currentIndex = input.length
+      }
+    }
+
+    result.toString()
+  }
+
 
 private def translateInExpression(input: String): String = {
   val ident = """(?:[a-zA-Z_]\w*|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|"[^"]*")"""
@@ -764,7 +844,8 @@ private def translateInExpression(input: String): String = {
       assignments.foreach {
         case Assignment(variable, _, expression) =>
           // Handle special expressions and operators in the provided code.
-          var updatedExpression = expression.replace("ite(", "Operators.ite(")
+//          var updatedExpression = expression.replace("ite(", "Operators.ite(")
+          var updatedExpression = convertITEtoOnelineIfStatement(expression)
           updatedExpression = translateInExpression(updatedExpression)
           updatedExpression = translatePrevExpression(updatedExpression)
 
@@ -779,20 +860,24 @@ private def translateInExpression(input: String): String = {
       eventNameToOutputMap.get(name).foreach {
         case Some(output: FunctionOutput) => {
           sb.append(s"\t\t")
-          outputHelper(sb, output.name, output.params)
+          sb.append(outputHelper(sb, output.name, output.params))
           sb.append(s"""\n""")
         }
         case Some(output: ITEOutput) => {
-          val testExpr = _And(_BooleanVar("a"), _BooleanVar("b"))
-          println(expressionToString(testExpr)) // Should print (a && b)
           val iteCondition = expressionToString(output.iteFunction.boolExpr)
           val ifTrue = output.iteFunction.function1
           val ifFalse = output.iteFunction.function2
-          sb.append(s"""\t\tOperators.ite($iteCondition, """)
-          outputHelper(sb, ifTrue.name, ifTrue.params)
-          sb.append(s""", """)
-          outputHelper(sb, ifFalse.name, ifFalse.params)
-          sb.append(s""")\n""")
+          var outputITEExpr = s"""\t\tite($iteCondition, """
+//          sb.append(s"""\t\tOperators.ite($iteCondition, """)
+          outputITEExpr += outputHelper(sb, ifTrue.name, ifTrue.params)
+          outputITEExpr += s""", """
+//          sb.append(s""", """)
+//          outputITEExpr += s""", """
+          outputITEExpr += outputHelper(sb, ifFalse.name, ifFalse.params)
+          outputITEExpr += s""")\n"""
+          val formattedITEOutput = convertITEtoOnelineIfStatement(outputITEExpr)
+//          sb.append(s""")\n""")
+          sb.append(formattedITEOutput)
         }
       }
       sb.append("\t}\n\n")
@@ -804,16 +889,20 @@ private def translateInExpression(input: String): String = {
    * A utility function to generate the appropriate output string format based on
    * the given output name and its parameters. The output is appended to the provided StringBuilder.
    *
-   * @param sb          The StringBuilder to which the formatted output will be appended.
-   * @param outputName  The name of the output.
-   * @param params      A list of parameters associated with the output. These parameters
-   *                    can be in different formats and might include special '@' expressions.
+   * @param sb         The StringBuilder to which the formatted output will be appended.
+   * @param outputName The name of the output.
+   * @param params     A list of parameters associated with the output. These parameters
+   *                   can be in different formats and might include special '@' expressions.
+   *
+   * @return The formatted output as a String.
    */
-  private def outputHelper(sb: StringBuilder, outputName: String, params: List[String]): Unit = {
+  private def outputHelper(sb: StringBuilder, outputName: String, params: List[String]): String = {
 
+    var stringOutput = ""
     // If the output has no parameters, simply append the output name.
     if (params.isEmpty) {
-      sb.append(s"""("$outputName")\n""")
+      stringOutput += s"""("$outputName")\n"""
+      //      sb.append(s"""("$outputName")\n""")
     } else {
       // Use a ListBuffer to accumulate the parsed parameters.
       val parsed_params = ListBuffer[String]()
@@ -830,8 +919,11 @@ private def translateInExpression(input: String): String = {
       }
 
       // Once all parameters are processed, append them in a formatted manner.
-      sb.append(s"""List("$outputName", List(${parsed_params.mkString(", ")}))""")
+      stringOutput += s"""List("$outputName", List(${parsed_params.mkString(", ")}))"""
+      //      sb.append(s"""List("$outputName", List(${parsed_params.mkString(", ")}))""")
     }
+//    sb.append(stringOutput)
+    stringOutput
   }
 
 

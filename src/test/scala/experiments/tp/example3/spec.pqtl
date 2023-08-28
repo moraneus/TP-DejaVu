@@ -1,0 +1,7 @@
+on p(x: int)
+    x_in_bound: bool := (x >= 0) && (x <= 100)
+    output p(x, x_in_bound)
+
+on q(x: int, y: int)
+    y_in_bound: bool := (abs(y) >= 0) && (abs(y) <= 100)
+    output q(x, y, y_in_bound)
