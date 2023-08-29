@@ -143,7 +143,7 @@ object Verify {
       """Usage:
         |
         |      (--specfile <filename>) [--prefile <filename>] [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)]
-        |      [--result <filename>] [--clear (0 | 1)] [--execution (0 | 1)]
+        |      [--result <filename>] [--clear (0 | 1)] [--execution (0 | 1)] [--stat (true | false)]
         |
         |Options:
         |   --specfile          the path to a file containing the specification document. This is a mandatory field.
@@ -153,13 +153,14 @@ object Verify {
         |   --mode              specifies output modes. by default no one is active.
         |   --result            the path to a result filename. If not specify the default is the running DejaVu folder. For development mode.
         |   --execution         indicating whether to work in production or development mode. this execution mode affects where the output files are created.
+        |   --stat              indicating whether to print violations or not.
         |   --clear             indicating whether to clear generated files and folder. For development mode.
         """.stripMargin
     SymbolTable.reset()
 
     val args = arguments.toList
 
-    if (2 <= arguments.length && arguments.length <= 16 && arguments.length % 2 == 0) {
+    if (2 <= arguments.length && arguments.length <= 18 && arguments.length % 2 == 0) {
       val argMap = Map.newBuilder[String, Any]
       arguments.sliding(2, 2).toList.collect {
         case Array("--specfile", specfile: String) => argMap.+=("specfile" -> specfile)
@@ -169,6 +170,7 @@ object Verify {
         case Array("--mode", mode: String) => argMap.+=("mode" -> mode)
         case Array("--resultfile", resultfile: String) => argMap.+=("resultfile" -> resultfile)
         case Array("--execution", execution: String) => argMap.+=("execution" -> execution)
+        case Array("--stat", stat: String) => argMap.+=("stat" -> stat)
         case Array("--clear", mode: String) => argMap.+=("clear" -> mode)
       }
 
@@ -257,6 +259,18 @@ object Verify {
         case None => println("mode argument not activated")
       }
 
+      // Validate the output mode argument
+      val stat = argMap.result().get("stat")
+      stat match {
+        case Some(value) =>
+          val statValue = value.toString.toLowerCase()
+          if (!(statValue != "true" || statValue != "false")) {
+            println(s"*** stat argument must be: true or false, and not ${value.toString}")
+            return
+          }
+        case None => println("stat argument is set to default true")
+      }
+
       // Validate the clear files argument
       val clear = argMap.result().get("clear")
       clear match {
@@ -305,8 +319,10 @@ object Verify {
         var evaluationArguments = args.take(specfileIndex) ++
                                   args.drop(specfileIndex + 2)
         val executionIndex = evaluationArguments.indexOf("--execution")
-        evaluationArguments = evaluationArguments.take(executionIndex) ++
-                              evaluationArguments.drop(executionIndex + 2)
+        if (executionIndex > -1) {
+          evaluationArguments = evaluationArguments.take(executionIndex) ++
+            evaluationArguments.drop(executionIndex + 2)
+        }
 
 
         // Execute the evaluation step.

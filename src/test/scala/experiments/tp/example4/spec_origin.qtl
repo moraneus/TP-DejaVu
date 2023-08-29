@@ -1,0 +1,1 @@
+prop origin: forall x . ((p(x) & x >= 0 & x <= 100) -> exists y . ( q(x, y) & ((y >= 0 & y <= 100) | (y <= 0 & y >= -100))))

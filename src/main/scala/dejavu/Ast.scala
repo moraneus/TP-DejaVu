@@ -319,18 +319,27 @@ case class Spec(properties: List[Property]) {
       s"""
          |object TraceMonitor {
          |  private val usage: String =
-         | \"\"\"Usage: (--logfile <filename>) [--bits numOfBits] [--mode (debug | profile)]
+         | \"\"\"Usage: (--logfile <filename>) [--bits numOfBits] [--mode (debug | profile)] [--stat]
          | \"\"\".stripMargin
+         |
+         | def time[R](block: => R): R = {
+         |     val t0 = System.nanoTime()
+         |     val result = block    // call-by-name
+         |     val t1 = System.nanoTime()
+         |     println("Evaluation time: " + (t1 - t0) / 1e9d + "s")
+         |     result
+         | }
          |
          |  def main(args: Array[String]): Unit = {
          |
-         |    if (2 <= args.length && args.length <= 8 && args.length % 2 == 0) {
+         |    if (2 <= args.length && args.length <= 10 && args.length % 2 == 0) {
          |      val argMapBuilder = Map.newBuilder[String, Any]
          |      args.sliding(2, 2).toList.collect {
          |        case Array("--logfile", logfile: String) => argMapBuilder.+=("logfile" -> logfile)
          |        case Array("--bits", numOfBits: String) => argMapBuilder.+=("bits" -> numOfBits)
          |        case Array("--mode", mode: String) => argMapBuilder.+=("mode" -> mode)
          |        case Array("--resultfile", resultfile: String) => argMapBuilder.+=("resultfile" -> resultfile)
+         |        case Array("--stat", stat: String) => argMapBuilder.+=("stat" -> stat)
          |      }
          |
          |      val argMap = argMapBuilder.result()
@@ -388,15 +397,30 @@ case class Spec(properties: List[Property]) {
          |        case None => println("No mode was selected")
          |      }
          |
+         |      val printStat = argMap.get("stat")
+         |      printStat match {
+         |        case Some(value) =>
+         |          val printStatValue = value.toString.toLowerCase()
+         |          if (printStatValue == "true") Options.PRINTS_STAT = true
+         |          else if (printStatValue == "false") Options.PRINTS_STAT = false
+         |          else {
+         |            println(s"*** stat argument must be: true or false")
+         |            return
+         |          }
+         |        case None => println("Default for stat is true")
+         |      }
+         |
          |      val m = new PropertyMonitor(${if(prePropertySynthesisCode.isEmpty) null else "PreMonitor"})
          |
          |      try {
+         |      time {
          |        openResultFile(Options.RESULT_FILE)
          |        if (Options.PROFILE) {
          |          openProfileFile("dejavu-profile.csv")
          |          m.printProfileHeader()
          |        }
          |        m.submitCSVFile(logfilePath)
+         |       }
          """.stripMargin)
 
     writeln(

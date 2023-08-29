@@ -22,6 +22,7 @@ object Options {
   var UNIT_TEST: Boolean = false
   var STATISTICS: Boolean = true
   var RESULT_FILE: String = ""
+  var PRINTS_STAT: Boolean = true
 }
 
 object Util {
@@ -662,8 +663,11 @@ abstract class Monitor(preMonitor: PreMonitorTrait) {
       formula.setTime(deltaTime)
       if (!formula.evaluate()) {
         errors += 1
-        println(s"\n*** Property ${formula.name} violated on event number $lineNr:\n")
-        println(state)
+
+        if (Options.PRINTS_STAT) {
+          println(s"\n*** Property ${formula.name} violated on event number $lineNr:\n")
+          println(state)
+        }
       }
     }
   }
