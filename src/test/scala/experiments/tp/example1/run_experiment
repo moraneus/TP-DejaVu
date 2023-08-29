@@ -6,49 +6,40 @@ echo "########## spec 1 ##########" >> result-spec-1
 
 echo "########## spec_origin.qtl 10K ##########"
 echo "########## spec_origin.qtl 10K ##########" >> result-spec-1
-(gtime ./dejavu --specfile=spec_origin.qtl --logfile=log_10K.csv --bits=20) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_origin.qtl --logfile=log_10K.csv --bits=20 --stat=false) >> result-spec-1 2>&1
 
 echo "########## spec_origin.qtl 100K ##########"
 echo "########## spec_origin.qtl 100K ##########" >> result-spec-1
-(gtime ./dejavu --specfile=spec_origin.qtl --logfile=log_100K.csv --bits=20) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_origin.qtl --logfile=log_100K.csv --bits=20 --stat=false) >> result-spec-1 2>&1
 
 echo "########## spec_origin.qtl 500K ##########"
 echo "########## spec_origin.qtl 500K ##########" >> result-spec-1
-(gtime ./dejavu --specfile=spec_origin.qtl --logfile=log_500K.csv --bits=20) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_origin.qtl --logfile=log_500K.csv --bits=20 --stat=false) >> result-spec-1 2>&1
 
 echo "########## spec_origin.qtl 1M ##########"
 echo "########## spec_origin.qtl 1M ##########" >> result-spec-1
-(gtime ./dejavu --specfile=spec_origin.qtl --logfile=log_1M.csv --bits=20) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_origin.qtl --logfile=log_1M.csv --bits=20 --stat=false) >> result-spec-1 2>&1
 
 echo "########## spec_origin.qtl 5M ##########"
 echo "########## spec_origin.qtl 5M ##########" >> result-spec-1
-(gtime ./dejavu --specfile=spec_origin.qtl --logfile=log_5M.csv --bits=20) >> result-spec-1 2>&1
-
-#echo "########## spec_origin.qtl 25M ##########"
-#echo "########## spec_origin.qtl 25M ##########" >> result-spec-1
-#(gtime ./dejavu --specfile=spec_origin.qtl --logfile=log_25M.csv --bits=20) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_origin.qtl --logfile=log_5M.csv --bits=20 --stat=false) >> result-spec-1 2>&1
 
 echo "########## spec_modified.qtl 10K ##########"
 echo "########## spec_modified.qtl 10K ##########" >> result-spec-1
-(gtime ./dejavu --specfile=spec_modified.qtl --logfile=log_10K.csv --bits=20 --prefile=spec.pqtl) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_modified.qtl --logfile=log_10K.csv --bits=20 --stat=false --prefile=spec.pqtl) >> result-spec-1 2>&1
 
 echo "########## spec_modified.qtl 100K ##########"
 echo "########## spec_modified.qtl 100K ##########" >> result-spec-1
-(gtime ./dejavu --specfile=spec_modified.qtl --logfile=log_100K.csv --bits=20 --prefile=spec.pqtl) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_modified.qtl --logfile=log_100K.csv --bits=20 --stat=false --prefile=spec.pqtl) >> result-spec-1 2>&1
 
 echo "########## spec_modified.qtl 500K ##########"
 echo "########## spec_modified.qtl 500K ##########" >> result-spec-1
-(gtime ./dejavu --specfile=spec_modified.qtl --logfile=log_500K.csv --bits=20 --prefile=spec.pqtl) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_modified.qtl --logfile=log_500K.csv --bits=20 --stat=false --prefile=spec.pqtl) >> result-spec-1 2>&1
 
 echo "########## spec_modified.qtl 1M ##########"
 echo "########## spec_modified.qtl 1M ##########" >> result-spec-1
-(gtime ./dejavu --specfile=spec_modified.qtl --logfile=log_1M.csv --bits=20 --prefile=spec.pqtl) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_modified.qtl --logfile=log_1M.csv --bits=20 --stat=false --prefile=spec.pqtl) >> result-spec-1 2>&1
 
 echo "########## spec_modified.qtl 5M ##########"
 echo "########## spec_modified.qtl 5M ##########" >> result-spec-1
-(gtime ./dejavu --specfile=spec_modified.qtl --logfile=log_5M.csv --bits=20 --prefile=spec.pqtl) >> result-spec-1 2>&1
-
-#echo "########## spec_modified.qtl 25M ##########"
-#echo "########## spec_modified.qtl 25M ##########" >> result-spec-1
-#(gtime ./dejavu --specfile=spec_modified.qtl --logfile=log_25M.csv --bits=20 --prefile=spec.pqtl) >> result-spec-1 2>&1
-
+(./dejavu --specfile=spec_modified.qtl --logfile=log_5M.csv --bits=20 --stat=false --prefile=spec.pqtl) >> result-spec-1 2>&1
