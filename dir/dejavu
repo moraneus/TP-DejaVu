@@ -13,6 +13,7 @@
 #     -p, --prefile           the path to a file containing the pre specification document.
 #     -b, --bits              number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
 #     -m, --mode              specifies output modes. by default no one is active.
+#     -st, --stat             indicating whether to print violations or not.
 #     -c, --clear             indicating whether to clear generated files and folder. value of '1' is for cleaning.
 
 
@@ -37,6 +38,10 @@ for i in "$@"; do
       ;;
     -m=*|--mode=*)
       MODE="${i#*=}"
+      shift # past argument=value
+      ;;
+    -st=*|--stat=*)
+      STAT="${i#*=}"
       shift # past argument=value
       ;;
     -c=*|--clear=*)
@@ -78,6 +83,9 @@ if [ -n "${PREFILE}" ]; then
     PARAMS_AS_STRING+="--prefile ${PREFILE} "
 fi
 
+if [ -n "${STAT}" ]; then
+    PARAMS_AS_STRING+="--stat ${STAT} "
+fi
 
 
 echo "#### Given Arguments: ${PARAMS_AS_STRING}"
@@ -89,21 +97,26 @@ echo "Working directory: ${DEJAVU}"
 echo "Output directory: ${OUTPUT}"
 
 # Parse specification and synthesize monitor:
+echo "Parse specification and synthesize monitor..."
 if [ -n "${PREFILE}" ]; then
-  java -cp .:$DEJAVU/dejavu.jar dejavu.Verify --specfile $SPECFILE --prefile $PREFILE --execution 1 | grep -v "Elapsed total"
+  gtime java -cp .:$DEJAVU/dejavu.jar dejavu.Verify --specfile $SPECFILE --prefile $PREFILE --execution 1 | grep -v "Elapsed total"
 else
-    java -cp .:$DEJAVU/dejavu.jar dejavu.Verify --specfile $SPECFILE --execution 1 | grep -v "Elapsed total"
+    gtime java -cp .:$DEJAVU/dejavu.jar dejavu.Verify --specfile $SPECFILE --execution 1 | grep -v "Elapsed total"
 fi
 
 # Compile synthesized monitor:
-echo "Compiling synthesized monitor: ..."
-time scalac -cp .:$DEJAVU/dejavu.jar $OUTPUT/TraceMonitor.scala 2>&1 | grep -v "warning"
+echo "Compiling synthesized monitor..."
+gtime scalac -cp .:$DEJAVU/dejavu.jar $OUTPUT/TraceMonitor.scala 2>&1 | grep -v "warning"
 
 # Run the compiled monitor on trace:
 echo ""
-echo "Verifying trace: ..."
-time scala -J-Xmx16g -cp .:$DEJAVU/dejavu.jar TraceMonitor $PARAMS_AS_STRING 2>&1\
+echo "THE RELEVANT RESULTS"
+echo "####################"
+echo "Verifying trace..."
+gtime scala -J-Xmx16g -cp .:$DEJAVU/dejavu.jar TraceMonitor $PARAMS_AS_STRING 2>&1\
    | grep -v "Resizing" | grep -v "load BDD package" | grep -v "Garbage collection"
+echo "####### END ########"
+echo ""
 
 
 # Cleaning Up:
