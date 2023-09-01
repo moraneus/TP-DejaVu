@@ -5,7 +5,7 @@
 #
 # To use, call (after making executable with: chmod +x dejavu) as follows:
 #
-#   dejavu (--specfile=<filename>) (--logfile=<filename>) [--bits=numOfBits] [--mode=(debug | profile)] [--clear=(0 | 1)]
+#   dejavu (--specfile=<filename>) (--logfile=<filename>) [--bits=numOfBits] [--mode=(debug | profile)] [--stat=(true | false)] [--clear=(0 | 1)]
 #
 #   Options:
 #     -s, --specfile          the path to a file containing the specification document. This is a mandatory field.
