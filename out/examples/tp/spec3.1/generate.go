@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	RAW_USERS        int
-	SIMULATION_STEPS = 20000
+	ROAD_USERS        int
+	SIMULATION_STEPS = 1000000
 	Obstacles        map[string]*Info
-	Syserr           int
+	Syserr           float64
 	filename         = "log.csv"
 	file             *os.File
 	fileMutex        sync.Mutex
@@ -23,8 +23,8 @@ var (
 type Info struct {
 	X         int
 	Y         int
-	Z         int
-	Lerr      int
+	//Z         int
+	Lerr      float64
 	Entry     bool
 	Exit      bool
 	Predicted bool
@@ -56,20 +56,20 @@ func dices() bool {
 	return randInt%5 == 0
 }
 
-func predict(ru string) (int, int, int) {
-	randX, randY, randZ := rand.Intn(41)-20, rand.Intn(41)-20, rand.Intn(41)-20
+func predict(ru string) (int, int /*, int*/) {
+	randX, randY /*, randZ */ := rand.Intn(41)-20, rand.Intn(41)-20 /*, rand.Intn(41)-20*/
 
 	ruObj := Obstacles[ru]
 
-	return ruObj.X + randX, ruObj.Y + randY, ruObj.Z + randZ
+	return ruObj.X + randX, ruObj.Y + randY //, ruObj.Z + randZ
 
 }
 
-func obstacle(ru string, x int, y int, z int) {
+func obstacle(ru string, x int, y int /*, z int*/) {
 	ruObj := Obstacles[ru]
-	ruObj.Lerr = int(math.Abs(float64(ruObj.X-x)) + math.Abs(float64(ruObj.Y-y)) + math.Abs(float64(ruObj.Z-z)))
+	ruObj.Lerr =  math.Sqrt(math.Pow(float64(ruObj.X-x),2) + math.Pow(float64(ruObj.Y-y),2)) /*+ math.Abs(float64(ruObj.Z-z)))*/
 	Syserr += ruObj.Lerr
-	appendLine("obstacle," + ru + "," + strconv.Itoa(ruObj.X) + "," + strconv.Itoa(ruObj.Y) + "," + strconv.Itoa(ruObj.Z))
+	appendLine("obstacle," + ru + "," + strconv.Itoa(ruObj.X) + "," + strconv.Itoa(ruObj.Y) /*+ "," + strconv.Itoa(ruObj.Z)*/ )
 }
 
 func obstacle_report(ru string) {
@@ -77,7 +77,7 @@ func obstacle_report(ru string) {
 	ruObj := Obstacles[ru]
 
 	if ruObj.Entry == true && ruObj.Exit == false && dices() == true {
-		appendLine("obstacle," + ru + "," + strconv.Itoa(ruObj.X) + "," + strconv.Itoa(ruObj.Y) + "," + strconv.Itoa(ruObj.Z))
+		appendLine("obstacle," + ru + "," + strconv.Itoa(ruObj.X) + "," + strconv.Itoa(ruObj.Y) /*+ "," + strconv.Itoa(ruObj.Z)*/)
 	}
 }
 
@@ -85,9 +85,9 @@ func mk_prediction(ru string) {
 	ruObj := Obstacles[ru]
 
 	if ruObj.Entry == true && ruObj.Exit == false && ruObj.Predicted == false && dices() == true {
-		x, y, z := predict(ru)
-		appendLine("mk_prediction," + ru + "," + strconv.Itoa(x) + "," + strconv.Itoa(y) + "," + strconv.Itoa(z))
-		obstacle(ru, x, y, z)
+		x, y /*, z*/ := predict(ru)
+		appendLine("mk_prediction," + ru + "," + strconv.Itoa(x) + "," + strconv.Itoa(y) /*+ "," + strconv.Itoa(z)*/)
+		obstacle(ru, x, y /*, z*/)
 		ruObj.Predicted = true
 	}
 
@@ -107,7 +107,7 @@ func exit(ru string) {
 
 	ruObj := Obstacles[ru]
 	if ruObj.Exit != true && ruObj.Entry == true && /*ruObj.Predicted == true &&*/ dices() == true {
-		appendLine("exit," + ru + "," + strconv.Itoa(ruObj.Lerr))
+		appendLine("exit," + ru + "," + strconv.FormatFloat(ruObj.Lerr, 'g', 5, 64))
 		ruObj.Exit = true
 		ruObj.Entry = false
 		ruObj.Predicted = false
@@ -135,8 +135,8 @@ func simulate() {
 
 func initialize() {
 
-	for i := 0; i < RAW_USERS; i++ {
-		Obstacles["ru"+strconv.Itoa(i)] = &Info{X: rand.Intn(30), Y: rand.Intn(30), Z: rand.Intn(30), Entry: false, Exit: false, Lerr: 0}
+	for i := 0; i < ROAD_USERS; i++ {
+		Obstacles["ru"+strconv.Itoa(i)] = &Info{X: rand.Intn(30), Y: rand.Intn(30),/* Z: rand.Intn(30),*/ Entry: false, Exit: false, Lerr: 0}
 	}
 }
 
@@ -153,9 +153,9 @@ func main() {
 
 	Obstacles = make(map[string]*Info)
 
-	fmt.Print("Number of raw users: ")
-	fmt.Scan(&RAW_USERS)
-	fmt.Println(RAW_USERS)
+	fmt.Print("Number of road users: ")
+	fmt.Scan(&ROAD_USERS)
+	fmt.Println(ROAD_USERS)
 
 	initialize()
 	simulate()

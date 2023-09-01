@@ -16,7 +16,7 @@ var Manifacturers = []string{"bmw", "audi", "alfaromeo",
 
 var (
 	NCARS            int
-	SIMULATION_STEPS = 50
+	SIMULATION_STEPS = 500000
 	Cars             []*Car
 	filename         = "log.csv"
 	file             *os.File
@@ -69,7 +69,7 @@ func initialize() {
 	for i := 0; i < NCARS; i++ {
 		Cars = append(Cars, &Car{
 			Maker: Manifacturers[rand.Intn(len(Manifacturers))],
-			Speed: 0,
+			Speed: rand.Intn(100),
 		})
 	}
 }

@@ -1,9 +1,9 @@
-initiate
+Initiate
     LErr: double := 0
     SysErr: double := 0
     NewPred: bool := false
-    Epo: int := 20
     Emax: int := 200
+    Epo: int := 20
 
 on entry(ru: str)
 output entry(ru)
@@ -14,14 +14,12 @@ on mk_prediction(ru: str, x: int, y: int)
 output predicted(ru)
 
 on obstacle(ru: str, x: int, y: int)
-    LErr: double := ite(NewPred == true, (abs(x - @x)^^2 + abs(y - @y)^^2)^^0.5, 0)
+    LErr: double := ite(NewPred == true, (((x - @x)^^2) + ((y - @y)^^2))^^0.5, 0)
     SysErr: double := @SysErr + LErr
     error: bool := (LErr > Epo) || (SysErr > Emax)
     NewPred: bool := false
 output valid(ru, error, LErr)
 
-on exit(ru: str, l_err: int)
-    SysErr: int := @SysErr - l_err
+on exit(ru: str, l_err: double)
+    SysErr: double := @SysErr - l_err
 output exit(ru)
-
-
