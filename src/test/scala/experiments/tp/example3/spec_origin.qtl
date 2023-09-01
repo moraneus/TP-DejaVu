@@ -1,1 +1,1 @@
-prop origin: Forall x . Forall y . ((p(x) & @P p(y)) -> x > y)
+prop origin: forall x . ( p(x) -> (forall y . ( @P q(y) -> x > y) & exists z . @  P q(z) ) )

@@ -22,7 +22,7 @@ echo "########## spec_origin.qtl 1M ##########" >> result-spec-1
 
 echo "########## spec_origin.qtl 5M ##########"
 echo "########## spec_origin.qtl 5M ##########" >> result-spec-1
-(./dejavu --specfile=spec_origin.qtl --logfile=log_5M.csv --bits=20 --stat=false) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_origin.qtl --logfile=log_5M.csv --bits=30 --stat=false) >> result-spec-1 2>&1
 
 echo "########## spec_modified.qtl 10K ##########"
 echo "########## spec_modified.qtl 10K ##########" >> result-spec-1
@@ -42,4 +42,4 @@ echo "########## spec_modified.qtl 1M ##########" >> result-spec-1
 
 echo "########## spec_modified.qtl 5M ##########"
 echo "########## spec_modified.qtl 5M ##########" >> result-spec-1
-(./dejavu --specfile=spec_modified.qtl --logfile=log_5M.csv --bits=20 --stat=false --prefile=spec.pqtl) >> result-spec-1 2>&1
+(./dejavu --specfile=spec_modified.qtl --logfile=log_5M.csv --bits=30 --stat=false --prefile=spec.pqtl) >> result-spec-1 2>&1

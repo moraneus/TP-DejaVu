@@ -1,7 +1,11 @@
 initiate
-    MaxVal: int := -1
+    MaxY: int := -1
     
 on p(x: int)
-   NewMax: bool := MaxVal < x
-   MaxVal: int := ite(NewMax, x, @MaxVal)
-  output p(x, NewMax)
+   xGTy: bool := x > MaxY
+   output p(x, xGTy)
+
+on q(y: int)
+   NewMaxY: bool := @MaxY < y
+   MaxY: int := ite(NewMaxY, y, @MaxY)
+   output q(y)

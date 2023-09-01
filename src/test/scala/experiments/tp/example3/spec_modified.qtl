@@ -1,1 +1,1 @@
-prop modified: exists x . p(x, "true")
+prop modified: forall x . forall z . (p(x, z) -> (p(x, "true") & exists y . @ P q(y)))

@@ -619,8 +619,8 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
           modifiedEvent match {
             case Some(first :: second :: _) =>
               submit(first.toString, second.asInstanceOf[List[String]])
-            case Some(event_name: String) if event_name != "skip" =>
-              submit(event_name, Nil)
+            case Some(event_name) =>
+              if (event_name.toString != "skip") submit(event_name.toString, Nil)
             case Some(_) =>
               println("Unexpected event structure output from the pre processing")
             case None =>

@@ -9,3 +9,6 @@ dejavu-results
 .idea/
 project/project/
 META_INF
+*log_5M.csv
+result-spec-*
+

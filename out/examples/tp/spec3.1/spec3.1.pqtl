@@ -1,26 +1,27 @@
-Initiate
-    LErr: int := 0
-    SysErr: int := 0
+initiate
+    LErr: double := 0
+    SysErr: double := 0
+    NewPred: bool := false
     Epo: int := 20
-    Emax: int := 10
+    Emax: int := 200
 
 on entry(ru: str)
 output entry(ru)
 
-on mk_prediction(ru: str, x: int, y: int, z: int)
-    LErr: int := 0
+on mk_prediction(ru: str, x: int, y: int)
+    LErr: double := 0
     NewPred: bool := true
 output predicted(ru)
 
-on obstacle(ru: str, x: int, y: int, z: int)
-    LErr: int := ite(NewPred == true, abs(x - @x) + abs(y - @y) + abs(z - @z), 0)
-    SysErr: int := SysErr + LErr
+on obstacle(ru: str, x: int, y: int)
+    LErr: double := ite(NewPred == true, (abs(x - @x)^^2 + abs(y - @y)^^2)^^0.5, 0)
+    SysErr: double := @SysErr + LErr
     error: bool := (LErr > Epo) || (SysErr > Emax)
     NewPred: bool := false
 output valid(ru, error, LErr)
 
 on exit(ru: str, l_err: int)
-    SysErr: int := SysErr - l_err
+    SysErr: int := @SysErr - l_err
 output exit(ru)
 
 
