@@ -10,7 +10,7 @@ import (
 
 var (
 	NACS             int
-	SIMULATION_STEPS = 50
+	SIMULATION_STEPS = 1500000
 	Airconditions    []*AC
 	filename         = "log.csv"
 	file             *os.File

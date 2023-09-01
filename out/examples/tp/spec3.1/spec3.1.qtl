@@ -1,1 +1,1 @@
-prop p3_1: forall v . exists l . ( exit(v) | ( ( @ predicted(v) -> valid(v, "false", l) ) S entry(v) ) )
+prop p3_1: forall ru .  ( exit(ru) | ( ( @ predicted(ru) -> exists L . valid(ru, "false", L) ) S entry(ru) ) )

@@ -1,8 +1,8 @@
 initiate
     MaxSpeed: int := 0
-on recorded(maker: str, speed: int)
-    MaxSpeed: int := ite(@MaxSpeed < speed, speed, @MaxSpeed)
+on recorded(vendor: str, speed: int)
     NewRecord: bool := @MaxSpeed < speed
-output fast(maker, NewRecord)
+    MaxSpeed: int := ite(NewRecord, speed, @MaxSpeed)
+output fast(vendor, NewRecord)
 
 

@@ -1,0 +1,2 @@
+prop p4:  exists x1 . exists y1 . exists x2 . exists y2 .   exit_fspace(x1,y1,x2,y2) |
+  (forall ru . ! error(ru, "true") & (!exit_fspace(x1,y1,x2,y2)  S new_fspace(x1, y1, x2, y2)))

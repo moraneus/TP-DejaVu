@@ -11,7 +11,9 @@ import (
 
 var (
 	NCARS            int
-	SIMULATION_STEPS = 50
+	SIMULATION_STEPS = 5000000
+	NLINES			 = 0
+	LIMIT			 = 5000000
 	Cars             []*Car
 	Distances 		 []*Distance
 	Differences 	 []int
@@ -56,10 +58,14 @@ func appendLine(line string) {
 	fileMutex.Lock()
 	defer fileMutex.Unlock()
 
+	if NLINES == LIMIT {
+		os.Exit(0)
+	}
+
 	if _, err := file.WriteString(line + "\n"); err != nil {
 		fmt.Println("Error: ", err)
 	}
-
+	NLINES += 1
 }
 
 func compute_distance(carA *Car, carB *Car) int {
@@ -68,13 +74,13 @@ func compute_distance(carA *Car, carB *Car) int {
 
 }
 
-func location(carA *Car, carB *Car) {
+func location(carA *Car, carB *Car, dist int) {
 	//dist := math.Sqrt(math.Pow(float64(carA.X-carB.X), 2) + math.Pow(float64(carB.Y-carA.Y), 2))
-	appendLine("location," + carA.Name + "," + carB.Name + "," + strconv.Itoa(carA.X)+ "," + strconv.Itoa(carA.Y)+  "," + strconv.Itoa(carB.X)+ "," + strconv.Itoa(carB.Y))
+	appendLine("location," + carA.Name + "," + carB.Name + "," + strconv.Itoa(carA.X)+ "," + strconv.Itoa(carA.Y)+  "," + strconv.Itoa(carB.X)+ "," + strconv.Itoa(carB.Y) /*+ "," + strconv.Itoa(dist)*/ )
 }
 
-func start_measure(carA *Car, carB *Car){
-	appendLine("startMeasure," + carA.Name + "," + carB.Name + "," + strconv.Itoa(carA.X)+ "," + strconv.Itoa(carA.Y)+  "," + strconv.Itoa(carB.X)+ "," + strconv.Itoa(carB.Y))
+func start_measure(carA *Car, carB *Car, dist int){
+	appendLine("startMeasure," + carA.Name + "," + carB.Name + "," + strconv.Itoa(carA.X)+ "," + strconv.Itoa(carA.Y)+  "," + strconv.Itoa(carB.X)+ "," + strconv.Itoa(carB.Y) /*+ "," + strconv.Itoa(dist)*/)
 }
 
 func move(car *Car) {
@@ -93,21 +99,21 @@ func get_minimum_distance() (int, int) {
 			index = ind
 		}
 	}
-
+	//appendLine("MINIMUM DISTANCE " + strconv.Itoa(minimumDistance))
 	return index, minimumDistance
 }
 
 func start_monitoring(d *Distance) {
 
 	d.Monitoring = true;
-	appendLine("startMonitoring" + "," + d.CarA.Name + "," + d.CarB.Name)
+	appendLine("startMonitoring" + "," + d.CarA.Name + "," + d.CarB.Name /*+ "," + strconv.Itoa(d.Dist)*/)
 
 }
 
 func stop_monitoring(d *Distance) {
 
 	d.Monitoring = false;
-	appendLine("stopMonitoring" + "," + d.CarA.Name + "," + d.CarB.Name)
+	appendLine("stopMonitoring" + "," + d.CarA.Name + "," + d.CarB.Name /*+ "," + strconv.Itoa(d.Dist)*/)
 
 }
 
@@ -138,21 +144,25 @@ func simulate() {
 
 		d := Distances[index]
 		
-		start_measure(d.CarA, d.CarB)
+		start_measure(d.CarA, d.CarB, d.Dist)
 
 		for _, car := range Cars {
 			move(car)
 		}
 		update_distances_between_cars()
 
-		for newInd, _ := get_minimum_distance(); newInd == index; {
+		newInd, _ := get_minimum_distance()
+		for ; newInd == index; {
 
 			
-			location(d.CarA, d.CarB)
+			location(d.CarA, d.CarB,d.Dist)
 			for _, car := range Cars {
 				move(car)
 			}
+
 			update_distances_between_cars()
+			newInd, _ = get_minimum_distance()
+
 		}
 
 		 

@@ -1,0 +1,7 @@
+
+on new_fspace(fs_x1: int, fs_y1: int , fs_x2: int , fs_y2: int )
+output new_fspace(fs_x1, fs_y1, fs_x2, fs_y2)
+
+on location(ru: str , bb_xa: int , bb_ya: int , bb_xb: int , bb_yb: int )
+    overlap:bool := (bb_xb >= fs_x1) && (bb_xa <= fs_x2) && (bb_yb <= fs_y1) && (bb_ya >= fs_y2)
+output error(ru,overlap)

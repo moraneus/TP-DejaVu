@@ -1,1 +1,3 @@
-prop p1: exists x . (fast(x, "true") & !(@(P(fast(x, "true")))))
+//prop p1: forall x . (fast(x, "true") -> !(@(P(fast(x, "true")))))
+
+prop p1: exists x . ( fast(x, "true") & ! @ P fast(x, "true"))

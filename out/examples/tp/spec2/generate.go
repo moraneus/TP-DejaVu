@@ -6,11 +6,12 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var (
 	NCARS            int
-	SIMULATION_STEPS = 1000
+	SIMULATION_STEPS = 250000
 	Cars             []*Car
 	filename         = "log.csv"
 	file             *os.File
@@ -44,16 +45,16 @@ func appendLine(line string) {
 }
 
 func StartMeasure(car *Car) {
-	car.Temperature += rand.Intn(10)
+	car.Temperature += rand.Intn(10) - 3
 	appendLine("StartMeasure," + car.Id + "," + strconv.Itoa(car.Temperature))
 }
 
 func EndMeasure(car *Car) {
-	car.Temperature += rand.Intn(10)
+	car.Temperature += rand.Intn(10) - 3
 	appendLine("EndMeasure," + car.Id + "," + strconv.Itoa(car.Temperature))
 
 	if car.Temperature > 120 {
-		car.Temperature = 70
+		car.Temperature = 90
 	}
 
 }
@@ -73,12 +74,14 @@ func initialize() {
 	for i := 0; i < NCARS; i++ {
 		Cars = append(Cars, &Car{
 			Id:          "car" + strconv.Itoa(i),
-			Temperature: 0,
+			Temperature: 90,
 		})
 	}
 }
 
 func main() {
+
+	rand.Seed(time.Now().UnixNano())
 
 	if err := openFile(); err != nil {
 		fmt.Println("Error: ", err)
