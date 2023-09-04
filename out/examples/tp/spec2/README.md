@@ -56,7 +56,7 @@ prop p2 : exists x . (warmAlert(x, "true") & @(startMeasure(x) & P (warmAlert(x,
 
 2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/out/examples/tp/spec2) and place the above files inside it.
 
-3. Specify the length of the trace by modyfing the variable `SIMULATION_STEPS` (line 14) in `generate.go`:
+3. Specify the length of the trace by modyfing the variable `SIMULATION_STEPS` (line 14) in `generate.go`. Please note that each simulation step generates 2 events (`StartMeasure` & `EndMeasure`) for each car. So if you want to generate a log file of size `n`, you have to define `SIMULATION_STEPS` as `n/2`.
 
 4. Generate a trace:
 
