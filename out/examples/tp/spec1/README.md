@@ -38,6 +38,7 @@ prop p1: exists x . ( fast(x, "true") & ! @ P fast(x, "true"))
     </thead>
     <tbody>
         <tr>
+            <td>10 cars</td>
             <td>0.53s<br>105.68MB</td>
             <td>0.92s<br>157.34MB</td>
             <td>1.55s<br>229.31MB</td>
@@ -52,7 +53,7 @@ prop p1: exists x . ( fast(x, "true") & ! @ P fast(x, "true"))
 - `dejavu`
 - `tpdejavu.jar`
 
-2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/src/out/examples/tp/spec1) and place the above files inside it.
+2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/out/examples/tp/spec1) and place the above files inside it.
 
 3. Specify the length of the trace by modyfing the variable `SIMULATION_STEPS` (line 19) in `generate.go`:
 
