@@ -319,7 +319,20 @@ case class Spec(properties: List[Property]) {
       s"""
          |object TraceMonitor {
          |  private val usage: String =
-         | \"\"\"Usage: (--logfile <filename>) [--bits numOfBits] [--mode (debug | profile)] [--stat]
+         | \"\"\"Usage: Usage:
+         |    --logfile=<filename> [OPTIONS]
+         |
+         |Options:
+         |    -l, --logfile=<filename>        Path to the CSV log file to be analyzed. (Optional)
+         |    -b, --bits=<numOfBits>          Number of bits for each variable in the BDD representation. (Default: 20 bits)
+         |    -m, --mode=(debug|profile)      Set the output mode. (Default: None)
+         |    -st, --stat=(true|false)        Print violations if set to true. (Optional)
+         |    -c, --clear=(0|1)               Clear generated files and folders. Set to '1' for cleaning. (Optional)
+         |
+         |Argument Examples:
+         |    --logfile log.csv
+         |    --logfile log.csv --bits 16 --mode debug --stat false
+         |
          | \"\"\".stripMargin
          |
          | def time[R](block: => R): R = {

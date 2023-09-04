@@ -141,20 +141,22 @@ object Verify {
   def main(arguments: Array[String]): Unit = {
     val usage =
       """Usage:
-        |
-        |      (--specfile <filename>) [--prefile <filename>] [--logfile <filename>] [--bits numOfBits] [--mode (debug | profile)]
-        |      [--result <filename>] [--clear (0 | 1)] [--execution (0 | 1)] [--stat (true | false)]
+        |    --specfile <filename> [OPTIONS]
         |
         |Options:
-        |   --specfile          the path to a file containing the specification document. This is a mandatory field.
-        |   --prefile           the path to a file containing the pre specification document.
-        |   --logfile           the path to a file containing the log in CSV format to be analyzed.
-        |   --bits              number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
-        |   --mode              specifies output modes. by default no one is active.
-        |   --result            the path to a result filename. If not specify the default is the running DejaVu folder. For development mode.
-        |   --execution         indicating whether to work in production or development mode. this execution mode affects where the output files are created.
-        |   --stat              indicating whether to print violations or not.
-        |   --clear             indicating whether to clear generated files and folder. For development mode.
+        |    -s, --specfile=<filename>       Path to the specification document. (Mandatory)
+        |    -p, --prefile=<filename>        Path to the pre-specification document. (Optional)
+        |    -l, --logfile=<filename>        Path to the CSV log file to be analyzed. (Optional)
+        |    -b, --bits=<numOfBits>          Number of bits for each variable in the BDD representation. (Default: 20 bits)
+        |    -m, --mode=(debug|profile)      Set the output mode. (Default: None)
+        |    -st, --stat=(true|false)        Print violations if set to true. (Optional)
+        |    -c, --clear=(0|1)               Clear generated files and folders. Set to '1' for cleaning. (Optional)
+        |
+        |Argument Examples:
+        |    --specfile spec.qtl --logfile log.csv
+        |    --specfile spec.qtl --logfile log.csv --bits=16 --mode debug --stat true --clear 1
+        |    --specfile spec.qtl --prefile spec.pqtl --logfile log.csv --bits=16 --mode debug --stat true --clear 1
+        |
         """.stripMargin
     SymbolTable.reset()
 

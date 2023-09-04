@@ -5,16 +5,23 @@
 #
 # To use, call (after making executable with: chmod +x dejavu) as follows:
 #
-#   dejavu (--specfile=<filename>) (--logfile=<filename>) [--bits=numOfBits] [--mode=(debug | profile)] [--clear=(0 | 1)]
+# Usage:
+#     dejavu --specfile=<filename> --logfile=<filename> [OPTIONS]
 #
-#   Options:
-#     -s, --specfile          the path to a file containing the specification document. This is a mandatory field.
-#     -l, --logfile           the path to a file containing the log in CSV format to be analyzed.
-#     -p, --prefile           the path to a file containing the pre specification document.
-#     -b, --bits              number indicating how many bits should be assigned to each variable in the BDD representation. If nothing is specified, the default value is 20 bits.
-#     -m, --mode              specifies output modes. by default no one is active.
-#     -st, --stat             indicating whether to print violations or not.
-#     -c, --clear             indicating whether to clear generated files and folder. value of '1' is for cleaning.
+# Options:
+#     -s, --specfile=<filename>       Path to the specification document. (Mandatory)
+#     -p, --prefile=<filename>        Path to the pre-specification document. (Optional)
+#     -l, --logfile=<filename>        Path to the CSV log file to be analyzed. (Mandatory)
+#     -b, --bits=<numOfBits>          Number of bits for each variable in the BDD representation. (Default: 20 bits)
+#     -m, --mode=(debug|profile)      Set the output mode. (Default: None)
+#     -st, --stat=(true|false)        Print violations if set to true. (Optional)
+#     -c, --clear=(0|1)               Clear generated files and folders. Set to '1' for cleaning. (Optional)
+#
+# Examples:
+#     dejavu --specfile=spec.qtl --logfile=log.csv
+#     dejavu --specfile=spec.qtl --logfile=log.csv --bits=16 --mode=debug --stat=true --clear=1
+#     dejavu --specfile=spec.qtl --prefile=spec.pqtl --logfile=log.csv --bits=16 --mode=debug --stat=true --clear=1
+
 
 
 for i in "$@"; do
@@ -99,21 +106,21 @@ echo "Output directory: ${OUTPUT}"
 # Parse specification and synthesize monitor:
 echo "Parse specification and synthesize monitor..."
 if [ -n "${PREFILE}" ]; then
-  gtime java -cp .:$DEJAVU/dejavu.jar dejavu.Verify --specfile $SPECFILE --prefile $PREFILE --execution 1 | grep -v "Elapsed total"
+  gtime java -cp .:$DEJAVU/tpdejavu.jar dejavu.Verify --specfile $SPECFILE --prefile $PREFILE --execution 1 | grep -v "Elapsed total"
 else
-    gtime java -cp .:$DEJAVU/dejavu.jar dejavu.Verify --specfile $SPECFILE --execution 1 | grep -v "Elapsed total"
+    gtime java -cp .:$DEJAVU/tpdejavu.jar dejavu.Verify --specfile $SPECFILE --execution 1 | grep -v "Elapsed total"
 fi
 
 # Compile synthesized monitor:
 echo "Compiling synthesized monitor..."
-gtime scalac -cp .:$DEJAVU/dejavu.jar $OUTPUT/TraceMonitor.scala 2>&1 | grep -v "warning"
+gtime scalac -cp .:$DEJAVU/tpdejavu.jar $OUTPUT/TraceMonitor.scala 2>&1 | grep -v "warning"
 
 # Run the compiled monitor on trace:
 echo ""
 echo "THE RELEVANT RESULTS"
 echo "####################"
 echo "Verifying trace..."
-gtime scala -J-Xmx16g -cp .:$DEJAVU/dejavu.jar TraceMonitor $PARAMS_AS_STRING 2>&1\
+gtime scala -J-Xmx16g -cp .:$DEJAVU/tpdejavu.jar TraceMonitor $PARAMS_AS_STRING 2>&1\
    | grep -v "Resizing" | grep -v "load BDD package" | grep -v "Garbage collection"
 echo "####### END ########"
 echo ""

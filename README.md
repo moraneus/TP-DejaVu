@@ -34,7 +34,7 @@ The directly ``out`` contains files and directories useful for installing and ru
 DejaVu is implemented in Scala. In this version of TP-DejaVu we used Scala 2.11.12.
 
 1. Install the Scala programming language if not already installed (https://www.scala-lang.org/download)
-2. Place the files ``dejavu`` and ``dejavu.jar`` mentioned above in some directory **DIR** (standing for the total path to this directory).
+2. Place the files ``dejavu`` and ``tpdejavu.jar`` mentioned above in some directory **DIR** (standing for the total path to this directory).
 3. cd to  **DIR** and make the script executable:
 
         chmod +x dejavu
@@ -519,9 +519,9 @@ When `TraceMonitor.scala` is created during the generation process, it uses code
 If you want to modify the final output of `TraceMonitor.scala`, you'll need to make changes in these source files. 
 This often involves altering the existing code templates or adding new ones as per your needs.
 
-### Build a New DejaVu.jar Artifact in IntelliJ
+### Build a New `tpdejaVu.jar` Artifact in IntelliJ
 
-After making modifications to the DejaVu Runtime Verification (RV) tool, you may want to create a new `dejavu.jar` artifact. Here are the steps to take this using IntelliJ:
+After making modifications to the DejaVu Runtime Verification (RV) tool, you may want to create a new `tpdejavu.jar` artifact. Here are the steps to take this using IntelliJ:
 
 #### Pre-requisites
 
@@ -541,7 +541,7 @@ Before you begin, please ensure you have Scala version 2.11.x installed on your 
 
 6. **Build Artifact**: Go to `Build -> Build Artifacts`, select `dejavu`, and then select `Build`.
 
-The `dejavu.jar` file will be created in the output directory you specified in the artifact configuration.
+The `tpdejavu.jar` file will be created in the output directory you specified in the artifact configuration.
 
 #### ⚠️ Important Note on Scala Versions
 
