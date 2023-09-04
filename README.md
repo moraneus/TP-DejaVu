@@ -24,14 +24,15 @@ More details about DejaVu and how it operates can be found [here](https://github
 
 ## Installing DejaVu:
 
-The directly ``out`` contains files and directories useful for installing and running DejaVu:
+The directory [``dir``](https://github.com/moraneus/TP-DejaVu/tree/master/dir) contains files useful for installing and running DejaVu:
+* [`dejavu`](https://github.com/moraneus/TP-DejaVu/blob/master/dir/dejavu)                          : Script to run the system
+* [`tpdejavu.jar`](https://github.com/moraneus/TP-DejaVu/blob/master/dir/tpdejavu.jar)                    : Contain the tpdejavu.jar file
 
-* dejavu                          : Script to run the system
-* artifacts                       : Contain the TP-DejaVu jar file
-* papers                          : A directory containing papers published about TP-DejaVu
-* examples                        : An example directory containing properties and logs (DejaVu + TP-DejaVu)
+The directory [``out``](https://github.com/moraneus/TP-DejaVu/tree/master/out) contains useful examples for DejaVu and TP-DejaVu:
+* [``examples``](https://github.com/moraneus/TP-DejaVu/tree/master/out/examples)                        : An example directory containing properties and logs (DejaVu + TP-DejaVu)
 
-DejaVu is implemented in Scala. In this version of TP-DejaVu we used Scala 2.11.12.
+
+DejaVu is implemented in Scala. In this version of TP-DejaVu we used **Scala 2.11.12**.
 
 1. Install the Scala programming language if not already installed (https://www.scala-lang.org/download)
 2. Place the files ``dejavu`` and ``tpdejavu.jar`` mentioned above in some directory **DIR** (standing for the total path to this directory).
@@ -62,6 +63,7 @@ The script is applied as follows:
     Examples:
     dejavu --specfile=spec.txt --logfile=log.csv
     dejavu --specfile=spec.txt --logfile=log.csv --bits=16 --mode=debug --stat=true --clear=1
+    dejavu --specfile=spec.qtl --prefile=spec.pqtl --logfile=log.csv --bits=16 --mode=debug --stat=true --clear=1
 
 
 #### Some Execution Examples
@@ -324,7 +326,7 @@ forall x . (p(x, "true") -> exists y . q(x,y))
 ### How to Execute the Example
 
 1. Ensure you have the following files in your local environment:
-  - `dejavu`
+  - `dejavu` (Make sure the script is executable by using the command ```chmod +x dejavu```)
   - `tpdejavu.jar`
 
 2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example1) and place the above files inside it.
@@ -409,7 +411,7 @@ forall x . forall y . ((p(x, "true") & @q(y)) -> P r(x, y))
 ### How to Execute the Example
 
 1. Ensure you have the following files in your local environment:
-- `dejavu`
+- `dejavu` (Make sure the script is executable by using the command ```chmod +x dejavu```)
 - `tpdejavu.jar`
 
 2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example2) and place the above files inside it.
@@ -494,7 +496,7 @@ forall x . forall z . (p(x, z) -> (p(x, "true") & exists y . @ P q(y)))
 ### How to Execute the Example
 
 1. Ensure you have the following files in your local environment:
-- `dejavu`
+- `dejavu` (Make sure the script is executable by using the command ```chmod +x dejavu```)
 - `tpdejavu.jar`
 
 2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example3) and place the above files inside it.
@@ -575,7 +577,7 @@ forall x . ((p(x, "true") -> exists y . q(x, y, "true")))
 ### How to Execute the Example
 
 1. Ensure you have the following files in your local environment:
-- `dejavu`
+- `dejavu` (Make sure the script is executable by using the command ```chmod +x dejavu```)
 - `tpdejavu.jar`
 
 2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example4) and place the above files inside it.
