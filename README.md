@@ -321,6 +321,31 @@ forall x . (p(x, "true") -> exists y . q(x,y))
         </tr>
 </table>
 
+### How to Execute the Example
+
+1. Ensure you have the following files in your local environment:
+  - `dejavu`
+  - `tpdejavu.jar`
+
+2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example1) and place the above files inside it.
+
+3. Run the following command:
+
+```bash
+./dejavu --specfile=spec_modified.qtl --logfile=log_10K.csv --bits=20 --prefile=spec.pqtl
+```
+
+### Required Files for Execution:
+
+- [`spec.pqtl`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example1/spec.pqtl)
+  - **Description**: The operational spec file.
+
+- [`spec_modified.qtl`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example1/spec_modified.qtl)
+  - **Description**: The declarative spec file.
+
+- [`log_10K.csv`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example1/log_10K.csv)
+  - **Description**: The trace file containing 10K events.
+
 ### Example 2
 #### Dejavu
 ```
@@ -380,6 +405,31 @@ forall x . forall y . ((p(x, "true") & @q(y)) -> P r(x, y))
             <td>56.78s<br>3.55GB</td>
         </tr>
 </table>
+
+### How to Execute the Example
+
+1. Ensure you have the following files in your local environment:
+- `dejavu`
+- `tpdejavu.jar`
+
+2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example2) and place the above files inside it.
+
+3. Run the following command:
+
+```bash
+./dejavu --specfile=spec_modified.qtl --logfile=log_1M.csv --bits=20 --prefile=spec.pqtl
+```
+
+### Required Files for Execution:
+
+- [`spec.pqtl`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example2/spec.pqtl)
+  - **Description**: The operational spec file.
+
+- [`spec_modified.qtl`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example2/spec_modified.qtl)
+  - **Description**: The declarative spec file.
+
+- [`log_1M.csv`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example2/log_1M.csv)
+  - **Description**: The trace file containing 1M events.
 
 ### Example 3
 #### Dejavu
@@ -441,6 +491,31 @@ forall x . forall z . (p(x, z) -> (p(x, "true") & exists y . @ P q(y)))
         </tr>
 </table>
 
+### How to Execute the Example
+
+1. Ensure you have the following files in your local environment:
+- `dejavu`
+- `tpdejavu.jar`
+
+2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example3) and place the above files inside it.
+
+3. Run the following command:
+
+```bash
+./dejavu --specfile=spec_modified.qtl --logfile=log_100K.csv --bits=20 --prefile=spec.pqtl
+```
+
+### Required Files for Execution:
+
+- [`spec.pqtl`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example3/spec.pqtl)
+  - **Description**: The operational spec file.
+
+- [`spec_modified.qtl`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example3/spec_modified.qtl)
+  - **Description**: The declarative spec file.
+
+- [`log_100K.csv`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example3/log_100K.csv)
+  - **Description**: The trace file containing 100K events.
+
 ### Example 4
 #### Dejavu
 ```
@@ -496,6 +571,31 @@ forall x . ((p(x, "true") -> exists y . q(x, y, "true")))
             <td>5.07s<br>230.99MB</td>
         </tr>
 </table>
+
+### How to Execute the Example
+
+1. Ensure you have the following files in your local environment:
+- `dejavu`
+- `tpdejavu.jar`
+
+2. Clone the [experiment directory](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example4) and place the above files inside it.
+
+3. Run the following command:
+
+```bash
+./dejavu --specfile=spec_modified.qtl --logfile=log_500K.csv --bits=20 --prefile=spec.pqtl
+```
+
+### Required Files for Execution:
+
+- [`spec.pqtl`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example1/spec.pqtl)
+  - **Description**: The operational spec file.
+
+- [`spec_modified.qtl`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example1/spec_modified.qtl)
+  - **Description**: The declarative spec file.
+
+- [`log_500K.csv`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example1/log_500K.csv)
+  - **Description**: The trace file containing 500K events.
 
 
 ## Modifying the DejaVu Runtime Verification Tool
