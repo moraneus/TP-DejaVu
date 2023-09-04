@@ -272,7 +272,7 @@ Executions where the evaluation process exceeded 1000 seconds are marked with th
 
 #### Dejavu
 ```
-forall x . ((p(x) & x > 7) -> exists y . P q(x, y)
+forall x . ((p(x) & x > 7) -> exists y . P q(x, y))
 ```
 
 #### TP-DejaVu
@@ -649,7 +649,7 @@ DejaVu is based on an older version of Scala (2.11.12). If you're using a newer 
 
 ## Contributors - For TP-DejaVu (Ordered by last name):
 * [Klaus Havelund](http://www.havelund.com), Jet Propulsion Laboratory/NASA, USA
-* Panagiotis Katsaros
+* [Panagiotis Katsaros](https://depend.csd.auth.gr/users/katsaros), Aristotle University of Thessaloniki, Greece
 * [Moran Omer](https://github.com/moraneus), Bar Ilan University, Israel
 * [Doron Peled](http://u.cs.biu.ac.il/~doronp), Bar Ilan University, Israel
-* Tasos Temperekidis
+* [Anastasios Temperekidis](https://github.com/tasosxak), Aristotle University of Thessaloniki, Greece
