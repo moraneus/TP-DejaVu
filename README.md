@@ -26,10 +26,8 @@ More details about DejaVu and how it operates can be found [here](https://github
 
 The directly ``out`` contains files and directories useful for installing and running DejaVu:
 
-* dejavu                          : Script to run the system
-* artifacts                       : Contain the TP-DejaVu jar file
-* papers                          : A directory containing papers published about TP-DejaVu
 * examples                        : An example directory containing properties and logs (DejaVu + TP-DejaVu)
+* dir                             : Script to run the system and tpdejavu.jar file
 
 DejaVu is implemented in Scala. In this version of TP-DejaVu we used Scala 2.11.12.
 

@@ -313,11 +313,18 @@ object CodeGenerator {
   }
 
   /**
-   * Wrap the custom 'in' operator expr with parentheses.
+   * Handle the custom 'in' operator within expr.
    *
    * @param expr A string expression that may contain custom 'in' syntax.
    * @return A string with custom 'in' expr wrapped with parentheses.
    */
+
+  private def translateInExpression(input: String): String = {
+    val ident = """(?:[a-zA-Z_]\w*|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|"[^"]*")"""
+    val pattern = s"""($ident\\sin\\s\\[.*?\\])"""
+    val patternRegex = pattern.r
+    patternRegex.replaceAllIn(input, m => s"(${m.group(0).replace('[', '(').replace(']', ')')})")
+  }
 
 //  private def translateInExpression(input: String): String = {
 //    val pattern = """((?:[a-zA-Z_]\w*)|[-+]?\d*\.?\d+(?:[eE][+-]?\d+)?[fF]?)\s+in\s+\(""".r
@@ -425,12 +432,7 @@ object CodeGenerator {
   }
 
 
-private def translateInExpression(input: String): String = {
-  val ident = """(?:[a-zA-Z_]\w*|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|"[^"]*")"""
-  val pattern = s"""($ident\\sin\\s\\[.*?\\])"""
-  val patternRegex = pattern.r
-  patternRegex.replaceAllIn(input, m => s"(${m.group(0).replace('[', '(').replace(']', ')')})")
-}
+
 
 
   /**
@@ -1016,7 +1018,7 @@ object PreParser {
       case parser.Error(msg, next) => throw new ParseException(s"Error: $msg at line " +
         s"${next.pos.line}, column ${next.pos.column}", next.pos.line)
     }
-    print(generatedCode)
+//    print(generatedCode)
     (preInputProperty, generatedCode)
   }
 }
