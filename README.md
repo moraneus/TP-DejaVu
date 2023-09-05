@@ -17,9 +17,9 @@ Version 4.0, August - 2023
 The main formulas are written in a first-order past-time linear temporal logic, with the addition of macros and recursive rules. The logic also supports reasoning about time.
 DejaVu contributors are [Klaus Havelund](http://www.havelund.com), [Doron Peled](http://u.cs.biu.ac.il/~doronp) and [Dogan Ulus](https://www.linkedin.com/in/doganulus).
 TP-DEJAVU is an enhanced version of the DEJAVU tool, designed to manage two-phase Runtime Verification (RV) processing. 
-In the first phase, which is implemented in Scala, operational RV is carried out, allowing for arithmetic, string, and Boolean manipulations. 
+In the first phase, which is implemented in Scala, **operational** RV is carried out, allowing for arithmetic, string, and Boolean manipulations. 
 This phase leverages a straightforward syntax that facilitates the updating of summary variables. 
-The second phase, based on the DEJAVU tool, and performs monitoring against a first-order specification.
+The second phase, a **declarative**, based on the DEJAVU tool, and performs monitoring against a first-order specification.
 More details about DejaVu and how it operates can be found [here](https://github.com/havelund/dejavu).
 
 ## Installing DejaVu:
@@ -32,9 +32,9 @@ The directory [``out``](https://github.com/moraneus/TP-DejaVu/tree/master/out) c
 * [``examples``](https://github.com/moraneus/TP-DejaVu/tree/master/out/examples)                        : An example directory containing properties and logs (DejaVu + TP-DejaVu)
 
 
-DejaVu is implemented in Scala. In this version of TP-DejaVu we used **Scala 2.11.12**.
+DejaVu is implemented in Scala. In this version of TP-DejaVu we used [**Scala 2.11.12**](https://www.scala-lang.org/download/2.11.12.html).
 
-1. Install the Scala programming language if not already installed (https://www.scala-lang.org/download)
+1. Install the Scala programming language if not already installed ([**Scala 2.11.12** installation instructions](https://www.scala-lang.org/download/2.11.12.html)).
 2. Place the files ``dejavu`` and ``tpdejavu.jar`` mentioned above in some directory **DIR** (standing for the total path to this directory).
 3. cd to  **DIR** and make the script executable:
 
@@ -52,8 +52,8 @@ The script is applied as follows:
     dejavu --specfile=<filename> --logfile=<filename> [OPTIONS]
     
     Options:
-    -s, --specfile=<filename>       Path to the specification document. (Mandatory)
-    -p, --prefile=<filename>        Path to the pre-specification document. (Optional)
+    -s, --specfile=<filename>       Path to the declarative specification document. (Mandatory)
+    -p, --prefile=<filename>        Path to the operational (pre-evaluation spec) document. (Optional)
     -l, --logfile=<filename>        Path to the CSV log file to be analyzed. (Mandatory)
     -b, --bits=<numOfBits>          Number of bits for each variable in the BDD representation. (Default: 20 bits)
     -m, --mode=(debug|profile)      Set the output mode. (Default: None)
@@ -279,12 +279,15 @@ forall x . ((p(x) & x > 7) -> exists y . P q(x, y))
 
 #### TP-DejaVu
 
+##### Operational Spec:
 ```
 on p(x: int)
   in_bound: bool := x > 7
   output p(x, in_bound)
-  
+```
 
+##### Declarative Spec:
+```
 forall x . (p(x, "true") -> exists y . q(x,y))  
 ```
 
@@ -356,6 +359,7 @@ forall x . forall y . ((p(x) & @q(y) & x < y) -> P r(x, y))
 
 #### TP-DejaVu
 
+##### Operational Spec:
 ```
 initiate
   prev_q: bool := false
@@ -368,8 +372,10 @@ on p(x: int)
 on q(y: int)
   prev_q: bool := true
   output q(y)
-  
+```
 
+##### Declarative Spec:
+```
 forall x . forall y . ((p(x, "true") & @q(y)) -> P r(x, y))
 ```
 
@@ -441,6 +447,7 @@ forall x . ( p(x) -> (forall y . ( @P q(y) -> x > y) & exists z . @  P q(z) ) )
 
 #### TP-DejaVu
 
+##### Operational Spec:
 ```
 initiate
     MaxY: int := -1
@@ -453,8 +460,10 @@ on q(y: int)
    NewMaxY: bool := @MaxY < y
    MaxY: int := ite(NewMaxY, y, @MaxY)
    output q(y)
-  
+```  
 
+##### Declarative Spec:
+```
 forall x . forall z . (p(x, z) -> (p(x, "true") & exists y . @ P q(y)))
 ```
 
@@ -526,6 +535,7 @@ forall x . ((p(x) & x >= 0 & x <= 100) -> exists y . ( q(x, y) & ((y >= 0 & y <=
 
 #### TP-DejaVu
 
+##### Operational Spec:
 ```
 on p(x: int)
     x_in_bound: bool := (x >= 0) && (x <= 100)
@@ -534,8 +544,10 @@ on p(x: int)
 on q(x: int, y: int)
     y_in_bound: bool := (abs(y) >= 0) && (abs(y) <= 100)
     output q(x, y, y_in_bound)
-  
+```
 
+##### Declarative Spec:
+```
 forall x . ((p(x, "true") -> exists y . q(x, y, "true")))
 ```
 
