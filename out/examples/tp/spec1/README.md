@@ -57,7 +57,7 @@ prop p1: exists x . ( fast(x, "true") & ! @ P fast(x, "true"))
 
 3. Specify the length of the trace by modyfing the variable `SIMULATION_STEPS` (line 19) in `generate.go`:
 
-4. Generate a trace:
+4. Generate a trace (Make sure golang installed in your PC - It tested on go version go1.21.0):
 
 ```
 go run generate.go

@@ -102,7 +102,7 @@ error (p err) ceases to be considered in the accumulated error (SysErr).
 * `exit(ru)`: May be randomly generated for road users that are within the parking lot area.
 
 
-4. Generate a trace:
+4. Generate a trace (Make sure golang installed in your PC - It tested on go version go1.21.0):
 
 ```
 go run generate.go

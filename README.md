@@ -7,7 +7,7 @@
    ╚═╝   ╚═╝           ╚═════╝ ╚══════╝ ╚════╝ ╚═╝  ╚═╝  ╚═══╝   ╚═════╝ 
                                                                                                                                                          
 First-order past time LTL with recursive rules, time and pre-evaluation!
-Version 4.0, August - 2023
+Version 2.0, August - 2023
 ```
 
   

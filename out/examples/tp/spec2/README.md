@@ -58,7 +58,7 @@ prop p2 : exists x . (warmAlert(x, "true") & @(startMeasure(x) & P (warmAlert(x,
 
 3. Specify the length of the trace by modyfing the variable `SIMULATION_STEPS` (line 14) in `generate.go`. Please note that each simulation step generates 2 events (`StartMeasure` & `EndMeasure`) for each car. So if you want to generate a log file of size `n`, you have to define `SIMULATION_STEPS` as `n/2`.
 
-4. Generate a trace:
+4. Generate a trace (Make sure golang installed in your PC - It tested on go version go1.21.0):
 
 ```
 go run generate.go

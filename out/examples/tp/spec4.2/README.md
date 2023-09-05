@@ -62,7 +62,7 @@ prop p4:  exists x1 . exists y1 . exists x2 . exists y2 .   exit_fspace(x1,y1,x2
 3. Specify the number simulation steps by modifying the variable `SIMULATION_STEPS` (line 14) in `generate.go`. Please note that each simulation step can generate up to `n + 2` events ( `new_fspace`, `exit_fspace` and `location`) where `n` the number of road users. In each simulation step, a `new_fspace(x1,y1,x2,y2)` event may be randomly generated with the top-left (`x1`,`y1`) and bottom-right (`x2`,`y2`) points of that free space. If this event is generated, an `exit_fspace(x1,y1,x2,y2)` event is produced first, indicating the coordinates of the previous free space. In each simulation step, whether or not a new free space is generated, `n` `location(ru,x1,y1,x2,y2)` events are generated, each with the ID of the road user and their corresponding coordinates.
 
 
-4. Generate a trace:
+4. Generate a trace (Make sure golang installed in your PC - It tested on go version go1.21.0):
 
 ```
 go run generate.go

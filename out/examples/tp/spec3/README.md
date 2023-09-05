@@ -55,7 +55,7 @@ prop p3: forall ac . ( ( exists temp .  set(ac, temp, "true") ) -> ( !turn_off(a
 
 3. Specify the number simulation steps by modifying the variable `SIMULATION_STEPS` (line 13) in `generate.go`. Please note that each simulation step can generate at most 3 events (`turn_on`, `set` and `turn_off`) for each air conditioner (AC). These three events for a specific AC can be produced with some probability. Additionally, a `set` or `turn_off` event can be produced only if the corresponding AC has been turned on previously. 
 
-4. Generate a trace:
+4. Generate a trace (Make sure golang installed in your PC - It tested on go version go1.21.0):
 
 ```
 go run generate.go
