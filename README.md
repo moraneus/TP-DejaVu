@@ -269,10 +269,12 @@ The different operators `op` and their behaviors on the variables `X` and `Y`:
 
 ## Usage Examples Of TP-DejaVu
 
-In this section we present an examples that use TP-DejaVu properties, and their corresponding DejaVu equivalents.
+In this section we present an [**examples**](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp) that use TP-DejaVu properties, and their corresponding DejaVu equivalents.
 We also provide experimental results for comparing the efficiency of properties expressed for TP-DejaVu and for DejaVu.
 Our benchmarks exclusively concentrated on assessing time and memory consumption during the evaluation phase, without the compilation time.
 Executions where the evaluation process exceeded 1000 seconds are marked with the symbol ∞.
+Please be aware that the 5M trace files are not initially uploaded to GitHub due to size constraints imposed by the platform. To test with these 5M trace files, utilize the trace generators provided within the respective example directories.
+
 
 ### Example 1
 
@@ -330,6 +332,10 @@ forall x . (p(x, "true") -> exists y . q(x,y))
         </tr>
 </table>
 
+### Results:
+More detailed result file can be found [**here**](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example1/result-example-1).
+
+
 ### How to Execute the Example
 
 1. Ensure you have the following files in your local environment:
@@ -354,6 +360,7 @@ forall x . (p(x, "true") -> exists y . q(x,y))
 
 - [`log_10K.csv`](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example1/log_10K.csv)
   - **Description**: The trace file containing 10K events.
+
 
 ### Example 2
 #### Dejavu
@@ -417,6 +424,10 @@ forall x . forall y . ((p(x, "true") & @q(y)) -> P r(x, y))
             <td>56.78s<br>3.55GB</td>
         </tr>
 </table>
+
+### Results:
+More detailed result file can be found [**here**](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example2/result-example-2).
+
 
 ### How to Execute the Example
 
@@ -506,6 +517,10 @@ forall x . forall z . (p(x, z) -> (p(x, "true") & exists y . @ P q(y)))
         </tr>
 </table>
 
+### Results:
+More detailed result file can be found [**here**](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example3/result-example-3).
+
+
 ### How to Execute the Example
 
 1. Ensure you have the following files in your local environment:
@@ -578,7 +593,7 @@ forall x . ((p(x, "true") -> exists y . q(x, y, "true")))
             <td>0.75s<br>216.72MB</td>
             <td>1.29s<br>355.31MB</td>
             <td>2.05s<br>374.48MB</td>
-            <td>13.01s<br>2.01GB</td>
+            <td>474.38s<br>3.92GB</td>
         </tr>
         <tr>
             <td><strong>TP-DejaVu</strong></td>
@@ -589,6 +604,10 @@ forall x . ((p(x, "true") -> exists y . q(x, y, "true")))
             <td>5.07s<br>230.99MB</td>
         </tr>
 </table>
+
+### Results:
+More detailed result file can be found [**here**](https://github.com/moraneus/TP-DejaVu/blob/master/src/test/scala/experiments/tp/example4/result-example-4).
+
 
 ### How to Execute the Example
 
