@@ -22,6 +22,10 @@ This phase leverages a straightforward syntax that facilitates the updating of s
 The second phase, a **declarative**, based on the DEJAVU tool, and performs monitoring against a first-order specification.
 More details about DejaVu and how it operates can be found [here](https://github.com/havelund/dejavu).
 
+## System Requirements
+Before installing DejaVu, ensure that you have the following software installed on your system:
+* **Java 8**: DejaVu is implemented in Scala, which requires Java. Specifically, Java 8 is required. [Java 8 Installation Instructions](https://www.oracle.com/java/technologies/downloads/#java8)
+
 ## Installing DejaVu:
 
 The directory [``dir``](https://github.com/moraneus/TP-DejaVu/tree/master/dir) contains files useful for installing and running DejaVu:
