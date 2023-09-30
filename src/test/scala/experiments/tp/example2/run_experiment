@@ -42,4 +42,4 @@ echo "########## spec_modified.qtl 1M ##########" >> result-spec-2
 
 echo "########## spec_modified.qtl 5M ##########"
 echo "########## spec_modified.qtl 5M ##########" >> result-spec-2
-(./dejavu --specfile=spec_modified.qtl --logfile=log_5M.csv --bits=20 --stat=false --prefile=spec.pqtl) >> result-spec-2 2>&1
+(./dejavu --specfile=spec_modified.qtl --logfile=log_5M.csv --bits=28 --stat=false --prefile=spec.pqtl) >> result-spec-2 2>&1
