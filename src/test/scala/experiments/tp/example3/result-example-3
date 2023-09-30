@@ -1,0 +1,483 @@
+=== RESULT ===
+########## spec 1 ##########
+########## spec_origin.qtl 10K ##########
+--specfile=spec_origin.qtl
+--logfile=log_10K.csv
+--bits=20
+--stat=false
+#### Given Arguments: --logfile log_10K.csv --bits 20 --stat false 
+BDD bits per variable = 20
+Working directory: .
+Output directory: output
+Parse specification and synthesize monitor...
+/usr/bin/time results
+cmd:java -cp .:./tpdejavu.jar dejavu.Verify --specfile spec_origin.qtl --execution 1
+real: 5.59s
+user: 7.43s 
+sys: 0.86s 
+memory: 1482428KB 
+cpu: 148%
+bits argument not activated
+mode argument not activated
+stat argument is set to default true
+clear is set to default value (CLEAR=true)
+prop origin : forall x . (p(x) -> (forall y . (@ P q(y) -> x > y) & exists z . @ P q(z))) 
+Generated TraceMonitor.scala file in: /Users/moraneus/Documents/Studies/phd/Dejavu-With-Pre-Proccess-Evaluation/Code/PPEE-DejaVu/src/test/scala/experiments/tp/example3/./output
+0 time bits allocated!
+
+--- Elapsed monitor synthesis time: 5.127s
+
+
+
+Compiling synthesized monitor...
+/usr/bin/time results
+cmd:scalac -cp .:./tpdejavu.jar output/TraceMonitor.scala
+real: 4.14s
+user: 11.63s 
+sys: 0.38s 
+memory: 269200KB 
+cpu: 289%
+
+THE RELEVANT RESULTS
+####################
+Verifying trace...
+No mode was selected
+Processed 10000 events
+
+0 errors detected!
+
+==================
+  Event Counts:
+------------------
+  p : 100
+  q : 9900
+==================
+
+- Garbage collector was not activated
+
+Elapsed analysis time: 4.605s
+Evaluation time: 4.607139833s
+/usr/bin/time results
+cmd:scala -J-Xmx16g -cp .:./tpdejavu.jar TraceMonitor --logfile log_10K.csv --bits 20 --stat false
+real: 4.95s
+user: 5.96s 
+sys: 0.21s 
+memory: 1001840KB 
+cpu: 124%
+####### END ########
+
+########## spec_origin.qtl 100K ##########
+########## spec_origin.qtl 500K ##########
+########## spec_origin.qtl 1M ##########
+########## spec_origin.qtl 5M ##########
+
+########## spec_modified.qtl 10K ##########
+--specfile=spec_modified.qtl
+--logfile=log_10K.csv
+--bits=20
+--stat=false
+--prefile=spec.pqtl
+#### Given Arguments: --logfile log_10K.csv --bits 20 --prefile spec.pqtl --stat false 
+BDD bits per variable = 20
+Working directory: .
+Output directory: output
+Parse specification and synthesize monitor...
+/usr/bin/time results
+cmd:java -cp .:./tpdejavu.jar dejavu.Verify --specfile spec_modified.qtl --prefile spec.pqtl --execution 1
+real: 3.74s
+user: 5.34s 
+sys: 0.77s 
+memory: 1529076KB 
+cpu: 163%
+bits argument not activated
+mode argument not activated
+stat argument is set to default true
+clear is set to default value (CLEAR=true)
+Pre-Property Parsing succeeded.
+initiate
+    MaxY: int := -1
+    
+on p(x: int)
+   xGTy: bool := x > MaxY
+   output p(x, xGTy)
+
+on q(y: int)
+   NewMaxY: bool := @MaxY < y
+   MaxY: int := ite(NewMaxY, y, @MaxY)
+   output q(y)
+
+--- Elapsed pre spec synthesis time: 0.075s
+
+prop modified : forall x . forall z . (p(x,z) -> (p(x,''true'') & exists y . @ P q(y))) 
+Generated TraceMonitor.scala file in: /Users/moraneus/Documents/Studies/phd/Dejavu-With-Pre-Proccess-Evaluation/Code/PPEE-DejaVu/src/test/scala/experiments/tp/example3/./output
+0 time bits allocated!
+
+--- Elapsed monitor synthesis time: 3.252s
+
+
+
+Compiling synthesized monitor...
+/usr/bin/time results
+cmd:scalac -cp .:./tpdejavu.jar output/TraceMonitor.scala
+real: 4.23s
+user: 12.22s 
+sys: 0.39s 
+memory: 273536KB 
+cpu: 298%
+
+THE RELEVANT RESULTS
+####################
+Verifying trace...
+No mode was selected
+Processed 10000 events
+
+0 errors detected!
+
+==================
+  Event Counts:
+------------------
+  p : 100
+  q : 9900
+==================
+
+- Garbage collector was not activated
+
+Elapsed analysis time: 0.203s
+Evaluation time: 0.204971416s
+/usr/bin/time results
+cmd:scala -J-Xmx16g -cp .:./tpdejavu.jar TraceMonitor --logfile log_10K.csv --bits 20 --prefile spec.pqtl --stat false
+real: 0.52s
+user: 1.15s 
+sys: 0.05s 
+memory: 126448KB 
+cpu: 231%
+####### END ########
+
+########## spec_modified.qtl 100K ##########
+--specfile=spec_modified.qtl
+--logfile=log_100K.csv
+--bits=20
+--stat=false
+--prefile=spec.pqtl
+#### Given Arguments: --logfile log_100K.csv --bits 20 --prefile spec.pqtl --stat false 
+BDD bits per variable = 20
+Working directory: .
+Output directory: output
+Parse specification and synthesize monitor...
+/usr/bin/time results
+cmd:java -cp .:./tpdejavu.jar dejavu.Verify --specfile spec_modified.qtl --prefile spec.pqtl --execution 1
+real: 3.65s
+user: 4.96s 
+sys: 0.73s 
+memory: 1521116KB 
+cpu: 155%
+bits argument not activated
+mode argument not activated
+stat argument is set to default true
+clear is set to default value (CLEAR=true)
+Pre-Property Parsing succeeded.
+initiate
+    MaxY: int := -1
+    
+on p(x: int)
+   xGTy: bool := x > MaxY
+   output p(x, xGTy)
+
+on q(y: int)
+   NewMaxY: bool := @MaxY < y
+   MaxY: int := ite(NewMaxY, y, @MaxY)
+   output q(y)
+
+--- Elapsed pre spec synthesis time: 0.086s
+
+prop modified : forall x . forall z . (p(x,z) -> (p(x,''true'') & exists y . @ P q(y))) 
+Generated TraceMonitor.scala file in: /Users/moraneus/Documents/Studies/phd/Dejavu-With-Pre-Proccess-Evaluation/Code/PPEE-DejaVu/src/test/scala/experiments/tp/example3/./output
+0 time bits allocated!
+
+--- Elapsed monitor synthesis time: 3.178s
+
+
+
+Compiling synthesized monitor...
+/usr/bin/time results
+cmd:scalac -cp .:./tpdejavu.jar output/TraceMonitor.scala
+real: 4.27s
+user: 12.48s 
+sys: 0.36s 
+memory: 269792KB 
+cpu: 300%
+
+THE RELEVANT RESULTS
+####################
+Verifying trace...
+No mode was selected
+Processed 100000 events
+
+0 errors detected!
+
+==================
+  Event Counts:
+------------------
+  p : 1000
+  q : 99000
+==================
+
+- Garbage collector was not activated
+
+Elapsed analysis time: 0.548s
+Evaluation time: 0.549423416s
+/usr/bin/time results
+cmd:scala -J-Xmx16g -cp .:./tpdejavu.jar TraceMonitor --logfile log_100K.csv --bits 20 --prefile spec.pqtl --stat false
+real: 0.85s
+user: 1.92s 
+sys: 0.07s 
+memory: 315920KB 
+cpu: 233%
+####### END ########
+
+########## spec_modified.qtl 500K ##########
+--specfile=spec_modified.qtl
+--logfile=log_500K.csv
+--bits=20
+--stat=false
+--prefile=spec.pqtl
+#### Given Arguments: --logfile log_500K.csv --bits 20 --prefile spec.pqtl --stat false 
+BDD bits per variable = 20
+Working directory: .
+Output directory: output
+Parse specification and synthesize monitor...
+/usr/bin/time results
+cmd:java -cp .:./tpdejavu.jar dejavu.Verify --specfile spec_modified.qtl --prefile spec.pqtl --execution 1
+real: 3.72s
+user: 5.15s 
+sys: 0.74s 
+memory: 1524444KB 
+cpu: 158%
+bits argument not activated
+mode argument not activated
+stat argument is set to default true
+clear is set to default value (CLEAR=true)
+Pre-Property Parsing succeeded.
+initiate
+    MaxY: int := -1
+    
+on p(x: int)
+   xGTy: bool := x > MaxY
+   output p(x, xGTy)
+
+on q(y: int)
+   NewMaxY: bool := @MaxY < y
+   MaxY: int := ite(NewMaxY, y, @MaxY)
+   output q(y)
+
+--- Elapsed pre spec synthesis time: 0.081s
+
+prop modified : forall x . forall z . (p(x,z) -> (p(x,''true'') & exists y . @ P q(y))) 
+Generated TraceMonitor.scala file in: /Users/moraneus/Documents/Studies/phd/Dejavu-With-Pre-Proccess-Evaluation/Code/PPEE-DejaVu/src/test/scala/experiments/tp/example3/./output
+0 time bits allocated!
+
+--- Elapsed monitor synthesis time: 3.236s
+
+
+
+Compiling synthesized monitor...
+/usr/bin/time results
+cmd:scalac -cp .:./tpdejavu.jar output/TraceMonitor.scala
+real: 4.21s
+user: 12.67s 
+sys: 0.38s 
+memory: 271184KB 
+cpu: 309%
+
+THE RELEVANT RESULTS
+####################
+Verifying trace...
+No mode was selected
+Processed 500000 events
+
+0 errors detected!
+
+==================
+  Event Counts:
+------------------
+  p : 5000
+  q : 495000
+==================
+
+- Garbage collector was not activated
+
+Elapsed analysis time: 1.936s
+Evaluation time: 1.93810125s
+/usr/bin/time results
+cmd:scala -J-Xmx16g -cp .:./tpdejavu.jar TraceMonitor --logfile log_500K.csv --bits 20 --prefile spec.pqtl --stat false
+real: 2.25s
+user: 3.67s 
+sys: 0.12s 
+memory: 699488KB 
+cpu: 168%
+####### END ########
+
+########## spec_modified.qtl 1M ##########
+--specfile=spec_modified.qtl
+--logfile=log_1M.csv
+--bits=20
+--stat=false
+--prefile=spec.pqtl
+#### Given Arguments: --logfile log_1M.csv --bits 20 --prefile spec.pqtl --stat false 
+BDD bits per variable = 20
+Working directory: .
+Output directory: output
+Parse specification and synthesize monitor...
+/usr/bin/time results
+cmd:java -cp .:./tpdejavu.jar dejavu.Verify --specfile spec_modified.qtl --prefile spec.pqtl --execution 1
+real: 3.59s
+user: 5.23s 
+sys: 0.69s 
+memory: 1526388KB 
+cpu: 165%
+bits argument not activated
+mode argument not activated
+stat argument is set to default true
+clear is set to default value (CLEAR=true)
+Pre-Property Parsing succeeded.
+initiate
+    MaxY: int := -1
+    
+on p(x: int)
+   xGTy: bool := x > MaxY
+   output p(x, xGTy)
+
+on q(y: int)
+   NewMaxY: bool := @MaxY < y
+   MaxY: int := ite(NewMaxY, y, @MaxY)
+   output q(y)
+
+--- Elapsed pre spec synthesis time: 0.08s
+
+prop modified : forall x . forall z . (p(x,z) -> (p(x,''true'') & exists y . @ P q(y))) 
+Generated TraceMonitor.scala file in: /Users/moraneus/Documents/Studies/phd/Dejavu-With-Pre-Proccess-Evaluation/Code/PPEE-DejaVu/src/test/scala/experiments/tp/example3/./output
+0 time bits allocated!
+
+--- Elapsed monitor synthesis time: 3.125s
+
+
+
+Compiling synthesized monitor...
+/usr/bin/time results
+cmd:scalac -cp .:./tpdejavu.jar output/TraceMonitor.scala
+real: 4.18s
+user: 12.12s 
+sys: 0.36s 
+memory: 272112KB 
+cpu: 298%
+
+THE RELEVANT RESULTS
+####################
+Verifying trace...
+No mode was selected
+Processed 1000000 events
+
+0 errors detected!
+
+==================
+  Event Counts:
+------------------
+  p : 10000
+  q : 990000
+==================
+
+- Garbage collector was not activated
+
+Elapsed analysis time: 3.667s
+Evaluation time: 3.668999458s
+/usr/bin/time results
+cmd:scala -J-Xmx16g -cp .:./tpdejavu.jar TraceMonitor --logfile log_1M.csv --bits 20 --prefile spec.pqtl --stat false
+real: 3.98s
+user: 5.80s 
+sys: 0.18s 
+memory: 1049872KB 
+cpu: 150%
+####### END ########
+
+########## spec_modified.qtl 5M ##########
+--specfile=spec_modified.qtl
+--logfile=log_5M.csv
+--bits=30
+--stat=false
+--prefile=spec.pqtl
+#### Given Arguments: --logfile log_5M.csv --bits 30 --prefile spec.pqtl --stat false 
+BDD bits per variable = 30
+Working directory: .
+Output directory: output
+Parse specification and synthesize monitor...
+/usr/bin/time results
+cmd:java -cp .:./tpdejavu.jar dejavu.Verify --specfile spec_modified.qtl --prefile spec.pqtl --execution 1
+real: 3.72s
+user: 5.10s 
+sys: 0.71s 
+memory: 1523644KB 
+cpu: 156%
+bits argument not activated
+mode argument not activated
+stat argument is set to default true
+clear is set to default value (CLEAR=true)
+Pre-Property Parsing succeeded.
+initiate
+    MaxY: int := -1
+    
+on p(x: int)
+   xGTy: bool := x > MaxY
+   output p(x, xGTy)
+
+on q(y: int)
+   NewMaxY: bool := @MaxY < y
+   MaxY: int := ite(NewMaxY, y, @MaxY)
+   output q(y)
+
+--- Elapsed pre spec synthesis time: 0.084s
+
+prop modified : forall x . forall z . (p(x,z) -> (p(x,''true'') & exists y . @ P q(y))) 
+Generated TraceMonitor.scala file in: /Users/moraneus/Documents/Studies/phd/Dejavu-With-Pre-Proccess-Evaluation/Code/PPEE-DejaVu/src/test/scala/experiments/tp/example3/./output
+0 time bits allocated!
+
+--- Elapsed monitor synthesis time: 3.242s
+
+
+
+Compiling synthesized monitor...
+/usr/bin/time results
+cmd:scalac -cp .:./tpdejavu.jar output/TraceMonitor.scala
+real: 4.19s
+user: 12.51s 
+sys: 0.36s 
+memory: 262704KB 
+cpu: 306%
+
+THE RELEVANT RESULTS
+####################
+Verifying trace...
+No mode was selected
+Processed 5000000 events
+
+0 errors detected!
+
+==================
+  Event Counts:
+------------------
+  p : 50000
+  q : 4950000
+==================
+
+- Garbage collector was not activated
+
+Elapsed analysis time: 21.092s
+Evaluation time: 21.093254417s
+/usr/bin/time results
+cmd:scala -J-Xmx16g -cp .:./tpdejavu.jar TraceMonitor --logfile log_5M.csv --bits 30 --prefile spec.pqtl --stat false
+real: 21.44s
+user: 25.00s 
+sys: 1.37s 
+memory: 3122224KB 
+cpu: 123%
+####### END ########
+
