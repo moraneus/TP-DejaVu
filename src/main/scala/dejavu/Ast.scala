@@ -147,7 +147,7 @@ case class Spec(properties: List[Property]) {
     openFile(s"$generatedMonitorsPath/TraceMonitor.scala")
     println(s"Generated TraceMonitor.scala file in: $generatedMonitorsPath")
 
-    writeln(ResourceReader.read("Monitor.txt"))
+    writeln(ResourceReader.read("/Monitor.txt"))
     writeln()
     for (property <- properties) {
       val name = property.name
