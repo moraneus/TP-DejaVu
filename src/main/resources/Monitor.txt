@@ -501,6 +501,10 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
     currentTime = timeStamp
   }
 
+  def preMonitor_(event_name: String, params: Any*) : Option[Any] = {
+     preMonitor.evaluate(event_name, params:_*)
+  }
+
   /**
     * Returns the set of events referred to in the specification, either defined, or referred to
     * in the LTL formulas. Must be overridden by generated specification specific monitor.
@@ -537,12 +541,12 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
     * @param args the arguments to the event.
     */
 
-  def submit(name: String, args: List[Any]): Unit = {
+  def submit(name: String, args: List[Any]): Boolean = {
     if (Options.STATISTICS) {
       statistics.update(name)
     }
     state.update(name, args)
-    evaluate()
+    return evaluate()
   }
 
   /**
@@ -657,7 +661,7 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
     * property.
     */
 
-  def evaluate(): Unit = {
+  def evaluate(): Boolean = {
     debug(s"\ncurrentTime = $currentTime\n$state\n")
     for (formula <- formulae) {
       formula.setTime(deltaTime)
@@ -668,8 +672,11 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
           println(s"\n*** Property ${formula.name} violated on event number $lineNr:\n")
           println(state)
         }
+        return false;
       }
     }
+    
+    return true;
   }
 
   /**

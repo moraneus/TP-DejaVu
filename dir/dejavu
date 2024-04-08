@@ -22,7 +22,8 @@
 #     dejavu --specfile=spec.qtl --logfile=log.csv --bits=16 --mode=debug --stat=true --clear=1
 #     dejavu --specfile=spec.qtl --prefile=spec.pqtl --logfile=log.csv --bits=16 --mode=debug --stat=true --clear=1
 
-
+JAR=false
+ONLINE=false
 
 for i in "$@"; do
   echo "${i}"
@@ -55,6 +56,14 @@ for i in "$@"; do
       CLEAR="${i#*=}"
       shift # past argument=value
       ;;
+    --jar*)
+      JAR=true
+      shift
+      ;;
+    --online*)
+      ONLINE=true
+      shift
+      ;;
     -*|--*)
       echo "Unknown option $i"
       exit 1
@@ -71,32 +80,35 @@ if [ -z "${SPECFILE}" ]; then               # Can't execute without specfile
     exit
 fi
 
-if [ -z "${LOGFILE}" ]; then               # Can't execute without logfile
-    echo "Logfile parameter is missing"
-    exit
+if [ "$ONLINE" = true ]; then
+    echo "Online mode is enabled"
+else
+    if [ -z "${LOGFILE}" ]; then
+        echo "Logfile parameter is missing"
+        exit
+    fi
+
+    if [ -z "${BITS}" ]; then                   # Default number of bits per variable = 20
+        BITS=20
+    fi
+
+    PARAMS_AS_STRING+="--logfile ${LOGFILE} --bits ${BITS} "
+
+    if [ -n "${MODE}" ]; then
+        PARAMS_AS_STRING+="--mode ${MODE} "
+    fi
+
+    if [ -n "${PREFILE}" ]; then
+        PARAMS_AS_STRING+="--prefile ${PREFILE} "
+    fi
+
+    if [ -n "${STAT}" ]; then
+        PARAMS_AS_STRING+="--stat ${STAT} "
+    fi
+
+    echo "#### Given Arguments: ${PARAMS_AS_STRING}"
+    echo "BDD bits per variable = ${BITS}"
 fi
-
-if [ -z "${BITS}" ]; then                   # Default number of bits per variable = 20
-    BITS=20
-fi
-
-PARAMS_AS_STRING+="--logfile ${LOGFILE} --bits ${BITS} "
-
-if [ -n "${MODE}" ]; then
-    PARAMS_AS_STRING+="--mode ${MODE} "
-fi
-
-if [ -n "${PREFILE}" ]; then
-    PARAMS_AS_STRING+="--prefile ${PREFILE} "
-fi
-
-if [ -n "${STAT}" ]; then
-    PARAMS_AS_STRING+="--stat ${STAT} "
-fi
-
-
-echo "#### Given Arguments: ${PARAMS_AS_STRING}"
-echo "BDD bits per variable = ${BITS}"
 
 DEJAVU=`dirname $0`
 OUTPUT="output"
@@ -113,18 +125,33 @@ fi
 
 # Compile synthesized monitor:
 echo "Compiling synthesized monitor..."
-gtime scalac -cp .:$DEJAVU/tpdejavu.jar $OUTPUT/TraceMonitor.scala 2>&1 | grep -v "warning"
 
-# Run the compiled monitor on trace:
-echo ""
-echo "THE RELEVANT RESULTS"
-echo "####################"
-echo "Verifying trace..."
-gtime scala -J-Xmx16g -cp .:$DEJAVU/tpdejavu.jar TraceMonitor $PARAMS_AS_STRING 2>&1\
-   | grep -v "Resizing" | grep -v "load BDD package" | grep -v "Garbage collection"
-echo "####### END ########"
-echo ""
+if [[ "$JAR"=true ]]; then
+  echo ""
+  echo "Generate .jar file..."
+  gtime scalac -cp .:$DEJAVU/tpdejavu.jar $OUTPUT/TraceMonitor.scala 2>&1 -d $OUTPUT/TraceMonitor.jar
+  # jar --update --verbose --file $OUTPUT/TraceMonitor.jar --main-class TraceMonitor
+else
+  gtime scalac -cp .:$DEJAVU/tpdejavu.jar $OUTPUT/TraceMonitor.scala 2>&1 | grep -v "warning"
+fi
 
+if [[ "$ONLINE" = false ]]; then
+    # Run the compiled monitor on trace:
+    echo ""
+    echo "THE RELEVANT RESULTS"
+    echo "####################"
+
+    if [[ "$JAR"=true ]]; then
+      echo "Verifying trace..."
+      java -cp $DEJAVU/tpdejavu.jar:$OUTPUT/TraceMonitor.jar TraceMonitor $PARAMS_AS_STRING
+    else
+      echo "Verifying trace..."
+      gtime scala -J-Xmx16g -cp .:$DEJAVU/tpdejavu.jar TraceMonitor $PARAMS_AS_STRING 2>&1\
+        | grep -v "Resizing" | grep -v "load BDD package" | grep -v "Garbage collection"
+      echo "####### END ########"
+      echo ""
+    fi
+fi
 
 # Cleaning Up:
 # ============

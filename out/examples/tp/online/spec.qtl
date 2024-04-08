@@ -1,0 +1,1 @@
+prop Spec: forall x . ((p(x, "true") -> Exists y . @q(y, "false")))

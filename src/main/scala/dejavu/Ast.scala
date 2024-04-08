@@ -318,6 +318,8 @@ case class Spec(properties: List[Property]) {
     writeln(
       s"""
          |object TraceMonitor {
+         |  var moni_ = new PropertyMonitor(${if(prePropertySynthesisCode.isEmpty) null else "PreMonitor"})
+         |  var timed = true
          |  private val usage: String =
          | \"\"\"Usage: Usage:
          |    --logfile=<filename> [OPTIONS]
@@ -334,6 +336,99 @@ case class Spec(properties: List[Property]) {
          |    --logfile log.csv --bits 16 --mode debug --stat false
          |
          | \"\"\".stripMargin
+         |
+         |def config(bits: String, mode: String, printStat: String, timeEnabled: String): Boolean = {
+         |     // Read and set 'bits'
+         |     val bitsValue = bits.trim
+         |     if (!bitsValue.matches(\"\"\"\\d+\"\"\")) {
+         |        println("*** bits argument must be an integer")
+         |        return false
+         |     }
+         |     Options.BITS = bitsValue.toInt
+         |
+         |    // Read and set 'mode'
+         |    val modeValue = mode.toLowerCase()
+         |    if (modeValue == "debug") Options.DEBUG = true
+         |    else if (modeValue == "profile") Options.PROFILE = true
+         |    else {
+         |     println("*** mode argument must be: debug or profile")
+         |    }
+         |   
+         |    if (Options.PROFILE) {
+         |        openProfileFile("dejavu-profile.csv")
+         |        moni_.printProfileHeader()
+         |    }
+         |
+         |   // Read and set 'printStat'
+         |   val printStatValue = printStat.toLowerCase()
+         |   if (printStatValue == "true") Options.PRINTS_STAT = true
+         |   else if (printStatValue == "false") Options.PRINTS_STAT = false
+         |   else {
+         |     println("*** stat argument must be: true or false")
+         |     return false
+         |   }
+         |
+         |   // Read and set 'timed'
+         |   val timedValue = timeEnabled.toLowerCase()
+         |   if (timedValue == "true") timed = true
+         |   else if (timedValue == "false") timed = false
+         |   else {
+         |     println("*** timed argument must be: true or false")
+         |     return false
+         |   }
+         |
+         |   println("Bits: " + bitsValue + " Mode: " + modeValue + " PrintStat: " + printStatValue + " Timed " + timedValue)
+         |   return true
+         | }
+         |
+         |
+         |  def eval(event: String): Boolean = {
+         |   openResultFile("dejavu-results")
+         |   var input = event.split(",")
+         |   var eventSize: Int = 0
+         |   Options.BITS = 20
+         |   val name = input(0)
+         |   var args = new ListBuffer[Any]()
+         | 
+         |
+         |   if (timed) {
+         |     eventSize = input.length - 1
+         |     val timeStamp: Int = input(eventSize).trim.toInt
+         |     moni_.setTime(moni_.lineNr)
+         |   } else {
+         |     eventSize = input.length
+         |   }
+         | 
+         |   for (i <- 1 until eventSize) {
+         |      args += input(i)
+         |   }
+         |
+         |   val res: Boolean = if (Options.PRE_PREDICTION && moni_ != null) {
+         |   val modifiedEvent = moni_.preMonitor_(name, args: _*)
+         |
+         |    modifiedEvent match {
+         |       case Some(first :: second :: _) =>
+         |         moni_.submit(first.toString, second.asInstanceOf[List[String]])
+         |       case Some(event_name) =>
+         |         if (event_name.toString != "skip")
+         |           moni_.submit(event_name.toString, Nil)
+         |         else
+         |           true
+         |       case Some(_) =>
+         |         println("Unexpected event structure output from the pre processing")
+         |         false
+         |       case None =>
+         |         moni_.submit(name, args.toList)
+         |     }
+         |   }
+         |  else {
+         |     moni_.submit(name, args.toList)
+         |  }
+         |
+         |  moni_.lineNr += 1
+         |  closeResultFile()
+         |  return res;
+         |}
          |
          | def time[R](block: => R): R = {
          |     val t0 = System.nanoTime()
