@@ -600,8 +600,11 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
           else
             println(lineNr.toDouble)
         }
+
+        // Init event name and event arguments
         val name = record.get(0)
         var args = new ListBuffer[Any]()
+
         if (timed) {
           eventSize = record.size() - 1
           val timeStamp: Int = record.get(eventSize).toInt
@@ -609,8 +612,14 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
         } else {
           eventSize = record.size()
         }
-        for (i <- 1 until eventSize) {
-          args += record.get(i)
+
+        // For a case when the event is a probabilistic data
+        if (record.get(1).startsWith("[")) {
+          args += (1 until record.size).map(record.get).toList.mkString(", ")
+        } else { // For a case when it is a common DejaVu event
+          for (i <- 1 until eventSize) {
+            args += record.get(i)
+          }
         }
 
         if (Options.PRE_PREDICTION && preMonitor != null) {
@@ -619,8 +628,8 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
           modifiedEvent match {
             case Some(first :: second :: _) =>
               submit(first.toString, second.asInstanceOf[List[String]])
-            case Some(event_name) =>
-              if (event_name.toString != "skip") submit(event_name.toString, Nil)
+            case Some(event_name: String) =>
+              if (event_name != "skip") submit(event_name.toString, Nil)
             case Some(_) =>
               println("Unexpected event structure output from the pre processing")
             case None =>

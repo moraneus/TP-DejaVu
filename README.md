@@ -125,6 +125,16 @@ with **no leading spaces** would mean the four events:
     bid(chair,650)
     sell(chair)
 
+A special event we support is a distribution/probabilities event (originally intended to support neural network output). 
+Let's assume we have a neural network that recognizes objects like animals and humans. A possible trace with this kind of event can look like as follow:
+    
+    start,car0
+    cacthed_objects,[("dog", 0.4), ("bird", 0.03), ("kid", 0.2), ("adult", 0.37)]
+    stop,car0
+
+This kind of event is particularly relevant to be processed by the operational phase of TP-DejaVu, as it provides 
+valuable information about the probabilities of different objects being detected by the neural network.
+
 **The bits per variable** (``--bits=numOfBits``):
 Indicates how many bits are assigned to each variable in the BDDs. 
 This parameter is optional with the default value being 20. If the number is too low an error message will be issued 
@@ -154,7 +164,7 @@ The grammar rules are outlined as follows:
 
     <specification>           ::= <initiate_section>? <update_section>*
 
-    <initiate_section>        ::= "initiate" <assignment>+
+    <initiate_section>        ::= "initiate" <initiate_assignment>+
     <update_section>          ::= "on" <predicate> <assignment>* <output_statement>?
     
     <predicate>               ::= <predicate_name> "(" <arg_type_list> ")"
@@ -163,11 +173,13 @@ The grammar rules are outlined as follows:
     <predicate_name>          ::= [a-zA-Z_][a-zA-Z0-9_]*
     <variable_name>           ::= [a-zA-Z_][a-zA-Z0-9_]*
     
+    <initiate_assignment>     ::= <variable_name> (":=" <expression>)?
     <assignment>              ::= <variable_name> ":=" <expression>
     
     <expression>              ::= <arithmetic_expression>
                                 | <boolean_expression>
-                                | <string_expression>
+                                | <string_expression>                           
+                                | <prob_expression>
                                 | "@" <variable_name>
                                 | "ite" "(" <boolean_expression> "," <expression> "," <expression> ")"
     
@@ -181,6 +193,10 @@ The grammar rules are outlined as follows:
                                 | <abs_function>
                                 | <number_value>
                                 | <variable_name>
+
+    <pair>                    ::= (<key>, <double>)
+    <prob_expression>         ::= "[" <pair> (",", <pair>)* "]"
+                                | #<variable_name>"(<key>)"
 
     <factor>                  ::= "(" <arithmetic_expression> ")"
     <abs_function>            ::= "abs(" <term> ")"
@@ -207,7 +223,7 @@ The grammar rules are outlined as follows:
     <arg_list>                ::= <argument> ("," <argument>)*
     <argument>                ::= <value> | <variable_name>
     
-    <data_type>               ::= "int" | "bool" | "string" | "float" | "double"
+    <data_type>               ::= "int" | "bool" | "string" | "float" | "double" | "prob"
     
     <value>                   ::= <number_value> | <boolean_value> | <string_value>
     <number_value>            ::= <integer> | <float> | <double>
@@ -216,6 +232,7 @@ The grammar rules are outlined as follows:
     <string_value>            ::= "\"" .* "\""
     <float>                   ::= [0-9]+ "." [0-9]+ ?[fF]
     <double>                  ::= [0-9]+ "." [0-9]+
+    <key>                     ::= <string_value> | <variable_name>
     
     <logical_operator>        ::= "&&" | "||" | "->" | "<->" | "^"
     <unary_logical_operator>  ::= "!"
@@ -265,6 +282,17 @@ The different operators `op` and their behaviors on the variables `X` and `Y`:
 
     X -> Y             : Logical implication. If X then Y
     X <-> Y            : Logical biconditional. True only if X and Y have the same boolean value
+
+
+### Default Values Within the Initiate Assignment
+Inside the initiate block, we can define some global variables. 
+These variables can be assigned specific values corresponding to their types, but they can also be assigned default values when no value is provided by the user.
+The default values are as follows:
+
+* "" (empty string) for type `string`
+* 0 for types `int`, `float`, and `double`
+* false for type `bool`
+* Map.empty[String, Double] for type `prob`
 
 
 ## Usage Examples Of TP-DejaVu

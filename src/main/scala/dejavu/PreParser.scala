@@ -26,7 +26,8 @@ object FetchingHelper {
     case _IdentDouble(name) => name
     case _IdentStr(name) => name
     case _IdentBool(name) => name
-    case _ => throw new IllegalArgumentException("Unknown identifier type")
+    case _IdentProb(name) => name
+    case invalid => throw new IllegalArgumentException(s"Unknown identifier type $invalid")
   }
 }
 
@@ -73,6 +74,7 @@ case class _IdentDouble(name: String) extends TypedIdentifier
 case class _IdentFloat(name: String) extends TypedIdentifier
 case class _IdentStr(name: String) extends TypedIdentifier
 case class _IdentBool(name: String) extends TypedIdentifier
+case class _IdentProb(name: String) extends TypedIdentifier
 sealed trait BooleanExpression
 case object _TrueExpr extends BooleanExpression
 case object _FalseExpr extends BooleanExpression
@@ -98,7 +100,8 @@ class PrePropertyParser extends JavaTokenParsers {
 
   /** Parses variable's type. */
   private def varType: Parser[String] =
-    "int" | "double" | "float" | "string" | "str" | "bool"
+    "int" | "double" | "float" | "string" | "str" | "bool" | "prob" | failure("Invalid variable type")
+
 
   /** Parses a variable and its type. */
   private def variable: Parser[(TypedIdentifier, String)] =
@@ -108,6 +111,7 @@ class PrePropertyParser extends JavaTokenParsers {
       case id ~ "double" => (_IdentDouble(id), "double")
       case id ~ "str" => (_IdentStr(id), "str")
       case id ~ "bool" => (_IdentBool(id), "bool")
+      case id ~ "prob" => (_IdentProb(id), "prob")
     }
 
 
@@ -197,8 +201,31 @@ class PrePropertyParser extends JavaTokenParsers {
       case id ~ "bool" ~ Some(value) if value == "true" || value == "false" => (_IdentBool(id), "bool", Some(value))
       case id ~ "bool" ~ None => (_IdentBool(id), "bool", None)
 
-      case _ => throw new ParseException(s"Invalid value assigment for variable (Initiate Block)", -1)
+      case id ~ "prob" ~ Some(value) if value.matches(
+      """^\[(\((("\w+")|('\w+')|(\w+))?,\s*([0-9]*\.?[0-9]+)\)\s*,?\s*)*\]$""") =>
+        val parsedMap = parseToMap(value)
+        val mapAsString = mapToString(parsedMap)
+        (_IdentProb(id), "prob", Some(mapAsString))
+      case id ~ "prob" ~ None => (_IdentProb(id), "prob", None)
+
+      case invalid =>
+        val error_message = s"[Initiate Block]: Invalid value assignment: " +
+          s"${invalid._1._1}: ${invalid._1._2} = ${invalid._2.get}"
+        throw new ParseException(error_message, -1)
     }
+
+  private def mapToString(map: Map[String, Double]): String = {
+    map.map { case (key, value) => s"""${key.replace("'", "\"")} -> $value""" }
+      .mkString("Map(", ", ", ")")
+  }
+
+  private def parseToMap(value: String): Map[String, Double] = {
+    val pattern = """\((["']?\s*\w+["']?\s*),\s*([0-9]*\.?[0-9]+)\s*\)""".r
+    pattern.findAllIn(value).matchData.map { m =>
+      (m.group(1), m.group(2).toDouble)
+    }.toMap
+  }
+
 
   /** Parses until end of line. */
   private def restOfLine: Parser[String] = """.*""".r
@@ -292,6 +319,7 @@ object CodeGenerator {
     case "float"             => "Float"
     case "bool"              => "Boolean"
     case "str" | "string"    => "String"
+    case "prob"              => "Prob"
     case _                   => throw new IllegalArgumentException(s"Unsupported type: $typeStr")
   }
 
@@ -304,12 +332,13 @@ object CodeGenerator {
    * @throws IllegalArgumentException If the provided Scala type is unsupported.
    */
   private def defaultValue(scalaType: String): String = scalaType match {
-    case "Int"         => "0"
-    case "Double"      => "0.0"
-    case "Float"       => "0f"
-    case "Boolean"     => "false"
-    case "String"      => """"""""
-    case _             => throw new IllegalArgumentException(s"Unsupported type: $scalaType")
+    case "Int"                  => "0"
+    case "Double"               => "0.0"
+    case "Float"                => "0f"
+    case "Boolean"              => "false"
+    case "String"               => """"""""
+    case "Prob"                 => "Map.empty[String, Double]"
+    case _                      => throw new IllegalArgumentException(s"Unsupported type: $scalaType")
   }
 
   /**
@@ -325,32 +354,6 @@ object CodeGenerator {
     val patternRegex = pattern.r
     patternRegex.replaceAllIn(input, m => s"(${m.group(0).replace('[', '(').replace(']', ')')})")
   }
-
-//  private def translateInExpression(input: String): String = {
-//    val pattern = """((?:[a-zA-Z_]\w*)|[-+]?\d*\.?\d+(?:[eE][+-]?\d+)?[fF]?)\s+in\s+\(""".r
-//    val output = new StringBuilder
-//    var lastIndex = 0
-//
-//    pattern.findAllMatchIn(input).foreach { m =>
-//      val startIdx = m.start
-//      output.append(input.substring(lastIndex, startIdx))
-//
-//      var openParenCount = 1
-//      var idx = m.end
-//      while (openParenCount > 0 && idx < input.length) {
-//        if (input(idx) == '(') openParenCount += 1
-//        if (input(idx) == ')') openParenCount -= 1
-//        idx += 1
-//      }
-//      output.append("(" + input.substring(startIdx, idx) + ")")
-//      lastIndex = idx
-//    }
-//
-//    output.append(input.substring(lastIndex))
-//    output.toString()
-//  }
-
-
 
   /**
    * Converts 'ite' expressions in the given input string into one-line if statements.
@@ -432,9 +435,6 @@ object CodeGenerator {
   }
 
 
-
-
-
   /**
    * Replaces the '@' symbol in a given string, but avoids replacing '@@'.
    *
@@ -444,6 +444,42 @@ object CodeGenerator {
   private def translatePrevExpression(expr: String): String = {
     val pattern: Regex = """(?<!@)@""".r
     pattern.replaceAllIn(expr, "prev_")
+  }
+
+
+  /**
+   *
+   * This function takes an input string representing a direct method call to a map-like data structure
+   * (e.g., `prob("key")`) and transforms it into a string using `getOrElse` to access the value safely.
+   * The transformation specifically targets the string format `prob("key")` and converts it to
+   * `prob.getOrElse("key", None)`, ensuring that if the key is not found, `None` is returned instead
+   *
+   * @param expr A string expression in the format `prob("key")`.
+   * @return A transformed string using `getOrElse` for safer access, or the original string if the input format does not match.
+   */
+  private def translateProbAccessMethod(expr: String): String = {
+    // Extract the key from the input string assuming the format is prob("key")
+    val pattern: Regex = """#(\w+)\((\s*("\w+")\s*|\s*('\w+')\s*|\s*(\w+)\s*)\)""".r
+    pattern.replaceAllIn(expr, m => s"${m.group(1)}.getOrElse(${m.group(2)}, -1.0)")
+  }
+
+  private def translateProbListMethod(expr: String): String = {
+    val list_pattern =
+      """^\[(\((("\w+")|('\w+')|(\w+))?,\s*(([0-9]*\.?[0-9]+)|(\w+\.getOrElse\(("\w+"|'\w+'|\w+),\s*-1.0\)))\)\s*,?\s*)*\]$"""
+    if (expr.matches(list_pattern)) {
+      val pair_pattern: Regex = """\((["']?\s*\w+["']?\s*),\s*(([0-9]*\.?[0-9]+)|(\w+\.getOrElse\(("\w+"|'\w+'|\w+),\s*-1.0\)))\)""".r
+      val asMap = pair_pattern.findAllIn(expr).matchData.map { m =>
+        if (m.group(2).contains("getOrElse")) {
+          (m.group(1), m.group(2))
+        } else {
+          (m.group(1), m.group(2).toDouble)
+        }
+      }.toMap
+      asMap.map { case (key, value) => s"""${key.replace("'", "\"")} -> $value""" }
+        .mkString("Map(", ", ", ")")
+    } else {
+      expr
+    }
   }
 
   /**
@@ -482,12 +518,13 @@ object CodeGenerator {
 
     // Helper methods and implicit conversions for the generated code
     sb.append(
-      """
+      s"""
         |object PreMonitor extends PreMonitorTrait {
         |  /**
         |   * Extension methods for various types.
         |   */
         |
+        | type Prob = Map[String, Double]
         |
         | /**
         | * Provides an implicit class to enable the use of the `in` infix operator
@@ -668,6 +705,44 @@ object CodeGenerator {
         |   */
         |  def abs[T](value: T)(implicit ops: AbsOps[T]): T = ops.abs(value)
         |
+        |  /**
+        | * Implicit class that extends the String class with a `toProb` method.
+        | *
+        | * @param str The input string to be converted to a probability map.
+        | */
+        |
+        |
+        |implicit class StringProbExtensions(val str: String) extends AnyVal {
+        |
+        |  /**
+        |   * Converts a string representation of a probability map to a Map[String, Double].
+        |   *
+        |   * The input string should have the following format:
+        |   * - Keys can be either quoted or unquoted.
+        |   * - Keys and values are separated by a comma and optional whitespace.
+        |   * - Key-value pairs are enclosed in parentheses and separated by commas and optional whitespace.
+        |   * - The entire map is enclosed in square brackets.
+        |   *
+        |   * Examples of valid input strings:
+        |   * - [(cat, 0.1),(dog, 0.7),(horse, 0.2)]
+        |   * - [("cat", 0.1),("dog", 0.7),("horse", 0.2)]
+        |   * - [(cat, 0.1),("dog", 0.7),(horse, 0.2)]
+        |   *
+        |   * @return A Map[String, Double] containing the parsed key-value pairs.
+        |   * @throws IllegalArgumentException If the input string is not in the valid format.
+        |   */
+        |  def toProb: Map[String, Double] = {
+        |    if (str.matches(${'"'}${'"'}${'"'}^\\[(\\((("\\w+")|('\\w+')|(\\w+))?,\\s*([0-9]*\\.?[0-9]+)\\)\\s*,?\\s*)*\\]$$${'"'}${'"'}${'"'})) {
+        |      val pattern = ${'"'}${'"'}${'"'}\\(["']?\\s*(\\w+)["']?\\s*,\\s*([0-9]*\\.?[0-9]+)\\s*\\)${'"'}${'"'}${'"'}.r
+        |      pattern.findAllIn(str).matchData.map { m =>
+        |        (m.group(1), m.group(2).toDouble)
+        |      }.toMap
+        |    } else {
+        |      throw new IllegalArgumentException(s"Invalid input format: $$str")
+        |    }
+        |  }
+        |}
+        |
         |
         |  /**
         |   * Provides utility methods for common operations.
@@ -685,6 +760,7 @@ object CodeGenerator {
         |     */
         |    def ite[T](condition: Boolean, ifTrue: T, ifFalse: T): T = if (condition) ifTrue else ifFalse
         |  }
+        |\n\n\n
         |""".stripMargin)
 
 
@@ -758,6 +834,7 @@ object CodeGenerator {
         }
     }
 
+
     // Create a set to collect the calculated prevVarNames
     val prevVarNamesSet = scala.collection.mutable.Set[String]()
 
@@ -772,6 +849,8 @@ object CodeGenerator {
         prevVarNamesSet += s"$prevVarName"
       }
     }
+
+
     // Return the set of calculated prevVarNames
     prevVarNamesSet.toSet
   }
@@ -825,7 +904,6 @@ object CodeGenerator {
    * @param events       A list of `EventOperation` objects representing events.
    * @param outputs      A list of `Output` objects representing outputs.
    * @param sb           The StringBuilder to which the generated code will be appended.
-   * @param eventParams  A map of event names to their parameter strings.
    */
   private def generateEventAndOutputFunctions(events: List[EventOperation], outputs: List[Output], sb: StringBuilder): Unit = {
 
@@ -846,10 +924,11 @@ object CodeGenerator {
       assignments.foreach {
         case Assignment(variable, _, expression) =>
           // Handle special expressions and operators in the provided code.
-//          var updatedExpression = expression.replace("ite(", "Operators.ite(")
           var updatedExpression = convertITEtoOnelineIfStatement(expression)
           updatedExpression = translateInExpression(updatedExpression)
           updatedExpression = translatePrevExpression(updatedExpression)
+          updatedExpression = translateProbAccessMethod(updatedExpression)
+          updatedExpression = translateProbListMethod(updatedExpression)
 
           sb.append(s"\t\tthis.$variable = $updatedExpression\n")
       }
@@ -870,15 +949,11 @@ object CodeGenerator {
           val ifTrue = output.iteFunction.function1
           val ifFalse = output.iteFunction.function2
           var outputITEExpr = s"""\t\tite($iteCondition, """
-//          sb.append(s"""\t\tOperators.ite($iteCondition, """)
           outputITEExpr += outputHelper(sb, ifTrue.name, ifTrue.params)
           outputITEExpr += s""", """
-//          sb.append(s""", """)
-//          outputITEExpr += s""", """
           outputITEExpr += outputHelper(sb, ifFalse.name, ifFalse.params)
           outputITEExpr += s""")\n"""
           val formattedITEOutput = convertITEtoOnelineIfStatement(outputITEExpr)
-//          sb.append(s""")\n""")
           sb.append(formattedITEOutput)
         }
       }
@@ -904,7 +979,6 @@ object CodeGenerator {
     // If the output has no parameters, simply append the output name.
     if (params.isEmpty) {
       stringOutput += s"""("$outputName")\n"""
-      //      sb.append(s"""("$outputName")\n""")
     } else {
       // Use a ListBuffer to accumulate the parsed parameters.
       val parsed_params = ListBuffer[String]()
@@ -922,9 +996,7 @@ object CodeGenerator {
 
       // Once all parameters are processed, append them in a formatted manner.
       stringOutput += s"""List("$outputName", List(${parsed_params.mkString(", ")}))"""
-      //      sb.append(s"""List("$outputName", List(${parsed_params.mkString(", ")}))""")
     }
-//    sb.append(stringOutput)
     stringOutput
   }
 
@@ -951,7 +1023,7 @@ object CodeGenerator {
           case ((paramName, typeStr), index) =>
             sb.append(s"""\t\t\t\tTry(params($index).toString.trim.to${toScalaType(typeStr)}) match {\n""")
             sb.append(s"""\t\t\t\t\tcase Success(value) => this.${FetchingHelper.fetchNameFromIdent(paramName)} = value\n""")
-            sb.append(s"""\t\t\t\t\tcase Failure(e) => println(s"Failed to convert to ${toScalaType(typeStr)}: """)
+            sb.append(s"""\t\t\t\t\tcase Failure(e) => println(s"Failed to convert $${params($index).toString} to ${toScalaType(typeStr)}: """)
             sb.append("""$e")""")
             sb.append(s"""\n\t\t\t\t}\n""")
         }
@@ -987,8 +1059,6 @@ object CodeGenerator {
 object PreParser {
   //object PreParser extends App {
   private val parser = new PrePropertyParser
-  //  parse("""/Users/moraneus/Documents/Studies/phd/Dejavu-With-Pre-Proccess-Evaluation/Code/PPEE-DejaVu/src/test/scala/tests/pre_proccess/test1/spec2.pqtl""")
-
   private def readerFromFile(filename: String): String = {
     val reader = new BufferedReader(new FileReader(filename))
     var content = ""
@@ -1004,7 +1074,7 @@ object PreParser {
   }
 
   def parse(filename: String): (String, String) = {
-    //  def parse(filename: String): Unit = {
+
     val preInputProperty = readerFromFile(filename)
 
     var generatedCode: String = ""
