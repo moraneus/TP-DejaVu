@@ -195,8 +195,8 @@ class PrePropertyParser extends JavaTokenParsers {
       case id ~ "float" ~ Some(value) if value.matches("""-?\d+(\.\d*)?(f)?""") => (_IdentFloat(id), "float", Some(value))
       case id ~ "float" ~ None => (_IdentFloat(id), "float", None)
 
-      case id ~ "str" ~ Some(value) if value.startsWith("\"") && value.endsWith("\"") => (_IdentStr(id), "str", Some(value))
-      case id ~ "str" ~ None => (_IdentStr(id), "str", None)
+      case id ~ ("str" | "string") ~ Some(value) if value.startsWith("\"") && value.endsWith("\"") => (_IdentStr(id), "str", Some(value))
+      case id ~ ("str" | "string") ~ None => (_IdentStr(id), "str", None)
 
       case id ~ "bool" ~ Some(value) if value == "true" || value == "false" => (_IdentBool(id), "bool", Some(value))
       case id ~ "bool" ~ None => (_IdentBool(id), "bool", None)
@@ -483,6 +483,17 @@ object CodeGenerator {
   }
 
   /**
+   * Replaces the '.max' or '.min' call with '._max' or '._min' respectively.
+   *
+   * @param expr A string expression that may contain the '.max' or '.min' strings.
+   * @return A string with the '._max' or '._min' if we had '.max' or '.min' in the expr.
+   */
+  def translateMaxMin(expr: String): String = {
+    expr.replaceAll(
+      "(\\w+)\\.max\\b", "$1._max").replaceAll("(\\w+)\\.min\\b", "$1._min")
+  }
+
+  /**
    * Converts a Boolean expression to its string representation.
    *
    * @param expr The Boolean expression to convert.
@@ -744,6 +755,46 @@ object CodeGenerator {
         |}
         |
         |
+        |/**
+        | * An implicit class that provides utility methods for finding the key associated with the maximum
+        | * or minimum value in a map.
+        | *
+        | * @param map the map to operate on
+        | * @tparam A the type of keys in the map
+        | * @tparam B the type of values in the map
+        | */
+        |implicit class MapMaxKey[A, B](map: Map[A, B]) {
+        |  /**
+        |   * Finds the key associated with the maximum value in the map.
+        |   *
+        |   * @param cmp an implicit `Ordering` for comparing values of type `B`
+        |   * @return the key associated with the maximum value
+        |   * @throws NoSuchElementException if the map is empty
+        |   */
+        |  def _max(implicit cmp: Ordering[B]): A = {
+        |    if (map.isEmpty) {
+        |      throw new NoSuchElementException("Map is empty")
+        |    } else {
+        |      map.maxBy(_._2)._1
+        |    }
+        |  }
+        |
+        |  /**
+        |   * Finds the key associated with the minimum value in the map.
+        |   *
+        |   * @param cmp an implicit `Ordering` for comparing values of type `B`
+        |   * @return the key associated with the minimum value
+        |   * @throws NoSuchElementException if the map is empty
+        |   */
+        |  def _min(implicit cmp: Ordering[B]): A = {
+        |    if (map.isEmpty) {
+        |      throw new NoSuchElementException("Map is empty")
+        |    } else {
+        |      map.minBy(_._2)._1
+        |    }
+        |  }
+        |}
+        |
         |  /**
         |   * Provides utility methods for common operations.
         |   */
@@ -929,6 +980,7 @@ object CodeGenerator {
           updatedExpression = translatePrevExpression(updatedExpression)
           updatedExpression = translateProbAccessMethod(updatedExpression)
           updatedExpression = translateProbListMethod(updatedExpression)
+          updatedExpression = translateMaxMin(updatedExpression)
 
           sb.append(s"\t\tthis.$variable = $updatedExpression\n")
       }
