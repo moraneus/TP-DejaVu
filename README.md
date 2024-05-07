@@ -196,7 +196,10 @@ The grammar rules are outlined as follows:
 
     <pair>                    ::= (<key>, <double>)
     <prob_expression>         ::= "[" <pair> (",", <pair>)* "]"
-                                | #<variable_name>"(<key>)"
+                                | #<variable_name>(<key>)
+                                | <variable_name>".max"
+                                | <variable_name>".min"
+
 
     <factor>                  ::= "(" <arithmetic_expression> ")"
     <abs_function>            ::= "abs(" <term> ")"
@@ -213,6 +216,9 @@ The grammar rules are outlined as follows:
     <string_operation>        ::= <string_term> "+" <string_term>
                                 | <string_term> ".substring(" <integer> "," <integer> ")"
                                 | <string_term> ".length()"  
+                                | <string_term> ".toInt"  
+                                | <string_term> ".toFloat"  
+                                | <string_term> ".toDouble"  
                                 | <string_term> ".indexOf(" <string_value> ")"
                                 | <string_term> "==" <string_term>
                                 | <string_term> "!=" <string_term>
@@ -282,6 +288,11 @@ The different operators `op` and their behaviors on the variables `X` and `Y`:
 
     X -> Y             : Logical implication. If X then Y
     X <-> Y            : Logical biconditional. True only if X and Y have the same boolean value
+
+    #X(key)            : Retrieves the probability value associated with the specified key in probability object X.
+    X.max              : Returns the key corresponding to the maximum probability value in probability object X.
+    X.min              : Returns the key corresponding to the minimum probability value in probability object X.
+
 
 
 ### Default Values Within the Initiate Assignment
