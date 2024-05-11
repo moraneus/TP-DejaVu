@@ -1,0 +1,1 @@
+prop test : det_alert("false")

@@ -1,0 +1,14 @@
+initiate
+    current_speed: int := 60
+    current_speed_prb: double := 1
+    max_prb_speed_sign: string
+    max_speed_sign_prb: double
+
+on speed_road_sign(det_prb: prob)
+    max_prb_speed_sign: string := det_prb.max
+    new_speed_prb: double := #det_prb(max_prb_speed_sign)
+    new_det_speed: int := max_prb_speed_sign.toInt
+    chg_speed: bool := max_speed_sign_prb >= 0.7 || new_speed_prb >  current_speed_prb || new_det_speed < current_speed
+    current_speed: int := ite(chg_speed, new_det_speed, current_speed)
+    current_speed_prb: double :=ite(chg_speed, new_speed_prb, current_speed_prb)
+    output det_alert(chg_speed, current_speed)
