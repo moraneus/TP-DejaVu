@@ -409,8 +409,8 @@ case class Spec(properties: List[Property]) {
          |    modifiedEvent match {
          |       case Some(first :: second :: _) =>
          |         moni_.submit(first.toString, second.asInstanceOf[List[String]])
-         |       case Some(event_name) =>
-         |         if (event_name.toString != "skip")
+         |       case Some(event_name: String) =>
+         |         if (event_name != "skip")
          |           moni_.submit(event_name.toString, Nil)
          |         else
          |           true
