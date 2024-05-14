@@ -16,10 +16,10 @@ object AstUtil {
   // --- Debugging: ----
 
   /**
-    * Used for debugging a problem: insert and then remove when bug is found.
-    *
-    * @param items any items to be printed.
-    */
+   * Used for debugging a problem: insert and then remove when bug is found.
+   *
+   * @param items any items to be printed.
+   */
 
   def debug(items: Any*): Unit = {
     println("==========")
@@ -78,12 +78,12 @@ object AstUtil {
   // --- File writing end ---
 
   /**
-    * This method copies the code in Monitor.scala to Monitor.txt (except for the initial package
-    * declaration). Monitor.txt becomes part of the generated monitoring code for a set of
-    * properties. This approach is necessary since Monitor.scala will not be available in
-    * the generated jar file. The method only has  a side effect in development mode where
-    * Monitor.scala is available, and is called each time the system (Verify.main) is run.
-    */
+   * This method copies the code in Monitor.scala to Monitor.txt (except for the initial package
+   * declaration). Monitor.txt becomes part of the generated monitoring code for a set of
+   * properties. This approach is necessary since Monitor.scala will not be available in
+   * the generated jar file. The method only has  a side effect in development mode where
+   * Monitor.scala is available, and is called each time the system (Verify.main) is run.
+   */
 
   def refreshMonitorTextIfDevelopment(): Unit = {
     val dejavuDir = s"${Paths.get(".").toAbsolutePath}src/main/scala/dejavu/"
@@ -147,7 +147,7 @@ case class Spec(properties: List[Property]) {
     openFile(s"$generatedMonitorsPath/TraceMonitor.scala")
     println(s"Generated TraceMonitor.scala file in: $generatedMonitorsPath")
 
-    writeln(ResourceReader.read("Monitor.txt"))
+    writeln(ResourceReader.read("/Monitor.txt"))
     writeln()
     for (property <- properties) {
       val name = property.name
@@ -180,9 +180,8 @@ case class Spec(properties: List[Property]) {
            |
            |    // Update the last evaluate value for the next pre monitor processing
            |    if (Options.PRE_PREDICTION) {
-           |      PreMonitor.last_eval = !error
+           |        PreMonitor.last_eval = !error
            |    }
-           |
            |    !error
            |  }""".stripMargin)
 
@@ -324,6 +323,8 @@ case class Spec(properties: List[Property]) {
     writeln(
       s"""
          |object TraceMonitor {
+         |  var moni_ = new PropertyMonitor(${if(prePropertySynthesisCode.isEmpty) null else "PreMonitor"})
+         |  var timed = true
          |  private val usage: String =
          | \"\"\"Usage: Usage:
          |    --logfile=<filename> [OPTIONS]
@@ -340,6 +341,99 @@ case class Spec(properties: List[Property]) {
          |    --logfile log.csv --bits 16 --mode debug --stat false
          |
          | \"\"\".stripMargin
+         |
+         |def config(bits: String, mode: String, printStat: String, timeEnabled: String): Boolean = {
+         |     // Read and set 'bits'
+         |     val bitsValue = bits.trim
+         |     if (!bitsValue.matches(\"\"\"\\d+\"\"\")) {
+         |        println("*** bits argument must be an integer")
+         |        return false
+         |     }
+         |     Options.BITS = bitsValue.toInt
+         |
+         |    // Read and set 'mode'
+         |    val modeValue = mode.toLowerCase()
+         |    if (modeValue == "debug") Options.DEBUG = true
+         |    else if (modeValue == "profile") Options.PROFILE = true
+         |    else {
+         |     println("*** mode argument must be: debug or profile")
+         |    }
+         |
+         |    if (Options.PROFILE) {
+         |        openProfileFile("dejavu-profile.csv")
+         |        moni_.printProfileHeader()
+         |    }
+         |
+         |   // Read and set 'printStat'
+         |   val printStatValue = printStat.toLowerCase()
+         |   if (printStatValue == "true") Options.PRINTS_STAT = true
+         |   else if (printStatValue == "false") Options.PRINTS_STAT = false
+         |   else {
+         |     println("*** stat argument must be: true or false")
+         |     return false
+         |   }
+         |
+         |   // Read and set 'timed'
+         |   val timedValue = timeEnabled.toLowerCase()
+         |   if (timedValue == "true") timed = true
+         |   else if (timedValue == "false") timed = false
+         |   else {
+         |     println("*** timed argument must be: true or false")
+         |     return false
+         |   }
+         |
+         |   println("Bits: " + bitsValue + " Mode: " + modeValue + " PrintStat: " + printStatValue + " Timed " + timedValue)
+         |   return true
+         | }
+         |
+         |
+         |  def eval(event: String): Boolean = {
+         |   openResultFile("dejavu-results")
+         |   var input = event.split(",")
+         |   var eventSize: Int = 0
+         |   Options.BITS = 20
+         |   val name = input(0)
+         |   var args = new ListBuffer[Any]()
+         |
+         |
+         |   if (timed) {
+         |     eventSize = input.length - 1
+         |     val timeStamp: Int = input(eventSize).trim.toInt
+         |     moni_.setTime(moni_.lineNr)
+         |   } else {
+         |     eventSize = input.length
+         |   }
+         |
+         |   for (i <- 1 until eventSize) {
+         |      args += input(i)
+         |   }
+         |
+         |   val res: Boolean = if (Options.PRE_PREDICTION && moni_ != null) {
+         |   val modifiedEvent = moni_.preMonitor_(name, args: _*)
+         |
+         |    modifiedEvent match {
+         |       case Some(first :: second :: _) =>
+         |         moni_.submit(first.toString, second.asInstanceOf[List[String]])
+         |       case Some(event_name: String) =>
+         |         if (event_name != "skip")
+         |           moni_.submit(event_name.toString, Nil)
+         |         else
+         |           true
+         |       case Some(_) =>
+         |         println("Unexpected event structure output from the pre processing")
+         |         false
+         |       case None =>
+         |         moni_.submit(name, args.toList)
+         |     }
+         |   }
+         |  else {
+         |     moni_.submit(name, args.toList)
+         |  }
+         |
+         |  moni_.lineNr += 1
+         |  closeResultFile()
+         |  return res;
+         |}
          |
          | def time[R](block: => R): R = {
          |     val t0 = System.nanoTime()
@@ -541,11 +635,11 @@ object SymbolTable {
   }
 
   /**
-    * Adds any definition or call of a predicate
-    *
-    * @param name name of predicate.
-    * @param size number of arguments to predicate.
-    */
+   * Adds any definition or call of a predicate
+   *
+   * @param name name of predicate.
+   * @param size number of arguments to predicate.
+   */
 
   def addPredicate(name: String, size: Int): Unit = {
     predicateSignatures.get(name) match {
@@ -629,10 +723,10 @@ case class Document(definitions: List[Definition]) {
   }
 
   /**
-    * The following version of this method allows a macro to call other macros defined later.
-    * It uses a macro map due to the previous older implementation of this method. A map
-    * is strictly speaking not needed with this version.
-    */
+   * The following version of this method allows a macro to call other macros defined later.
+   * It uses a macro map due to the previous older implementation of this method. A map
+   * is strictly speaking not needed with this version.
+   */
 
   def expandMacroCalls: Spec = {
     var macros: List[Macro] = definitions.filter(_.isInstanceOf[Macro]).asInstanceOf[List[Macro]]
@@ -872,24 +966,24 @@ case class Rule(name: String, args: List[String], ltl: LTL) extends Definition {
 trait LTL {
 
   /**
-    * Index of formula, used to index in <code>now</code> and <code>pre</code> arrays.
-    */
+   * Index of formula, used to index in <code>now</code> and <code>pre</code> arrays.
+   */
 
   var index: Int = 0
 
   /**
-    * True for the top level formula of a rule body. This directs how this formula
-    * is displayed in dot format.
-    */
+   * True for the top level formula of a rule body. This directs how this formula
+   * is displayed in dot format.
+   */
 
   var isRuleBodyTop: Boolean = false
 
   /**
-    * Sets the variable <code>isBelowPrevious</code> to true in this node and all
-    * subnodes.
-    *
-    * @return the same LTL formula (this).
-    */
+   * Sets the variable <code>isBelowPrevious</code> to true in this node and all
+   * subnodes.
+   *
+   * @return the same LTL formula (this).
+   */
 
   def setBelowPrevious(): LTL = {
     isBelowPrevious = true
@@ -897,106 +991,106 @@ trait LTL {
   }
 
   /**
-    * True for an LTL formula that occurs below the <code>@</code> operator
-    * (previous time).
-    */
+   * True for an LTL formula that occurs below the <code>@</code> operator
+   * (previous time).
+   */
 
   implicit var isBelowPrevious: Boolean = false
 
   /**
-    * True for predicate calls that represent calls to rules.
-    *
-    * @return true iff this is an object of class <code>Pred</code>,
-    *         which is a call to a rule.
-    */
+   * True for predicate calls that represent calls to rules.
+   *
+   * @return true iff this is an object of class <code>Pred</code>,
+   *         which is a call to a rule.
+   */
 
   def isRuleCall: Boolean = false
 
   /**
-    * Verifies whether this LTL formula is wellformed (type checking, static analysis).
-    * The method accesses the global <code>SymbolTable</code> as well as the local
-    * symbol table, named an environment <code>env</code>, passed as parameter.
-    *
-    * @param env the local symbol table environment.
-    */
+   * Verifies whether this LTL formula is wellformed (type checking, static analysis).
+   * The method accesses the global <code>SymbolTable</code> as well as the local
+   * symbol table, named an environment <code>env</code>, passed as parameter.
+   *
+   * @param env the local symbol table environment.
+   */
 
   def checkForm(env: Environment): Unit = {}
 
   /**
-    * Verifies a particular wellformedness condition. Sets <code>errors</code> flag in symbol table in
-    * case the condition is false.
-    *
-    * @param condition the condition to be verified.
-    * @param msg       message to be printed in case it is violated.
-    */
+   * Verifies a particular wellformedness condition. Sets <code>errors</code> flag in symbol table in
+   * case the condition is false.
+   *
+   * @param condition the condition to be verified.
+   * @param msg       message to be printed in case it is violated.
+   */
 
   def verify(condition: Boolean)(msg: String, error: Boolean = true): Unit = {
     SymbolTable.verify(condition)(s"$msg - in: $this", error)
   }
 
   /**
-    * Get all quantified variables (and whether they are bounded or not - true = yes)
-    * in an LTL term. That is, all variables defined in an existential or universal
-    * quantification. Note that this is not the list of free variables in the LTL formula.
-    *
-    * @return the list of quantified variables and their boundedness status in the LTL term.
-    */
+   * Get all quantified variables (and whether they are bounded or not - true = yes)
+   * in an LTL term. That is, all variables defined in an existential or universal
+   * quantification. Note that this is not the list of free variables in the LTL formula.
+   *
+   * @return the list of quantified variables and their boundedness status in the LTL term.
+   */
 
   def getQuantifiedVariables: List[(String, Boolean)] = Nil
 
   /**
-    * Get all free variables in an LTL term. That is, all variables not occurring under a
-    * corresponding quantification over that same variable.
-    *
-    * @return the set of free variables.
-    */
+   * Get all free variables in an LTL term. That is, all variables not occurring under a
+   * corresponding quantification over that same variable.
+   *
+   * @return the set of free variables.
+   */
 
   def getFreeVariables: Set[String] = Set()
 
   /**
-    * Returns the names of predicates called in a LTL formula. This includes macro calls.
-    *
-    * @return names of the called predicates.
-    */
+   * Returns the names of predicates called in a LTL formula. This includes macro calls.
+   *
+   * @return names of the called predicates.
+   */
 
   def getPredicates: Set[String] = Set()
 
   /**
-    * Returns the predicates referred to in a LTL formula.
-    *
-    * @return predicates referred to in the LTL formula.
-    */
+   * Returns the predicates referred to in a LTL formula.
+   *
+   * @return predicates referred to in the LTL formula.
+   */
 
   def getPredicateTerms: Set[Pred] = Set()
 
   /**
-    * Expands calls of macros.
-    *
-    * @param macros the macros defined in the specification document.
-    * @return the LTL formula where macros have been expanded.
-    */
+   * Expands calls of macros.
+   *
+   * @param macros the macros defined in the specification document.
+   * @return the LTL formula where macros have been expanded.
+   */
 
   def expandMacros(macros: MacroMap): LTL = this
 
   /**
-    * Renames quantifiers that are introduced more than once, as for example
-    * <code>forall x . (p(x) & exists x . q(x))</code>
-    * becomes:
-    * <code>forall x1 . (p(x1) & exists x2 . q(x2))</code>.
-    *
-    * @return the renamed LTL formula.
-    */
+   * Renames quantifiers that are introduced more than once, as for example
+   * <code>forall x . (p(x) & exists x . q(x))</code>
+   * becomes:
+   * <code>forall x1 . (p(x1) & exists x2 . q(x2))</code>.
+   *
+   * @return the renamed LTL formula.
+   */
 
   def renameQuantVars(): LTL = this
 
   /**
-    * Renames a specific quantified expression, given the name quantified over and the body of
-    * the quantification. Reused in the four different quantified expressions in DejaVu.
-    *
-    * @param name the name of the quantified variable.
-    * @param ltl  the body of the quantified expression.
-    * @return the new name (if renamed) and the renamed body.
-    */
+   * Renames a specific quantified expression, given the name quantified over and the body of
+   * the quantification. Reused in the four different quantified expressions in DejaVu.
+   *
+   * @param name the name of the quantified variable.
+   * @param ltl  the body of the quantified expression.
+   * @return the new name (if renamed) and the renamed body.
+   */
 
   def renameQuantification(name: String, ltl: LTL): (String, LTL) = {
     LTL.quantVarCounters.get(name) match {
@@ -1013,15 +1107,15 @@ trait LTL {
   }
 
   /**
-    * Produces a new name based on an old quantified variable name and a counter. The result
-    * depends on whether we are renaming a macro LTL body or a property LTL body.
-    * E.g x and 5 becomes x_5 in property mode and _x_5 in macro mode. The variable
-    * <code>LTL.renameMacros</code> indicates whether it is macro mode.
-    *
-    * @param name  the quantified variable name to be renamed.
-    * @param count the variable counter.
-    * @return the renamed variable.
-    */
+   * Produces a new name based on an old quantified variable name and a counter. The result
+   * depends on whether we are renaming a macro LTL body or a property LTL body.
+   * E.g x and 5 becomes x_5 in property mode and _x_5 in macro mode. The variable
+   * <code>LTL.renameMacros</code> indicates whether it is macro mode.
+   *
+   * @param name  the quantified variable name to be renamed.
+   * @param count the variable counter.
+   * @return the renamed variable.
+   */
 
   def variableWithCounter(name: String, count: Int): String = {
     var newName = name + "_" + count
@@ -1036,12 +1130,12 @@ trait LTL {
   def substituteRuleBody(subst: Substitution) = this
 
   /**
-    * Substitutes a variable name for a variable name. Substituting a constant for a variable name results in an error.
-    *
-    * @param varName the variable name being substituted.
-    * @param subst   the substitution.
-    * @return the LTL expression after application of substitution.
-    */
+   * Substitutes a variable name for a variable name. Substituting a constant for a variable name results in an error.
+   *
+   * @param varName the variable name being substituted.
+   * @param subst   the substitution.
+   * @return the LTL expression after application of substitution.
+   */
 
   def substituteVarForVar(varName: String, subst: Substitution): String = {
     subst.get(varName) match {
@@ -1082,46 +1176,46 @@ trait LTL {
 
 object LTL {
   /**
-    * Counter used to keep track of sub-formula indexes.
-    */
+   * Counter used to keep track of sub-formula indexes.
+   */
 
   var next: Int = 0
 
   /**
-    * Stores the different time limits occurring in timed formulas. E.g
-    * the formula `p S[<=k] q` will cause `k` to be stored. The set is used
-    * to generate the `timeLimitMap` which is looked up in the semantics of
-    * the timed formulas.
-    */
+   * Stores the different time limits occurring in timed formulas. E.g
+   * the formula `p S[<=k] q` will cause `k` to be stored. The set is used
+   * to generate the `timeLimitMap` which is looked up in the semantics of
+   * the timed formulas.
+   */
 
   var timeLimits : Set[Int] = Set()
 
   /**
-    * Will after translation of the current LTL property contain all its sub-formulas
-    * in positions corresponding to their indexes. This is used to annotate debugging
-    * output with which formulas correspond to which indexes.
-    */
+   * Will after translation of the current LTL property contain all its sub-formulas
+   * in positions corresponding to their indexes. This is used to annotate debugging
+   * output with which formulas correspond to which indexes.
+   */
 
   var subExpressions: List[LTL] = Nil
 
   /**
-    * Will after translation of the current LTL property contain the indexes of past time
-    * formulas, such as S (since), @ (previous), P (sometime), etc. This is used by the
-    * garbage collection algorithm.
-    */
+   * Will after translation of the current LTL property contain the indexes of past time
+   * formulas, such as S (since), @ (previous), P (sometime), etc. This is used by the
+   * garbage collection algorithm.
+   */
 
   var indicesOfPastTimeFormulas: List[Int] = Nil
 
   /**
-    * Stores a counter for each quantified variable <code>x</code>, which is introduced by a quantifier more than
-    * once in an LTL formula. Used to rename such variables, as in: <code>x1, x2, x3, ...</code>.
-    */
+   * Stores a counter for each quantified variable <code>x</code>, which is introduced by a quantifier more than
+   * once in an LTL formula. Used to rename such variables, as in: <code>x1, x2, x3, ...</code>.
+   */
 
   var quantVarCounters: Map[String, Int] = Map()
 
   /**
-    * Boolean flag being true if properties are being renamed, in contrast to macros
-    */
+   * Boolean flag being true if properties are being renamed, in contrast to macros
+   */
 
   var renameMacros: Boolean = false
 
@@ -1131,10 +1225,10 @@ object LTL {
   }
 
   /**
-    * Compute the index for the next sub-formula.
-    *
-    * @return the next index.
-    */
+   * Compute the index for the next sub-formula.
+   *
+   * @return the next index.
+   */
 
   def getIndex(): Int = {
     val index = next
@@ -1143,47 +1237,47 @@ object LTL {
   }
 
   /**
-    * Any variables used in a relation will be added to this set.
-    */
+   * Any variables used in a relation will be added to this set.
+   */
 
   var varsInRelations: Set[String] = Set()
 
   /**
-    * Stores information about which AST nodes represent calls of rules, and which
-    * AST nodes define the head of rules.
-    */
+   * Stores information about which AST nodes represent calls of rules, and which
+   * AST nodes define the head of rules.
+   */
 
   var ruleIndex: RuleIndex = new RuleIndex
 
   /**
-    * Lists storing assignment statements generated during translation to the
-    * <code>now</code> array. They are updated in mixed order but are printed out
-    * in order 1 to 5.
-    *
-    * <code>assignments1</code> will be printed out first (corresponds to
-    * events in leaf nodes). Leaf node events must be printed first to provide
-    * variable bindings for evaluating relations.
-    * That is: <code>Pred & !isRuleCall</code>.
-    *
-    * <code>assignments2</code> will be printed out thereafter. These
-    * correspond to non-leaf rule nodes that do not occur below a @-operator in rules.
-    * That is: <code>!updatingMainFormula & !Pred & !isBelowPrevious</code>.
-    *
-    * <code>assignments3</code> will be printed out thereafter. They correspond
-    * to rule calls being assigned the values of finalized
-    * rule body values. This includes recursive calls of these as well as calls of
-    * rules in the main formula.
-    * That is: <code>isRuleCall</code>.
-    *
-    * <code>assignments4</code> Will be printed out thereafter. These are the remaining
-    * rule nodes. That is: nodes that occur below the @-operator, and which
-    * are not recursive rule calls and not leaf nodes.
-    * That is: <code>!updatingMainFormula & !Pred & isBelowPrevious</code>.
-    *
-    * <code>assignments5</code> will be printed out last. This is the main formula's
-    * non-leaf nodes.
-    * That is: <code>updatingMainFormula & !Pred</code>.
-    */
+   * Lists storing assignment statements generated during translation to the
+   * <code>now</code> array. They are updated in mixed order but are printed out
+   * in order 1 to 5.
+   *
+   * <code>assignments1</code> will be printed out first (corresponds to
+   * events in leaf nodes). Leaf node events must be printed first to provide
+   * variable bindings for evaluating relations.
+   * That is: <code>Pred & !isRuleCall</code>.
+   *
+   * <code>assignments2</code> will be printed out thereafter. These
+   * correspond to non-leaf rule nodes that do not occur below a @-operator in rules.
+   * That is: <code>!updatingMainFormula & !Pred & !isBelowPrevious</code>.
+   *
+   * <code>assignments3</code> will be printed out thereafter. They correspond
+   * to rule calls being assigned the values of finalized
+   * rule body values. This includes recursive calls of these as well as calls of
+   * rules in the main formula.
+   * That is: <code>isRuleCall</code>.
+   *
+   * <code>assignments4</code> Will be printed out thereafter. These are the remaining
+   * rule nodes. That is: nodes that occur below the @-operator, and which
+   * are not recursive rule calls and not leaf nodes.
+   * That is: <code>!updatingMainFormula & !Pred & isBelowPrevious</code>.
+   *
+   * <code>assignments5</code> will be printed out last. This is the main formula's
+   * non-leaf nodes.
+   * That is: <code>updatingMainFormula & !Pred</code>.
+   */
 
   var assignments1: List[String] = Nil
   var assignments2: List[String] = Nil
@@ -1192,46 +1286,46 @@ object LTL {
   var assignments5: List[String] = Nil
 
   /**
-    * Is true when the code for the main formula is generated, and is false when the
-    * code for the rules is generated. This drives which of the assignment variables
-    * above are assigned to.
-    */
+   * Is true when the code for the main formula is generated, and is false when the
+   * code for the rules is generated. This drives which of the assignment variables
+   * above are assigned to.
+   */
 
   var updatingMainFormula: Boolean = true
 
   /**
-    * Create an assignment statement to <code>now(index)</code>.
-    *
-    * @param index the index of <code>now</code> to assign to.
-    * @param rhs   the right-hand side of the assignment statement.
-    * @return the assignment statement as a string.
-    */
+   * Create an assignment statement to <code>now(index)</code>.
+   *
+   * @param index the index of <code>now</code> to assign to.
+   * @param rhs   the right-hand side of the assignment statement.
+   * @return the assignment statement as a string.
+   */
 
   def mkAssignment(index: Int, rhs: String): String = s"      now($index) = $rhs"
 
   /**
-    * Assign first.
-    *
-    * @param index the index of <code>now</code> to assign to.
-    * @param rhs   the right-hand side of the assignment statement.
-    */
+   * Assign first.
+   *
+   * @param index the index of <code>now</code> to assign to.
+   * @param rhs   the right-hand side of the assignment statement.
+   */
 
   def assignFirst(index: Int)(rhs: String): Unit = {
     assignments1 :+= mkAssignment(index, rhs)
   }
 
   /**
-    * Assign there after.
-    *
-    * Assign to <code>assignments2</code> if it concerns a rule body.
-    * Assign to <code>assignments5</code> if it concerns the main formula.
-    * This is controlled by the the Boolean variable <code>updatingMainFormula</code>.
-    *
-    * This is some hairy code dude.
-    *
-    * @param index the index of <code>now</code> to assign to.
-    * @param rhs   the right-hand side of the assignment statement.
-    */
+   * Assign there after.
+   *
+   * Assign to <code>assignments2</code> if it concerns a rule body.
+   * Assign to <code>assignments5</code> if it concerns the main formula.
+   * This is controlled by the the Boolean variable <code>updatingMainFormula</code>.
+   *
+   * This is some hairy code dude.
+   *
+   * @param index the index of <code>now</code> to assign to.
+   * @param rhs   the right-hand side of the assignment statement.
+   */
 
   def assign(index: Int)(rhs: String)(implicit isBelowPrevious: Boolean): Unit = {
     val assignment = mkAssignment(index, rhs)
@@ -1247,23 +1341,23 @@ object LTL {
   }
 
   /**
-    * Connects a call to a rule to the head of the rule. E.g. if a rule <code>r(x)</code>
-    * is called at index <code>index1</code>, and this rule's top node is <code>index2</code>,
-    * them the following code is generated:
-    *
-    * <code>now(index1) = now(index2)</code>
-    *
-    * @param index1 the index of the rule call.
-    * @param index2 the index of the rule definition.
-    */
+   * Connects a call to a rule to the head of the rule. E.g. if a rule <code>r(x)</code>
+   * is called at index <code>index1</code>, and this rule's top node is <code>index2</code>,
+   * them the following code is generated:
+   *
+   * <code>now(index1) = now(index2)</code>
+   *
+   * @param index1 the index of the rule call.
+   * @param index2 the index of the rule definition.
+   */
 
   def assignIndexToIndex(index1: Int, index2: Int): Unit = {
     assignments3 :+= mkAssignment(index1, s"now($index2)")
   }
 
   /**
-    * Resets this LTL object for translating a new property.
-    */
+   * Resets this LTL object for translating a new property.
+   */
 
   def reset(): Unit = {
     next = 0
@@ -1283,10 +1377,10 @@ object LTL {
   }
 
   /**
-    * Translates a property.
-    *
-    * @param property the property to be translated.
-    */
+   * Translates a property.
+   *
+   * @param property the property to be translated.
+   */
 
   def translate(property: Property): Unit = {
     reset()
@@ -1319,18 +1413,18 @@ object LTL {
 }
 
 /**
-  * represents the call of a rule.
-  *
-  * @param name the name of the rule called.
-  * @param args the arguments of the rule call.
-  */
+ * represents the call of a rule.
+ *
+ * @param name the name of the rule called.
+ * @param args the arguments of the rule call.
+ */
 
 case class RuleHead(name: String, args: List[String])
 
 /**
-  * Represents information about which AST nodes are calls to rules, and
-  * which AST nodes are the heads of rule definitions.
-  */
+ * Represents information about which AST nodes are calls to rules, and
+ * which AST nodes are the heads of rule definitions.
+ */
 
 class RuleIndex {
   var ruleNames: Set[String] = Set()

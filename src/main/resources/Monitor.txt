@@ -478,7 +478,7 @@ class TraceStatistics(events: Set[String]) {
   * by the user.
   */
 
-abstract class Monitor(preMonitor: PreMonitorTrait){
+abstract class Monitor(preMonitor: PreMonitorTrait) {
   val state: State = new State
   var formulae: List[Formula] = Nil
   var lineNr: Int = 0
@@ -499,6 +499,10 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
   def setTime(timeStamp: Int): Unit = {
     deltaTime = timeStamp - currentTime
     currentTime = timeStamp
+  }
+
+  def preMonitor_(event_name: String, params: Any*): Option[Any] = {
+    preMonitor.evaluate(event_name, params: _*)
   }
 
   /**
@@ -537,12 +541,12 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
     * @param args the arguments to the event.
     */
 
-  def submit(name: String, args: List[Any]): Unit = {
+  def submit(name: String, args: List[Any]): Boolean = {
     if (Options.STATISTICS) {
       statistics.update(name)
     }
     state.update(name, args)
-    evaluate()
+    return evaluate()
   }
 
   /**
@@ -666,7 +670,7 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
     * property.
     */
 
-  def evaluate(): Unit = {
+  def evaluate(): Boolean = {
     debug(s"\ncurrentTime = $currentTime\n$state\n")
     for (formula <- formulae) {
       formula.setTime(deltaTime)
@@ -677,8 +681,10 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
           println(s"\n*** Property ${formula.name} violated on event number $lineNr:\n")
           println(state)
         }
+        return false
       }
     }
+    true
   }
 
   /**
@@ -687,7 +693,7 @@ abstract class Monitor(preMonitor: PreMonitorTrait){
     */
 
   def recordResult(): Unit = {
-      writelnResult(lineNr)
+    writelnResult(lineNr)
   }
 
   /**
@@ -902,9 +908,8 @@ abstract class Formula(val monitor: Monitor) {
   def addTouchedByLastEvent(name: String, value: Any, bdd: BDD): Unit = {
     if (varsInRelations.contains(name)) {
       touchedByLastEvent += ((name, value, bdd))
-
-      // ### Prediction Extension ###
       debug(s"recording binding $name -> $value (assignment: ${bdd.satOne()}) for subsequent relation updating")
+
     }
   }
 
