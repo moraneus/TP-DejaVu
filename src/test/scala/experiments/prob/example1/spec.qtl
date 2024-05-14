@@ -1,1 +1,1 @@
-prop test : det_alert("false")
+prop AdjustSpeed2: exists  dst . exists dsp . instance(0,dst,dsp) & (( dst < 45000) -> dsp <= 0) & ( ( dst >= 45000) -> dsp < -5000)

@@ -98,6 +98,20 @@ case class FunctionCall(name: String, params: List[String])
 class PrePropertyParser extends JavaTokenParsers {
   override val whiteSpace: Regex = "[ \t\r\f\n]+".r
 
+  private val keywords = Set(
+    "if", "else", "ite", "max", "while", "for", "return", "int",
+    "float", "double", "str", "bool", "prob", "last_eval")
+
+  override def ident: Parser[String] = {
+    val identRegex = "[a-zA-Z_][a-zA-Z0-9_]*".r
+    identRegex >> {
+      case id if keywords.contains(id) =>
+        failure(s"Keyword '$id' is a reserved word. It cannot be used as an variable")
+      case id =>
+        success(id)
+    }
+  }
+
   /** Parses variable's type. */
   private def varType: Parser[String] =
     "int" | "double" | "float" | "string" | "str" | "bool" | "prob" | failure("Invalid variable type")
@@ -857,6 +871,9 @@ object CodeGenerator {
                eventParams: Map[TypedIdentifier, String],
                prevEventParams: Set[String],
                sb: StringBuilder): Set[String] = {
+
+    // Define last evaluate variable
+    sb.append(s"\tvar last_eval: Boolean = false\n")
 
     // To keep track of initialized variables
     val initializedVariables = scala.collection.mutable.Set[String]()

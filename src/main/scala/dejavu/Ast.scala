@@ -177,6 +177,12 @@ case class Spec(properties: List[Property]) {
            |    now = pre
            |    pre = tmp
            |    touchedByLastEvent = emptyTouchedSet
+           |
+           |    // Update the last evaluate value for the next pre monitor processing
+           |    if (Options.PRE_PREDICTION) {
+           |      PreMonitor.last_eval = !error
+           |    }
+           |
            |    !error
            |  }""".stripMargin)
 

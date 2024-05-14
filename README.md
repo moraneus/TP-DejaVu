@@ -207,6 +207,7 @@ The grammar rules are outlined as follows:
     <boolean_expression>      ::= <arithmetic_expression> <comparison_operator> <arithmetic_expression>
                                 | <logical_expression>
                                 | <in_function>
+                                | last_eval
 
     <boolean_term>            ::= <boolean_value> | <variable_name>
     <logical_expression>      ::= <boolean_term> <logical_operator> <boolean_term>
@@ -292,6 +293,7 @@ The different operators `op` and their behaviors on the variables `X` and `Y`:
     #X(key)            : Retrieves the probability value associated with the specified key in probability object X.
     X.max              : Returns the key corresponding to the maximum probability value in probability object X.
     X.min              : Returns the key corresponding to the minimum probability value in probability object X.
+    last_eval          : Returns the last evaluatle value of DejaVu.
 
 
 
@@ -304,6 +306,7 @@ The default values are as follows:
 * 0 for types `int`, `float`, and `double`
 * false for type `bool`
 * Map.empty[String, Double] for type `prob`
+
 
 
 ## Usage Examples Of TP-DejaVu
