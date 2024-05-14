@@ -1,0 +1,7 @@
+on p(x: int)
+    in_bound: bool := x > 0
+    output p(x, in_bound)
+
+on q(y: int)
+    in_bound: bool := y > 0
+    output q(y, in_bound)
