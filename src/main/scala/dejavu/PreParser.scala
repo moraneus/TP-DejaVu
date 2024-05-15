@@ -102,15 +102,15 @@ class PrePropertyParser extends JavaTokenParsers {
     "if", "else", "ite", "max", "while", "for", "return", "int",
     "float", "double", "str", "bool", "prob", "last_eval")
 
-  override def ident: Parser[String] = {
-    val identRegex = "[a-zA-Z_][a-zA-Z0-9_]*".r
-    identRegex >> {
-      case id if keywords.contains(id) =>
-        failure(s"Keyword '$id' is a reserved word. It cannot be used as an variable")
-      case id =>
-        success(id)
-    }
-  }
+//  override def ident: Parser[String] = {
+//    val identRegex = "[a-zA-Z_()\"'][a-zA-Z0-9_()\"']*".r
+//    identRegex >> {
+//      case id if keywords.contains(id) =>
+//        failure(s"Keyword '$id' is a reserved word. It cannot be used as an variable")
+//      case id =>
+//        success(id)
+//    }
+//  }
 
   /** Parses variable's type. */
   private def varType: Parser[String] =
@@ -169,7 +169,7 @@ class PrePropertyParser extends JavaTokenParsers {
     val specialVar: Parser[NumericExpression] = "@" ~> ident ^^ _SpecialVar
     val numberOrVar = float | double | integer | specialVar | regularVar // order matters
 
-    val op = ("<" | ">" | "<=" | ">=" | "==" | "!=")
+    val op = ("<=" | ">=" | "==" | "!=" | "<" | ">")
 
     numberOrVar ~ op ~ numberOrVar ^^ {
       case left ~ operator ~ right => NumComparison(left, operator, right)

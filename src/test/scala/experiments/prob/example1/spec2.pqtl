@@ -1,0 +1,11 @@
+initiate
+    current_speed: int
+
+on speed_sensor(speed: int)
+    current_speed: int := speed
+    output skip
+
+on speed_road_sign(det_prb: prob)
+    max_prb_speed_sign: string := det_prb.max
+    allowed_speed: int := max_prb_speed_sign.toInt
+    output ite(allowed_speed <= current_speed, accelerate(allowed_speed), decelerate(allowed_speed))
