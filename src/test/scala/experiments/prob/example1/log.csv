@@ -1,7 +1,7 @@
-speed_road_sign,80
-car_current_speed(100)
-speed_road_sign,[("80", 0.2), ("100", 0.5),("120", 0.3)]
-speed_road_sign,[("80", 0.1), ("100", 0.7),("120", 0.2)]
-speed_road_sign,[("80", 0.4), ("100", 0.3),("120", 0.3)]
-speed_road_sign,[("80", 0.3), ("100", 0.4),("120", 0.3)]
-speed_road_sign,[("80", 0.1), ("100", 0.5),("120", 0.4)]
+car_current_speed,10
+car_current_speed,100
+car_current_speed,30
+car_current_speed,30
+car_current_speed,30
+car_current_speed,30
+car_current_speed,30

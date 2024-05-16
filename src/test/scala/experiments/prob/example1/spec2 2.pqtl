@@ -1,0 +1,11 @@
+initiate
+    max_speed: int := 30
+
+on car_current_speed(speed: int)
+    output ite(speed > max_speed, decelerate(max_speed),
+        ite(speed < max_speed - 2, accelerate(max_speed), skip))
+
+on speed_road_sign(det_prb: prob)
+    max_speed_sign: string := det_prb.max
+    max_speed: int := max_speed_sign.toInt
+    output det_alert(chg_speed, max_speed)

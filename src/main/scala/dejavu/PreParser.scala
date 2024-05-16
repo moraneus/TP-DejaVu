@@ -66,7 +66,11 @@ case class ITEOutput(iteFunction: ITEFunction) extends Output
  */
 case class Assignment(variable: String, variableType: String, expression: String) extends PProperty
 
-case class ITEFunction(boolExpr: BooleanExpression, function1: FunctionCall, function2: FunctionCall)
+sealed trait Callable
+case class FunctionCall(name: String, params: List[String]) extends Callable
+case class ITEFunction(boolExpr: BooleanExpression, function1: Callable, function2: Callable) extends Callable
+case object Skip extends Callable
+
 
 sealed trait TypedIdentifier
 case class _IdentInt(name: String) extends TypedIdentifier
@@ -89,8 +93,11 @@ trait NumericExpression
 case class _Value(value: Double) extends NumericExpression
 case class _NumericVar(name: String) extends NumericExpression
 case class _SpecialVar(name: String) extends NumericExpression
+case class _Add(left: NumericExpression, right: NumericExpression) extends NumericExpression
+case class _Subtract(left: NumericExpression, right: NumericExpression) extends NumericExpression
+case class _Multiply(left: NumericExpression, right: NumericExpression) extends NumericExpression
+case class _Divide(left: NumericExpression, right: NumericExpression) extends NumericExpression
 case class NumComparison(left: NumericExpression, op: String, right: NumericExpression) extends BooleanExpression
-case class FunctionCall(name: String, params: List[String])
 
 /**
  * Represents a parser for the property DSL language.
@@ -102,20 +109,9 @@ class PrePropertyParser extends JavaTokenParsers {
     "if", "else", "ite", "max", "while", "for", "return", "int",
     "float", "double", "str", "bool", "prob", "last_eval")
 
-//  override def ident: Parser[String] = {
-//    val identRegex = "[a-zA-Z_()\"'][a-zA-Z0-9_()\"']*".r
-//    identRegex >> {
-//      case id if keywords.contains(id) =>
-//        failure(s"Keyword '$id' is a reserved word. It cannot be used as an variable")
-//      case id =>
-//        success(id)
-//    }
-//  }
-
   /** Parses variable's type. */
   private def varType: Parser[String] =
     "int" | "double" | "float" | "string" | "str" | "bool" | "prob" | failure("Invalid variable type")
-
 
   /** Parses a variable and its type. */
   private def variable: Parser[(TypedIdentifier, String)] =
@@ -127,7 +123,6 @@ class PrePropertyParser extends JavaTokenParsers {
       case id ~ "bool" => (_IdentBool(id), "bool")
       case id ~ "prob" => (_IdentProb(id), "prob")
     }
-
 
   /** Main parser for all boolean expressions, starting with the highest precedence, OR. */
   private def booleanExpression: Parser[BooleanExpression] = orExpr
@@ -176,6 +171,26 @@ class PrePropertyParser extends JavaTokenParsers {
     }
   }
 
+  private def numericExpr: Parser[NumericExpression] = addSubExpr
+
+  private def addSubExpr: Parser[NumericExpression] =
+    mulDivExpr * (
+      "+" ^^^ { (a: NumericExpression, b: NumericExpression) => _Add(a, b) } |
+        "-" ^^^ { (a: NumericExpression, b: NumericExpression) => _Subtract(a, b) }
+      )
+
+  private def mulDivExpr: Parser[NumericExpression] =
+    simpleNumericExpr * (
+      "*" ^^^ { (a: NumericExpression, b: NumericExpression) => _Multiply(a, b) } |
+        "/" ^^^ { (a: NumericExpression, b: NumericExpression) => _Divide(a, b) }
+      )
+
+  private def simpleNumericExpr: Parser[NumericExpression] =
+    floatingPointNumber ^^ { num => _Value(num.toDouble) } |
+      ident ^^ _NumericVar |
+      "@" ~> ident ^^ _SpecialVar |
+      "(" ~> numericExpr <~ ")"
+
   /** Parses the simplest boolean expressions like variables, true, false,
    * as well as numeric comparisons.
    */
@@ -185,7 +200,6 @@ class PrePropertyParser extends JavaTokenParsers {
       "true" ^^^ _TrueExpr |
       "false" ^^^ _FalseExpr |
       "(" ~> booleanExpression <~ ")"
-
 
   /** Parses the "initiate" block. */
   private def initiate: Parser[Initiate] =
@@ -202,26 +216,20 @@ class PrePropertyParser extends JavaTokenParsers {
     ident ~ (":" ~> varType) ~ opt(":=" ~> restOfLine) ^^ {
       case id ~ "int" ~ Some(value) if value.matches("""-?\d+""") => (_IdentInt(id), "int", Some(value))
       case id ~ "int" ~ None => (_IdentInt(id), "int", None)
-
       case id ~ "double" ~ Some(value) if value.matches("""-?\d+(\.\d*)?""") => (_IdentDouble(id), "double", Some(value))
       case id ~ "double" ~ None => (_IdentDouble(id), "double", None)
-
       case id ~ "float" ~ Some(value) if value.matches("""-?\d+(\.\d*)?(f)?""") => (_IdentFloat(id), "float", Some(value))
       case id ~ "float" ~ None => (_IdentFloat(id), "float", None)
-
       case id ~ ("str" | "string") ~ Some(value) if value.startsWith("\"") && value.endsWith("\"") => (_IdentStr(id), "str", Some(value))
       case id ~ ("str" | "string") ~ None => (_IdentStr(id), "str", None)
-
       case id ~ "bool" ~ Some(value) if value == "true" || value == "false" => (_IdentBool(id), "bool", Some(value))
       case id ~ "bool" ~ None => (_IdentBool(id), "bool", None)
-
       case id ~ "prob" ~ Some(value) if value.matches(
-      """^\[(\((("\w+")|('\w+')|(\w+))?,\s*([0-9]*\.?[0-9]+)\)\s*,?\s*)*\]$""") =>
+        """^\[(\((("\w+")|('\w+')|(\w+))?,\s*([0-9]*\.?[0-9]+)\)\s*,?\s*)*\]$""") =>
         val parsedMap = parseToMap(value)
         val mapAsString = mapToString(parsedMap)
         (_IdentProb(id), "prob", Some(mapAsString))
       case id ~ "prob" ~ None => (_IdentProb(id), "prob", None)
-
       case invalid =>
         val error_message = s"[Initiate Block]: Invalid value assignment: " +
           s"${invalid._1._1}: ${invalid._1._2} = ${invalid._2.get}"
@@ -240,7 +248,6 @@ class PrePropertyParser extends JavaTokenParsers {
     }.toMap
   }
 
-
   /** Parses until end of line. */
   private def restOfLine: Parser[String] = """.*""".r
 
@@ -252,7 +259,6 @@ class PrePropertyParser extends JavaTokenParsers {
     }
 
   /** Parses the main event operation block. */
-
   private def eventOperation: Parser[EventOperation] =
     ("on" | "On" | "ON") ~> ident ~ ("(" ~> repsep(variable, ",") <~ ")") ~ rep(assignment) ^^ {
       case name ~ params ~ assignments =>
@@ -260,27 +266,35 @@ class PrePropertyParser extends JavaTokenParsers {
     }
 
   /** Parses function call parameters. */
-  private def parameter: Parser[String] = "@" ~ ident ^^ { case atSign ~ id => atSign + id } | ident | decimalNumber | "false" | "true"
+  private def parameter: Parser[String] =
+    ("@" ~> ident ^^ { id => "@" + id }) |
+      ident |
+      decimalNumber |
+      "false" |
+      "true"
 
   /** Parses the ITE function. */
   private def iteFunction: Parser[ITEFunction] =
-    ("ite" ~> "(" ~> booleanExpression ~ ("," ~> functionCall) ~ ("," ~> functionCall) <~ ")") ^^ {
+    ("ite" ~> "(" ~> booleanExpression ~ ("," ~> callable) ~ ("," ~> callable) <~ ")") ^^ {
       case boolExpr ~ function1 ~ function2 =>
         ITEFunction(boolExpr, function1, function2)
     }
 
+  private def callable: Parser[Callable] =
+    functionCall | iteFunction | "skip" ^^^ Skip
 
   /** Parses function calls or a "skip" ident. */
   private def functionCall: Parser[FunctionCall] =
-    (ident ~ ("(" ~> repsep(parameter, ",") <~ ")") ^^ {
+    ident ~ ("(" ~> repsep(parameter, ",") <~ ")") ^^ {
       case name ~ params => FunctionCall(name, params)
-    }) | ("skip" ^^^ FunctionCall("skip", List()))
+    }
 
   /** Parses the "output" block. */
   private def output: Parser[Output] =
-    ("output" | "Output" | "OUTPUT") ~> (iteFunction | functionCall) ^^ {
+    ("output" | "Output" | "OUTPUT") ~> callable ^^ {
       case function: FunctionCall => FunctionOutput(function.name, function.params)
       case ite: ITEFunction => ITEOutput(ite)
+      case Skip => FunctionOutput("skip", List())
     }
 
   /** Parses a combined event operation block and ensures both eventOperation and output are present. */
@@ -299,6 +313,8 @@ class PrePropertyParser extends JavaTokenParsers {
         PreProperty(maybeInit.getOrElse(Initiate(Nil)), events, outs)
     }
 }
+
+
 
 /**
  * Represents the entire parsed property.
@@ -535,6 +551,10 @@ object CodeGenerator {
       case _Value(value) => value.toString
       case _NumericVar(name) => name
       case _SpecialVar(name) => "prev_" + name
+      case _Add(left, right) => s"(${numericExpressionToString(left)} + ${numericExpressionToString(right)})"
+      case _Subtract(left, right) => s"(${numericExpressionToString(left)} - ${numericExpressionToString(right)})"
+      case _Multiply(left, right) => s"(${numericExpressionToString(left)} * ${numericExpressionToString(right)})"
+      case _Divide(left, right) => s"(${numericExpressionToString(left)} / ${numericExpressionToString(right)})"
     }
   }
 
@@ -544,289 +564,289 @@ object CodeGenerator {
     // Helper methods and implicit conversions for the generated code
     sb.append(
       s"""
-        |object PreMonitor extends PreMonitorTrait {
-        |  /**
-        |   * Extension methods for various types.
-        |   */
-        |
-        | type Prob = Map[String, Double]
-        |
-        | /**
-        | * Provides an implicit class to enable the use of the `in` infix operator
-        | * for checking the presence of an element within a collection.
-        | *
-        | * @param left the element to be checked for presence within a collection.
-        | * @tparam T the type of the element.
-        | */
-        | implicit class InfixIn[T](val left: T) {
-        |
-        |   /**
-        |   * Checks if the `left` element is present in the given elements.
-        |   *
-        |   * @param right a sequence of elements to check against.
-        |   * @return true if `left` is present in the `right` sequence, false otherwise.
-        |   */
-        |   def in(right: T*): Boolean = right.contains(left)
-        |  }
-        |
-        |  /**
-        |   * Extension methods for Boolean type.
-        |   *
-        |   * @param a the source Boolean value.
-        |   */
-        |  implicit class extendedBoolean(a: Boolean) {
-        |
-        |    /**
-        |     * Logical implication.
-        |     *
-        |     * @param b target Boolean value.
-        |     * @return true if either `a` is false or `b` is true, otherwise false.
-        |     */
-        |    def ->(b: => Boolean): Boolean = !a || b
-        |
-        |    /**
-        |     * Logical biconditional (equivalence).
-        |     *
-        |     * @param b target Boolean value.
-        |     * @return true if `a` and `b` are both true or both false, otherwise false.
-        |     */
-        |    def <->(b: => Boolean): Boolean = a == b
-        |  }
-        |
-        | /**
-        |  * Implicit class to provide power operation `^^` for `Double` base values.
-        |  *
-        |  * @param a the base of type Double.
-        |  */
-        | implicit class ExtendedDouble(val a: Double) extends AnyVal {
-        |
-        |  /**
-        |    * Raises the base `a` to the power of an `Int` exponent `b`.
-        |    *
-        |    * @param b the exponent of type Int.
-        |    * @return the result as a Double.
-        |    */
-        |   def ^^(b: Int): Double = scala.math.pow(a, b.toDouble)
-        |
-        |   /**
-        |     * Raises the base `a` to the power of a `Float` exponent `b`.
-        |     *
-        |     * @param b the exponent of type Float.
-        |     * @return the result as a Double.
-        |     */
-        |   def ^^(b: Float): Double = scala.math.pow(a, b.toDouble)
-        |
-        |   /**
-        |     * Raises the base `a` to the power of a `Double` exponent `b`.
-        |     *
-        |     * @param b the exponent of type Double.
-        |     * @return the result as a Double.
-        |     */
-        |   def ^^(b: Double): Double = scala.math.pow(a, b)
-        | }
-        |
-        | /**
-        |   * Implicit class to provide power operation `^^` for `Int` base values.
-        |   *
-        |   * @param a the base of type Int.
-        |   */
-        | implicit class ExtendedInt(val a: Int) extends AnyVal {
-        |
-        |   /**
-        |     * Raises the base `a` to the power of an `Int` exponent `b`.
-        |     *
-        |     * @param b the exponent of type Int.
-        |     * @return the result as a Double.
-        |     */
-        |   def ^^(b: Int): Double = scala.math.pow(a.toDouble, b.toDouble)
-        |
-        |   /**
-        |     * Raises the base `a` to the power of a `Float` exponent `b`.
-        |     *
-        |     * @param b the exponent of type Float.
-        |     * @return the result as a Double.
-        |     */
-        |   def ^^(b: Float): Double = scala.math.pow(a.toDouble, b.toDouble)
-        |
-        |   /**
-        |     * Raises the base `a` to the power of a `Double` exponent `b`.
-        |     *
-        |     * @param b the exponent of type Double.
-        |     * @return the result as a Double.
-        |     */
-        |   def ^^(b: Double): Double = scala.math.pow(a.toDouble, b)
-        | }
-        |
-        | /**
-        |   * Implicit class to provide power operation `^^` for `Float` base values.
-        |   *
-        |   * @param a the base of type Float.
-        |   */
-        | implicit class ExtendedFloat(val a: Float) extends AnyVal {
-        |
-        |   /**
-        |     * Raises the base `a` to the power of an `Int` exponent `b`.
-        |     *
-        |     * @param b the exponent of type Int.
-        |     * @return the result as a Float.
-        |     */
-        |   def ^^(b: Int): Float = scala.math.pow(a.toDouble, b.toDouble).toFloat
-        |
-        |   /**
-        |     * Raises the base `a` to the power of a `Float` exponent `b`.
-        |     *
-        |     * @param b the exponent of type Float.
-        |     * @return the result as a Float.
-        |     */
-        |   def ^^(b: Float): Float = scala.math.pow(a.toDouble, b.toDouble).toFloat
-        |
-        |   /**
-        |     * Raises the base `a` to the power of a `Double` exponent `b`.
-        |     *
-        |     * @param b the exponent of type Double.
-        |     * @return the result as a Float.
-        |     */
-        |   def ^^(b: Double): Float = scala.math.pow(a.toDouble, b).toFloat
-        | }
-        |
-        |
-        |  /**
-        |   * A type class defining absolute operation on a type.
-        |   *
-        |   * @tparam A the type for which the absolute operation is defined.
-        |   */
-        |  trait AbsOps[T] {
-        |
-        |    /**
-        |     * Computes the absolute value of `value`.
-        |     *
-        |     * @param value the input value.
-        |     * @return absolute value of `value`.
-        |     */
-        |    def abs(value: T): T
-        |  }
-        |
-        |  // Below are instances for the AbsOps type class for supported types: Int, Float, and Double.
-        |
-        |  implicit object IntAbsOps extends AbsOps[Int] {
-        |    def abs(value: Int): Int = math.abs(value)
-        |  }
-        |
-        |  implicit object FloatAbsOps extends AbsOps[Float] {
-        |    def abs(value: Float): Float = math.abs(value)
-        |  }
-        |
-        |  implicit object DoubleAbsOps extends AbsOps[Double] {
-        |    def abs(value: Double): Double = math.abs(value)
-        |  }
-        |
-        |  /**
-        |   * Generic utility to compute the absolute value for supported types.
-        |   *
-        |   * @param value the input value.
-        |   * @param ops implicit evidence of the AbsOps type class instance for type A.
-        |   * @tparam A type of the value.
-        |   * @return absolute value of `value`.
-        |   */
-        |  def abs[T](value: T)(implicit ops: AbsOps[T]): T = ops.abs(value)
-        |
-        |  /**
-        | * Implicit class that extends the String class with a `toProb` method.
-        | *
-        | * @param str The input string to be converted to a probability map.
-        | */
-        |
-        |
-        |implicit class StringProbExtensions(val str: String) extends AnyVal {
-        |
-        |  /**
-        |   * Converts a string representation of a probability map to a Map[String, Double].
-        |   *
-        |   * The input string should have the following format:
-        |   * - Keys can be either quoted or unquoted.
-        |   * - Keys and values are separated by a comma and optional whitespace.
-        |   * - Key-value pairs are enclosed in parentheses and separated by commas and optional whitespace.
-        |   * - The entire map is enclosed in square brackets.
-        |   *
-        |   * Examples of valid input strings:
-        |   * - [(cat, 0.1),(dog, 0.7),(horse, 0.2)]
-        |   * - [("cat", 0.1),("dog", 0.7),("horse", 0.2)]
-        |   * - [(cat, 0.1),("dog", 0.7),(horse, 0.2)]
-        |   *
-        |   * @return A Map[String, Double] containing the parsed key-value pairs.
-        |   * @throws IllegalArgumentException If the input string is not in the valid format.
-        |   */
-        |  def toProb: Map[String, Double] = {
-        |    if (str.matches(${'"'}${'"'}${'"'}^\\[(\\((("\\w+")|('\\w+')|(\\w+))?,\\s*([0-9]*\\.?[0-9]+)\\)\\s*,?\\s*)*\\]$$${'"'}${'"'}${'"'})) {
-        |      val pattern = ${'"'}${'"'}${'"'}\\(["']?\\s*(\\w+)["']?\\s*,\\s*([0-9]*\\.?[0-9]+)\\s*\\)${'"'}${'"'}${'"'}.r
-        |      pattern.findAllIn(str).matchData.map { m =>
-        |        (m.group(1), m.group(2).toDouble)
-        |      }.toMap
-        |    } else {
-        |      throw new IllegalArgumentException(s"Invalid input format: $$str")
-        |    }
-        |  }
-        |}
-        |
-        |
-        |/**
-        | * An implicit class that provides utility methods for finding the key associated with the maximum
-        | * or minimum value in a map.
-        | *
-        | * @param map the map to operate on
-        | * @tparam A the type of keys in the map
-        | * @tparam B the type of values in the map
-        | */
-        |implicit class MapMaxKey[A, B](map: Map[A, B]) {
-        |  /**
-        |   * Finds the key associated with the maximum value in the map.
-        |   *
-        |   * @param cmp an implicit `Ordering` for comparing values of type `B`
-        |   * @return the key associated with the maximum value
-        |   * @throws NoSuchElementException if the map is empty
-        |   */
-        |  def _max(implicit cmp: Ordering[B]): A = {
-        |    if (map.isEmpty) {
-        |      throw new NoSuchElementException("Map is empty")
-        |    } else {
-        |      map.maxBy(_._2)._1
-        |    }
-        |  }
-        |
-        |  /**
-        |   * Finds the key associated with the minimum value in the map.
-        |   *
-        |   * @param cmp an implicit `Ordering` for comparing values of type `B`
-        |   * @return the key associated with the minimum value
-        |   * @throws NoSuchElementException if the map is empty
-        |   */
-        |  def _min(implicit cmp: Ordering[B]): A = {
-        |    if (map.isEmpty) {
-        |      throw new NoSuchElementException("Map is empty")
-        |    } else {
-        |      map.minBy(_._2)._1
-        |    }
-        |  }
-        |}
-        |
-        |  /**
-        |   * Provides utility methods for common operations.
-        |   */
-        |  object Operators {
-        |
-        |    /**
-        |     * If-Then-Else operation.
-        |     *
-        |     * @param condition a Boolean condition to check.
-        |     * @param ifTrue result to return if `condition` is true.
-        |     * @param ifFalse result to return if `condition` is false.
-        |     * @tparam T type of the results.
-        |     * @return `ifTrue` if `condition` is true, `ifFalse` otherwise.
-        |     */
-        |    def ite[T](condition: Boolean, ifTrue: T, ifFalse: T): T = if (condition) ifTrue else ifFalse
-        |  }
-        |\n\n\n
-        |""".stripMargin)
+         |object PreMonitor extends PreMonitorTrait {
+         |  /**
+         |   * Extension methods for various types.
+         |   */
+         |
+         | type Prob = Map[String, Double]
+         |
+         | /**
+         | * Provides an implicit class to enable the use of the `in` infix operator
+         | * for checking the presence of an element within a collection.
+         | *
+         | * @param left the element to be checked for presence within a collection.
+         | * @tparam T the type of the element.
+         | */
+         | implicit class InfixIn[T](val left: T) {
+         |
+         |   /**
+         |   * Checks if the `left` element is present in the given elements.
+         |   *
+         |   * @param right a sequence of elements to check against.
+         |   * @return true if `left` is present in the `right` sequence, false otherwise.
+         |   */
+         |   def in(right: T*): Boolean = right.contains(left)
+         |  }
+         |
+         |  /**
+         |   * Extension methods for Boolean type.
+         |   *
+         |   * @param a the source Boolean value.
+         |   */
+         |  implicit class extendedBoolean(a: Boolean) {
+         |
+         |    /**
+         |     * Logical implication.
+         |     *
+         |     * @param b target Boolean value.
+         |     * @return true if either `a` is false or `b` is true, otherwise false.
+         |     */
+         |    def ->(b: => Boolean): Boolean = !a || b
+         |
+         |    /**
+         |     * Logical biconditional (equivalence).
+         |     *
+         |     * @param b target Boolean value.
+         |     * @return true if `a` and `b` are both true or both false, otherwise false.
+         |     */
+         |    def <->(b: => Boolean): Boolean = a == b
+         |  }
+         |
+         | /**
+         |  * Implicit class to provide power operation `^^` for `Double` base values.
+         |  *
+         |  * @param a the base of type Double.
+         |  */
+         | implicit class ExtendedDouble(val a: Double) extends AnyVal {
+         |
+         |  /**
+         |    * Raises the base `a` to the power of an `Int` exponent `b`.
+         |    *
+         |    * @param b the exponent of type Int.
+         |    * @return the result as a Double.
+         |    */
+         |   def ^^(b: Int): Double = scala.math.pow(a, b.toDouble)
+         |
+         |   /**
+         |     * Raises the base `a` to the power of a `Float` exponent `b`.
+         |     *
+         |     * @param b the exponent of type Float.
+         |     * @return the result as a Double.
+         |     */
+         |   def ^^(b: Float): Double = scala.math.pow(a, b.toDouble)
+         |
+         |   /**
+         |     * Raises the base `a` to the power of a `Double` exponent `b`.
+         |     *
+         |     * @param b the exponent of type Double.
+         |     * @return the result as a Double.
+         |     */
+         |   def ^^(b: Double): Double = scala.math.pow(a, b)
+         | }
+         |
+         | /**
+         |   * Implicit class to provide power operation `^^` for `Int` base values.
+         |   *
+         |   * @param a the base of type Int.
+         |   */
+         | implicit class ExtendedInt(val a: Int) extends AnyVal {
+         |
+         |   /**
+         |     * Raises the base `a` to the power of an `Int` exponent `b`.
+         |     *
+         |     * @param b the exponent of type Int.
+         |     * @return the result as a Double.
+         |     */
+         |   def ^^(b: Int): Double = scala.math.pow(a.toDouble, b.toDouble)
+         |
+         |   /**
+         |     * Raises the base `a` to the power of a `Float` exponent `b`.
+         |     *
+         |     * @param b the exponent of type Float.
+         |     * @return the result as a Double.
+         |     */
+         |   def ^^(b: Float): Double = scala.math.pow(a.toDouble, b.toDouble)
+         |
+         |   /**
+         |     * Raises the base `a` to the power of a `Double` exponent `b`.
+         |     *
+         |     * @param b the exponent of type Double.
+         |     * @return the result as a Double.
+         |     */
+         |   def ^^(b: Double): Double = scala.math.pow(a.toDouble, b)
+         | }
+         |
+         | /**
+         |   * Implicit class to provide power operation `^^` for `Float` base values.
+         |   *
+         |   * @param a the base of type Float.
+         |   */
+         | implicit class ExtendedFloat(val a: Float) extends AnyVal {
+         |
+         |   /**
+         |     * Raises the base `a` to the power of an `Int` exponent `b`.
+         |     *
+         |     * @param b the exponent of type Int.
+         |     * @return the result as a Float.
+         |     */
+         |   def ^^(b: Int): Float = scala.math.pow(a.toDouble, b.toDouble).toFloat
+         |
+         |   /**
+         |     * Raises the base `a` to the power of a `Float` exponent `b`.
+         |     *
+         |     * @param b the exponent of type Float.
+         |     * @return the result as a Float.
+         |     */
+         |   def ^^(b: Float): Float = scala.math.pow(a.toDouble, b.toDouble).toFloat
+         |
+         |   /**
+         |     * Raises the base `a` to the power of a `Double` exponent `b`.
+         |     *
+         |     * @param b the exponent of type Double.
+         |     * @return the result as a Float.
+         |     */
+         |   def ^^(b: Double): Float = scala.math.pow(a.toDouble, b).toFloat
+         | }
+         |
+         |
+         |  /**
+         |   * A type class defining absolute operation on a type.
+         |   *
+         |   * @tparam A the type for which the absolute operation is defined.
+         |   */
+         |  trait AbsOps[T] {
+         |
+         |    /**
+         |     * Computes the absolute value of `value`.
+         |     *
+         |     * @param value the input value.
+         |     * @return absolute value of `value`.
+         |     */
+         |    def abs(value: T): T
+         |  }
+         |
+         |  // Below are instances for the AbsOps type class for supported types: Int, Float, and Double.
+         |
+         |  implicit object IntAbsOps extends AbsOps[Int] {
+         |    def abs(value: Int): Int = math.abs(value)
+         |  }
+         |
+         |  implicit object FloatAbsOps extends AbsOps[Float] {
+         |    def abs(value: Float): Float = math.abs(value)
+         |  }
+         |
+         |  implicit object DoubleAbsOps extends AbsOps[Double] {
+         |    def abs(value: Double): Double = math.abs(value)
+         |  }
+         |
+         |  /**
+         |   * Generic utility to compute the absolute value for supported types.
+         |   *
+         |   * @param value the input value.
+         |   * @param ops implicit evidence of the AbsOps type class instance for type A.
+         |   * @tparam A type of the value.
+         |   * @return absolute value of `value`.
+         |   */
+         |  def abs[T](value: T)(implicit ops: AbsOps[T]): T = ops.abs(value)
+         |
+         |  /**
+         | * Implicit class that extends the String class with a `toProb` method.
+         | *
+         | * @param str The input string to be converted to a probability map.
+         | */
+         |
+         |
+         |implicit class StringProbExtensions(val str: String) extends AnyVal {
+         |
+         |  /**
+         |   * Converts a string representation of a probability map to a Map[String, Double].
+         |   *
+         |   * The input string should have the following format:
+         |   * - Keys can be either quoted or unquoted.
+         |   * - Keys and values are separated by a comma and optional whitespace.
+         |   * - Key-value pairs are enclosed in parentheses and separated by commas and optional whitespace.
+         |   * - The entire map is enclosed in square brackets.
+         |   *
+         |   * Examples of valid input strings:
+         |   * - [(cat, 0.1),(dog, 0.7),(horse, 0.2)]
+         |   * - [("cat", 0.1),("dog", 0.7),("horse", 0.2)]
+         |   * - [(cat, 0.1),("dog", 0.7),(horse, 0.2)]
+         |   *
+         |   * @return A Map[String, Double] containing the parsed key-value pairs.
+         |   * @throws IllegalArgumentException If the input string is not in the valid format.
+         |   */
+         |  def toProb: Map[String, Double] = {
+         |    if (str.matches(${'"'}${'"'}${'"'}^\\[(\\((("\\w+")|('\\w+')|(\\w+))?,\\s*([0-9]*\\.?[0-9]+)\\)\\s*,?\\s*)*\\]$$${'"'}${'"'}${'"'})) {
+         |      val pattern = ${'"'}${'"'}${'"'}\\(["']?\\s*(\\w+)["']?\\s*,\\s*([0-9]*\\.?[0-9]+)\\s*\\)${'"'}${'"'}${'"'}.r
+         |      pattern.findAllIn(str).matchData.map { m =>
+         |        (m.group(1), m.group(2).toDouble)
+         |      }.toMap
+         |    } else {
+         |      throw new IllegalArgumentException(s"Invalid input format: $$str")
+         |    }
+         |  }
+         |}
+         |
+         |
+         |/**
+         | * An implicit class that provides utility methods for finding the key associated with the maximum
+         | * or minimum value in a map.
+         | *
+         | * @param map the map to operate on
+         | * @tparam A the type of keys in the map
+         | * @tparam B the type of values in the map
+         | */
+         |implicit class MapMaxKey[A, B](map: Map[A, B]) {
+         |  /**
+         |   * Finds the key associated with the maximum value in the map.
+         |   *
+         |   * @param cmp an implicit `Ordering` for comparing values of type `B`
+         |   * @return the key associated with the maximum value
+         |   * @throws NoSuchElementException if the map is empty
+         |   */
+         |  def _max(implicit cmp: Ordering[B]): A = {
+         |    if (map.isEmpty) {
+         |      throw new NoSuchElementException("Map is empty")
+         |    } else {
+         |      map.maxBy(_._2)._1
+         |    }
+         |  }
+         |
+         |  /**
+         |   * Finds the key associated with the minimum value in the map.
+         |   *
+         |   * @param cmp an implicit `Ordering` for comparing values of type `B`
+         |   * @return the key associated with the minimum value
+         |   * @throws NoSuchElementException if the map is empty
+         |   */
+         |  def _min(implicit cmp: Ordering[B]): A = {
+         |    if (map.isEmpty) {
+         |      throw new NoSuchElementException("Map is empty")
+         |    } else {
+         |      map.minBy(_._2)._1
+         |    }
+         |  }
+         |}
+         |
+         |  /**
+         |   * Provides utility methods for common operations.
+         |   */
+         |  object Operators {
+         |
+         |    /**
+         |     * If-Then-Else operation.
+         |     *
+         |     * @param condition a Boolean condition to check.
+         |     * @param ifTrue result to return if `condition` is true.
+         |     * @param ifFalse result to return if `condition` is false.
+         |     * @tparam T type of the results.
+         |     * @return `ifTrue` if `condition` is true, `ifFalse` otherwise.
+         |     */
+         |    def ite[T](condition: Boolean, ifTrue: T, ifFalse: T): T = if (condition) ifTrue else ifFalse
+         |  }
+         |\n\n\n
+         |""".stripMargin)
 
 
     property match {
@@ -867,10 +887,10 @@ object CodeGenerator {
    * @param sb              The StringBuilder to which the initialized variables will be appended.
    */
   private def initVariables(
-               init: Initiate,
-               eventParams: Map[TypedIdentifier, String],
-               prevEventParams: Set[String],
-               sb: StringBuilder): Set[String] = {
+                             init: Initiate,
+                             eventParams: Map[TypedIdentifier, String],
+                             prevEventParams: Set[String],
+                             sb: StringBuilder): Set[String] = {
 
     // Define last evaluate variable
     sb.append(s"\tvar last_eval: Boolean = false\n")
@@ -1015,19 +1035,27 @@ object CodeGenerator {
         }
         case Some(output: ITEOutput) => {
           val iteCondition = expressionToString(output.iteFunction.boolExpr)
-          val ifTrue = output.iteFunction.function1
-          val ifFalse = output.iteFunction.function2
-          var outputITEExpr = s"""\t\tite($iteCondition, """
-          outputITEExpr += outputHelper(sb, ifTrue.name, ifTrue.params)
-          outputITEExpr += s""", """
-          outputITEExpr += outputHelper(sb, ifFalse.name, ifFalse.params)
-          outputITEExpr += s""")\n"""
-          val formattedITEOutput = convertITEtoOnelineIfStatement(outputITEExpr)
-          sb.append(formattedITEOutput)
+          val ifTrue = processCallable(output.iteFunction.function1, sb)
+          val ifFalse = processCallable(output.iteFunction.function2, sb)
+          var outputITEExpr = s"""ite($iteCondition, $ifTrue, $ifFalse)"""
+          outputITEExpr = convertITEtoOnelineIfStatement(outputITEExpr)
+          sb.append(s"\t\t$outputITEExpr\n")
         }
       }
       sb.append("\t}\n\n")
     }
+  }
+
+  private def processCallable(callable: Callable, sb: StringBuilder): String = callable match {
+    case FunctionCall(name, params) =>
+      outputHelper(sb, name, params)
+    case ite: ITEFunction =>
+      val iteCondition = expressionToString(ite.boolExpr)
+      val ifTrue = processCallable(ite.function1, sb)
+      val ifFalse = processCallable(ite.function2, sb)
+      s"ite($iteCondition, $ifTrue, $ifFalse)"
+    case Skip =>
+      """"skip""""
   }
 
 
@@ -1062,7 +1090,6 @@ object CodeGenerator {
           parsed_params += s"$param.toString"
         }
       }
-
       // Once all parameters are processed, append them in a formatted manner.
       stringOutput += s"""List("$outputName", List(${parsed_params.mkString(", ")}))"""
     }
@@ -1071,10 +1098,10 @@ object CodeGenerator {
 
 
   private def generateEvaluateFunction(
-                      events: List[EventOperation],
-                      sb: StringBuilder,
-                      declaredVariables: Set[String],
-                      uninitiatePrevVarsInEvents: Set[String]): Unit = {
+                                        events: List[EventOperation],
+                                        sb: StringBuilder,
+                                        declaredVariables: Set[String],
+                                        uninitiatePrevVarsInEvents: Set[String]): Unit = {
     // Start the generation of the evaluate function
     sb.append("\tdef evaluate(event_name: String, params: Any*): Option[Any] = {\n")
     sb.append("\t\tvar event : Any = null\n\n") // Added this line
@@ -1157,7 +1184,7 @@ object PreParser {
       case parser.Error(msg, next) => throw new ParseException(s"Error: $msg at line " +
         s"${next.pos.line}, column ${next.pos.column}", next.pos.line)
     }
-//    print(generatedCode)
+    //    print(generatedCode)
     (preInputProperty, generatedCode)
   }
 }

@@ -1,7 +1,25 @@
 initiate
-    max_speed: int := 30
+	allowed_speed: int := 20
+	allowed_speed_prb: double := 0.7
+	nat_speed_limit: int := 120
+	det_speed_val: int
+	det_prb: double
+	same_speed_seq: bool
+	prb_cnf: double
 
-on speed_road_sign(det_prb: prob)
-    max_speed_sign: string := det_prb.max
-    max_speed: int := max_speed_sign.toInt
-    output skip
+on end_of_speed_limit()
+	allowed_speed: int := nat_speed_limit
+	allowed_speed_prb: double := 1.0
+	output no_limit(allowed_speed)
+
+on speed_road_sign(prb_lst: prob)
+	det_speed_key: string := prb_lst.max
+	det_prb: double := #prb_lst(det_speed_key)
+	det_speed_val: int := det_speed_key.toInt
+	same_speed_seq: bool := ite(det_speed_val == @det_speed_val, true, false)
+	prb_calc: bool := last_eval && same_speed_seq && det_speed_val > allowed_speed
+	prb_cnf: double := ite(prb_calc, ite(@prb_cnf != 0, 1 - ((1 - @prb_cnf) * (1 - det_prb)), 1 - ((1 - @det_prb) * (1-det_prb))), 0)
+	chg_speed: bool := det_prb >= 0.7 || (!prb_calc && det_speed_val < allowed_speed && det_prb >= 0.5 ) || prb_cnf > allowed_speed_prb
+	allowed_speed: int := ite(chg_speed && last_eval, det_speed_val, allowed_speed)
+	allowed_speed_prb: double := ite(chg_speed && last_eval, det_prb, allowed_speed_prb)
+	output det_alert(chg_speed, allowed_speed)

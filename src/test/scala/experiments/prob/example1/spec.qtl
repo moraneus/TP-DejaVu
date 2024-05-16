@@ -1,1 +1,1 @@
-prop AdjustSpeed2: exists  dst . exists dsp . instance(0,dst,dsp) & (( dst < 45000) -> dsp <= 0) & ( ( dst >= 45000) -> dsp < -5000)
+prop example6: forall n_speed . ( ! exists curr_spd . (no_limit(n_speed) S exists x . det_alert(x, curr_spd ) ) )
