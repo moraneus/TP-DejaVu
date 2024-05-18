@@ -167,6 +167,11 @@ case class Spec(properties: List[Property]) {
 
       LTL.translate(property)
 
+      val last_eval = """|    // Update the last evaluate value for the next pre monitor processing
+                         |           if (Options.PRE_PREDICTION) {
+                         |               PreMonitor.last_eval = !error
+                         |           }""".stripMargin
+
       writeln(
         s"""
            |    debugMonitorState()
@@ -178,10 +183,8 @@ case class Spec(properties: List[Property]) {
            |    pre = tmp
            |    touchedByLastEvent = emptyTouchedSet
            |
-           |    // Update the last evaluate value for the next pre monitor processing
-           |    if (Options.PRE_PREDICTION) {
-           |        PreMonitor.last_eval = !error
-           |    }
+           |    ${if(prePropertySynthesisCode.isEmpty) "" else last_eval}
+           |
            |    !error
            |  }""".stripMargin)
 

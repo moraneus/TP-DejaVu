@@ -1,0 +1,17 @@
+initiate
+    curr_spd: int
+    curr_prb: double
+    det_spd_val: int
+    det_prb: double
+    same_spd: bool
+    prb_cnf: double
+
+on speed_road_sign(prb_lst: prob)
+    det_spd_key: string := prb_lst.max
+    det_prb: double := #prb_lst(det_spd_key)
+    det_spd_val: int := det_spd_key.toInt
+    same_spd_seq: bool := ite(det_spd_val == @det_spd_val, true, false)
+    prb_calc: bool := same_spd_seq && det_spd_val > curr_spd
+    prb_cnf: double := ite(prb_calc, ite(@prb_cnf != 0, 1 - ((1 - @prb_cnf) * (1 - det_prb)), 1 - ((1 - @det_prb) * (1-det_prb))), 0)
+    new_spd: int := ite(prb_cnf > curr_prb, det_spd_val, ite(det_spd_val < curr_spd, det_spd_val, curr_spd))
+    output chg_spd(new_spd)
