@@ -618,7 +618,7 @@ abstract class Monitor(preMonitor: PreMonitorTrait) {
         }
 
         // For a case when the event is a probabilistic data
-        if (record.get(1).startsWith("[")) {
+        if (record.size() > 1 && record.get(1).startsWith("[")) {
           args += (1 until record.size).map(record.get).toList.mkString(", ")
         } else { // For a case when it is a common DejaVu event
           for (i <- 1 until eventSize) {

@@ -490,14 +490,14 @@ object CodeGenerator {
   private def translateProbAccessMethod(expr: String): String = {
     // Extract the key from the input string assuming the format is prob("key")
     val pattern: Regex = """#(\w+)\((\s*("\w+")\s*|\s*('\w+')\s*|\s*(\w+)\s*)\)""".r
-    pattern.replaceAllIn(expr, m => s"${m.group(1)}.getOrElse(${m.group(2)}, -1.0)")
+    pattern.replaceAllIn(expr, m => s"${m.group(1)}.getOrElse(${m.group(2)}, 0.0)")
   }
 
   private def translateProbListMethod(expr: String): String = {
     val list_pattern =
-      """^\[(\((("\w+")|('\w+')|(\w+))?,\s*(([0-9]*\.?[0-9]+)|(\w+\.getOrElse\(("\w+"|'\w+'|\w+),\s*-1.0\)))\)\s*,?\s*)*\]$"""
+      """^\[(\((("\w+")|('\w+')|(\w+))?,\s*(([0-9]*\.?[0-9]+)|(\w+\.getOrElse\(("\w+"|'\w+'|\w+),\s*0.0\)))\)\s*,?\s*)*\]$"""
     if (expr.matches(list_pattern)) {
-      val pair_pattern: Regex = """\((["']?\s*\w+["']?\s*),\s*(([0-9]*\.?[0-9]+)|(\w+\.getOrElse\(("\w+"|'\w+'|\w+),\s*-1.0\)))\)""".r
+      val pair_pattern: Regex = """\((["']?\s*\w+["']?\s*),\s*(([0-9]*\.?[0-9]+)|(\w+\.getOrElse\(("\w+"|'\w+'|\w+),\s*0.0\)))\)""".r
       val asMap = pair_pattern.findAllIn(expr).matchData.map { m =>
         if (m.group(2).contains("getOrElse")) {
           (m.group(1), m.group(2))
