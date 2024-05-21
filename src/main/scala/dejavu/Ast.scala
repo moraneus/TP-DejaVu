@@ -407,14 +407,15 @@ case class Spec(properties: List[Property]) {
          |     eventSize = input.length
          |   }
          |
-         |   // For a case when the event is a probabilistic data
-         |   if (record.size() > 1 && record.get(1).startsWith("[")) {
-         |      args += (1 until record.size).map(record.get).toList.mkString(", ")
-         |   } else { // For a case when it is a common DejaVu event
-         |      for (i <- 1 until eventSize) {
-         |        args += record.get(i)
-         |      }
+         |  // For a case when the event is a probabilistic data
+         |  if (input.length > 1 && input(1).startsWith("[")) {
+         |    args += input.slice(1, input.length).mkString(", ")
+         |  } else {
+         |    // For a case when it is a common DejaVu event
+         |    for (i <- 1 until input.length) {
+         |      args += input(i)
          |    }
+         |  }
          |
          |   val res: Boolean = if (Options.PRE_PREDICTION && moni_ != null) {
          |   val modifiedEvent = moni_.preMonitor_(name, args: _*)
