@@ -156,14 +156,8 @@ class PrePropertyParser extends JavaTokenParsers {
    * Supports Int, Float, and Double.
    */
   private def numComparison: Parser[NumComparison] = {
-    // Number parsers
-    val integer: Parser[NumericExpression] = """\d+""".r ^^ { num => _Value(num.toDouble) }
-    val float: Parser[NumericExpression] = """\d+(\.\d+)?[fF]""".r ^^ { str => _Value(str.replace("f", "").replace("F", "").toDouble) }
-    val double: Parser[NumericExpression] = """\d+(\.\d+)?(?!f|F)""".r ^^ { str => _Value(str.toDouble) }
-    val regularVar: Parser[NumericExpression] = ident ^^ _NumericVar
-    val specialVar: Parser[NumericExpression] = "@" ~> ident ^^ _SpecialVar
-    val numberOrVar = float | double | integer | specialVar | regularVar // order matters
 
+    val numberOrVar = numericExpr
     val op = ("<=" | ">=" | "==" | "!=" | "<" | ">")
 
     numberOrVar ~ op ~ numberOrVar ^^ {
