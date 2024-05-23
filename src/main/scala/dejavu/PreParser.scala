@@ -57,6 +57,10 @@ case class EventOperation(
 sealed trait Output extends PProperty
 case class FunctionOutput(name: String, params: List[String]) extends Output
 case class ITEOutput(iteFunction: ITEFunction) extends Output
+case class EmitOutput(emitFunction: EmitFunction) extends Output
+case class EmitFunction(name: String, params: List[String]) extends Callable
+
+
 
 /**
  * Represents an assignment.
@@ -291,12 +295,20 @@ class PrePropertyParser extends JavaTokenParsers {
       case Skip => FunctionOutput("skip", List())
     }
 
+  /** Parses the "emit" block. */
+  private def emit: Parser[Output] =
+    ("emit" | "Emit" | "EMIT") ~> callable ^^ {
+      case function: FunctionCall => EmitOutput(EmitFunction(function.name, function.params))
+      case ite: ITEFunction => ITEOutput(ite)
+      case Skip => EmitOutput(EmitFunction("skip", List()))
+    }
+
   /** Parses a combined event operation block and ensures both eventOperation and output are present. */
   private def combinedEvent: Parser[(EventOperation, Output)] =
-    eventOperation ~ output ^^ {
+    eventOperation ~ (output | emit) ^^ {
       case operation ~ out => (operation, out)
     } |
-      failure("Missing 'on' or 'output' line in event block.")
+      failure("Missing 'on' or 'output' or 'emit' line in event block.")
 
   /** Main parser function. */
   def parsedProperty: Parser[PreProperty] =
@@ -1024,7 +1036,7 @@ object CodeGenerator {
       eventNameToOutputMap.get(name).foreach {
         case Some(output: FunctionOutput) => {
           sb.append(s"\t\t")
-          sb.append(outputHelper(sb, output.name, output.params))
+          sb.append(outputHelper(sb, output.name, output.params, false))
           sb.append(s"""\n""")
         }
         case Some(output: ITEOutput) => {
@@ -1034,6 +1046,11 @@ object CodeGenerator {
           var outputITEExpr = s"""ite($iteCondition, $ifTrue, $ifFalse)"""
           outputITEExpr = convertITEtoOnelineIfStatement(outputITEExpr)
           sb.append(s"\t\t$outputITEExpr\n")
+        }
+        case Some(output: EmitOutput) => {
+          sb.append(s"\t\t")
+          sb.append(outputHelper(sb, output.emitFunction.name, output.emitFunction.params, true))
+          sb.append(s"""\n""")
         }
       }
       sb.append("\t}\n\n")
@@ -1064,12 +1081,19 @@ object CodeGenerator {
    *
    * @return The formatted output as a String.
    */
-  private def outputHelper(sb: StringBuilder, outputName: String, params: List[String]): String = {
+  private def outputHelper(sb: StringBuilder,
+                           outputName: String,
+                           params: List[String],
+                           isEmit: Boolean = false): String = {
 
     var stringOutput = ""
     // If the output has no parameters, simply append the output name.
     if (params.isEmpty) {
-      stringOutput += s"""("$outputName")\n"""
+      if (isEmit) {
+        stringOutput += s"""("emit", "$outputName")\n"""
+      } else {
+        stringOutput += s"""("$outputName")\n"""
+      }
     } else {
       // Use a ListBuffer to accumulate the parsed parameters.
       val parsed_params = ListBuffer[String]()
@@ -1085,7 +1109,11 @@ object CodeGenerator {
         }
       }
       // Once all parameters are processed, append them in a formatted manner.
-      stringOutput += s"""List("$outputName", List(${parsed_params.mkString(", ")}))"""
+      if (isEmit) {
+        stringOutput += s"""("emit",List("$outputName", List(${parsed_params.mkString(", ")})))"""
+      } else {
+        stringOutput += s"""List("$outputName", List(${parsed_params.mkString(", ")}))"""
+      }
     }
     stringOutput
   }

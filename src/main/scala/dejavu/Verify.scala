@@ -36,7 +36,7 @@ object Verify {
     * Flag indicating whether to clear generated files and folder (relevent in development mode).
     */
 
-  private var CLEAR: Boolean = true
+  private var CLEAR: Boolean = false
 
   /**
     * Flag indicating whether to work in production or development mode.

@@ -345,7 +345,7 @@ case class Spec(properties: List[Property]) {
          |
          | \"\"\".stripMargin
          |
-         |def config(bits: String, mode: String, printStat: String, timeEnabled: String): Boolean = {
+         |def config(bits: String, mode: String, printStat: String, timeEnabled: String): Any = {
          |     // Read and set 'bits'
          |     val bitsValue = bits.trim
          |     if (!bitsValue.matches(\"\"\"\\d+\"\"\")) {
@@ -390,7 +390,7 @@ case class Spec(properties: List[Property]) {
          | }
          |
          |
-         |  def eval(event: String): Boolean = {
+         |  def eval(event: String): Any = {
          |   openResultFile("dejavu-results")
          |   var input = event.split(",")
          |   var eventSize: Int = 0
@@ -417,10 +417,24 @@ case class Spec(properties: List[Property]) {
          |    }
          |  }
          |
-         |   val res: Boolean = if (Options.PRE_PREDICTION && moni_ != null) {
+         |   val res: Any = if (Options.PRE_PREDICTION && moni_ != null) {
          |   val modifiedEvent = moni_.preMonitor_(name, args: _*)
          |
          |    modifiedEvent match {
+         |      case Some(("emit", eventArgs: String)) =>
+         |        val emitResult = eventArgs
+         |          emitResult
+         |        case Some(("emit", eventArgs: List[_])) =>
+         |           eventArgs match {
+         |             case eventName :: args :: Nil =>
+         |               val eventNameStr = eventName.toString
+         |               val argsStr = args.asInstanceOf[List[String]].mkString(",")
+         |               val emitResult = s"$$eventNameStr,$$argsStr"
+         |               emitResult
+         |             case _ =>
+         |               println("Unexpected event structure output from the pre processing")
+         |               ""
+         |            }
          |       case Some(first :: second :: _) =>
          |         moni_.submit(first.toString, second.asInstanceOf[List[String]])
          |       case Some(event_name: String) =>
