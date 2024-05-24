@@ -541,7 +541,7 @@ abstract class Monitor(preMonitor: PreMonitorTrait) {
     * @param args the arguments to the event.
     */
 
-  def submit(name: String, args: List[Any]): Boolean = {
+  def submit(name: String, args: List[Any]): String = {
     if (Options.STATISTICS) {
       statistics.update(name)
     }
@@ -670,7 +670,7 @@ abstract class Monitor(preMonitor: PreMonitorTrait) {
     * property.
     */
 
-  def evaluate(): Boolean = {
+  def evaluate(): String = {
     debug(s"\ncurrentTime = $currentTime\n$state\n")
     for (formula <- formulae) {
       formula.setTime(deltaTime)
@@ -681,10 +681,10 @@ abstract class Monitor(preMonitor: PreMonitorTrait) {
           println(s"\n*** Property ${formula.name} violated on event number $lineNr:\n")
           println(state)
         }
-        return false
+        return "false"
       }
     }
-    true
+    "true"
   }
 
   /**

@@ -345,12 +345,12 @@ case class Spec(properties: List[Property]) {
          |
          | \"\"\".stripMargin
          |
-         |def config(bits: String, mode: String, printStat: String, timeEnabled: String): Any = {
+         |def config(bits: String, mode: String, printStat: String, timeEnabled: String): String = {
          |     // Read and set 'bits'
          |     val bitsValue = bits.trim
          |     if (!bitsValue.matches(\"\"\"\\d+\"\"\")) {
          |        println("*** bits argument must be an integer")
-         |        return false
+         |        return "false"
          |     }
          |     Options.BITS = bitsValue.toInt
          |
@@ -373,7 +373,7 @@ case class Spec(properties: List[Property]) {
          |   else if (printStatValue == "false") Options.PRINTS_STAT = false
          |   else {
          |     println("*** stat argument must be: true or false")
-         |     return false
+         |     return "false"
          |   }
          |
          |   // Read and set 'timed'
@@ -382,15 +382,15 @@ case class Spec(properties: List[Property]) {
          |   else if (timedValue == "false") timed = false
          |   else {
          |     println("*** timed argument must be: true or false")
-         |     return false
+         |     return "false"
          |   }
          |
          |   println("Bits: " + bitsValue + " Mode: " + modeValue + " PrintStat: " + printStatValue + " Timed " + timedValue)
-         |   return true
+         |   return "true"
          | }
          |
          |
-         |  def eval(event: String): Any = {
+         |  def eval(event: String): String = {
          |   openResultFile("dejavu-results")
          |   var input = event.split(",")
          |   var eventSize: Int = 0
@@ -417,7 +417,7 @@ case class Spec(properties: List[Property]) {
          |    }
          |  }
          |
-         |   val res: Any = if (Options.PRE_PREDICTION && moni_ != null) {
+         |   val res: String = if (Options.PRE_PREDICTION && moni_ != null) {
          |   val modifiedEvent = moni_.preMonitor_(name, args: _*)
          |
          |    modifiedEvent match {
@@ -441,10 +441,10 @@ case class Spec(properties: List[Property]) {
          |         if (event_name != "skip")
          |           moni_.submit(event_name.toString, Nil)
          |         else
-         |           true
+         |           "true"
          |       case Some(_) =>
          |         println("Unexpected event structure output from the pre processing")
-         |         false
+         |         "false"
          |       case None =>
          |         moni_.submit(name, args.toList)
          |     }
