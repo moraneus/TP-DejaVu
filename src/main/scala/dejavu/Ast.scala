@@ -149,11 +149,20 @@ case class Spec(properties: List[Property]) {
 
     writeln(ResourceReader.read("/Monitor.txt"))
     writeln()
+
+    val last_eval_vars = properties
+      .map(property => s"\tvar ${property.name}: Boolean = false\n")
+      .mkString("")
+
+    writeln(
+      s"""
+         |  ${prePropertySynthesisCode.replace("###LAST_EVAL###", last_eval_vars)}
+        """
+        .stripMargin)
     for (property <- properties) {
       val name = property.name
       writeln(
         s"""
-           |  $prePropertySynthesisCode
            |
            |/*
            |  $property
@@ -167,9 +176,10 @@ case class Spec(properties: List[Property]) {
 
       LTL.translate(property)
 
-      val last_eval = """|    // Update the last evaluate value for the next pre monitor processing
+      val last_eval = s"""
+                         |    // Update the last evaluate value for the next pre monitor processing
                          |           if (Options.PRE_PREDICTION) {
-                         |               PreMonitor.last_eval = !error
+                         |               PreMonitor.$name = !error
                          |           }""".stripMargin
 
       writeln(

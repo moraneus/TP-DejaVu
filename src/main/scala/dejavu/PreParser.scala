@@ -124,6 +124,7 @@ class PrePropertyParser extends JavaTokenParsers {
       case id ~ "float" => (_IdentFloat(id), "float")
       case id ~ "double" => (_IdentDouble(id), "double")
       case id ~ "str" => (_IdentStr(id), "str")
+      case id ~ "string" => (_IdentStr(id), "str")
       case id ~ "bool" => (_IdentBool(id), "bool")
       case id ~ "prob" => (_IdentProb(id), "prob")
     }
@@ -899,7 +900,8 @@ object CodeGenerator {
                              sb: StringBuilder): Set[String] = {
 
     // Define last evaluate variable
-    sb.append(s"\tvar last_eval: Boolean = false\n")
+//    sb.append(s"\tvar last_eval: Boolean = false\n")
+    sb.append(s"###LAST_EVAL###")
 
     // To keep track of initialized variables
     val initializedVariables = scala.collection.mutable.Set[String]()
